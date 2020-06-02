@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <title>Zaccord - Regisztráció</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/style.css">
+    <script src="/js/includes/mobileCheck.js" defer></script>
+    <script src="/js/includes/short.js" defer></script>
+    <script src="/js/includes/year.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/register.js" defer></script>
+    <script src="/js/includes/cookie.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+  </head>
+  <body>   
+    <section class="keepBottom">
+      <p class="mainTitle">Regisztráció</p> 
+      <div class="formContainer">
+        <input type="text" class="formField" id="email" placeholder="Email">
+        <input type="password" class="formField" id="pass" placeholder="Jelszó">
+        <input type="password" class="formField" id="passConf" placeholder="Jelszó újra"
+          style="margin-bottom: 0;">
+        <p class="align">
+          A regisztrációval elfogadom az <a href="/aszf">Általános Szerződési Feltételeket</a>,
+          az <a href="/nyilatkozat">Adatvédelmi Nyilatkozatot</a> és a
+          <a href="/cookies">sütik</a> használatát.
+        </p>
+        <div id="errStatus" class="errorBox"></div>
+        <div id="successStatus" class="successBox"></div>
+        <div class="loadImg" id="loader"></div>
+        <button class="fillBtn btnCommon" id="submitBtn">Regisztráció</button>
+      </div>
+    </section>
+  </body>
+</html>

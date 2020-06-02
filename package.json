@@ -1,0 +1,28 @@
+{
+  "name": "company",
+  "version": "1.0.0",
+  "description": "Webshop prototype",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app"
+  },
+  "author": "Mark Frankli",
+  "license": "ISC",
+  "dependencies": {
+    "animate.css": "^4.1.0",
+    "bcrypt": "^4.0.1",
+    "client-sessions": "^0.8.0",
+    "email-validator": "^2.0.4",
+    "formidable": "^1.2.2",
+    "galleria": "^1.6.1",
+    "mysql": "^2.18.1",
+    "node-stl": "^0.7.0",
+    "nodemailer": "^6.4.6",
+    "querystring": "^0.2.0",
+    "randomstring": "^1.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
