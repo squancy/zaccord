@@ -1,6 +1,6 @@
+// Change the database connection params to your custom ones
 const mysql = require('mysql');
 
-// Edit the connection params to fit your server
 var conn = mysql.createConnection({
   host: "",
   user: "",

@@ -2,13 +2,17 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const url = require('url');
+const mv = require('mv');
+const randomstring = require("randomstring");
 const formidable = require('formidable');
 const validateEmail = require('email-validator');
 const conn = require('./src/js/connectDb.js');
+const StlThumbnailer = require('node-stl-to-thumbnail');
 const parseCookies = require('./src/js/includes/parseCookies.js');
 const createSession = require('./src/js/includes/createSession.js');
 const userRegister = require('./src/js/registerLogic.js');
 const buyItem = require('./src/js/buyItem.js');
+const updateStatus = require('./src/js/updateStatus.js');
 const changeDeliveryInfo = require('./src/js/chDelInfo.js');
 const changePassword = require('./src/js/chPassword.js');
 const userLogin = require('./src/js/loginLogic.js');
@@ -19,6 +23,10 @@ const buildAccountSection = require('./src/js/accountLogic.js');
 const buildPrintSection = require('./src/js/printLogic.js');
 const buildCustomPrint = require('./src/js/customPrintLogic.js');
 const buildBuySection = require('./src/js/buyLogic.js');
+const buildAdminPage = require('./src/js/adminLogic.js');
+const buildAdminSection = require('./src/js/adminSectionLogic.js');
+
+// Note: change admin page password, user etc. to your data instead of using placeholders
 
 // Add cookie accept file if user has not yet accepted it
 function addCookieAccept(req) {
@@ -56,18 +64,35 @@ function addTemplate(userID) {
   return content
 }
 
-// Display error page when uploading a file for custom print
-function imgError(res, userID, fname) {
-  let content = fs.readFileSync('src/printUpload.html');
-  content += `
-    <section class="keepBottom">
+function generateTemplate(fname, text) {
+  return `
+    <section class="keepBottom flexDiv" style="align-items: center;">
       <div>
         <img src="/images/${fname}.png" class="emptyCart">
+        <p class="align" style="font-size: 32px; color: #ccc;">${text}</p>
       </div>
     </section>
   `;
+}
+
+// Display error page when uploading a file for custom print
+function imgError(res, userID, fname, text = '') {
+  let content = fs.readFileSync('src/printUpload.html');
+  content += generateTemplate(fname, text);
   content += addTemplate(userID);
   res.writeHead(200, {'Content-Type': 'text/html'});
+  res.end(content);
+}
+
+// Server response for .stl and .png files: set proper content type
+function fileResponse(contentType, url, res) {
+  res.writeHead(200, {'Content-Type': contentType});
+  let path = url.substr(1);
+  try {
+    var content = fs.readFileSync(path);
+  } catch (e) {
+    imgError(res, userID, '404error');
+  }
   res.end(content);
 }
 
@@ -86,6 +111,8 @@ function getContentType(extension) {
       return 'image/jpg';
     case '.stl':
       return 'application/netfabb';
+    case '.png':
+      return 'image/png';
   }
   return 'text/html';
 }
@@ -106,12 +133,22 @@ function errorFormResponse(res, msg) {
   res.end(JSON.stringify(responseData));
 }
 
-function pageCouldNotLoad(res, msg) {
+function pageCouldNotLoad(res, userID) {
+  let content = fs.readFileSync('src/index.html');
+  content += generateTemplate('notLoad', 'Nem sikerült az oldal betöltése')
+  commonData(content, userID, '', res);
+}
+
+function commonData(content, userID, data, res) {
+  content += data;
+  content += addTemplate(userID);
   res.writeHead(200, {'Content-Type': 'text/html'});
-  res.end(JSON.stringify(msg));
+  res.end(content, 'utf8');
 }
 
 // Store user id in a session
+let d = new Date();
+d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
 let userSession = createSession('user');
 
 const server = http.createServer((req, res) => {
@@ -140,6 +177,7 @@ const server = http.createServer((req, res) => {
           res.writeHead(200, {'Content-Type': 'text/html'});
           res.end(data);
       }).catch(err => {
+        console.log(err);
         errorFormResponse(res, 'Hoppá... hiba történt a keresés közben');
       });
     });
@@ -242,7 +280,7 @@ const server = http.createServer((req, res) => {
       let responseData = {};
 
       // Validate postal code; other paramters are too ambiguous
-      if (isNaN(formData.pcode) || formData.pcode.length != 4) {
+      if (!Number.isInteger(formData.pcode) || formData.pcode < 1000 || formData.pcode > 9985) {
         errorFormResponse(res, 'Kérlek valós irányítószámot adj meg');
         return;
       } else {
@@ -279,16 +317,16 @@ const server = http.createServer((req, res) => {
       });
     });
   } else if (req.url === '/uploadPrint' && req.method.toLowerCase() === 'post') {
-    // Make sure user is logged in
-    loggedIn(req, res);
-
     // Allow multiple files to be uploaded, max file size is 20MB
     const form = formidable({multiples: true, maxFileSize: 20 * 1024 * 1024});
 
     form.parse(req, (err, fields, files) => {
-      if (err || files.customPrint.length > 10 ||
-        (!Array.isArray(files.customPrint) && !files.customPrint.size)) {
-        imgError(res, userID, 'fupload');
+      // If user submits nothing or more than 10 files display error msg
+      if (!Array.isArray(files.customPrint) && !files.customPrint.size) {
+        imgError(res, userID, 'cFile', 'Válassz egy fájlt');
+        return;
+      } else if (err || files.customPrint.length > 10) {
+        imgError(res, userID, 'sfupload', 'Maximum 10db fájlt tölthetsz fel');
         return;
       }
 
@@ -297,26 +335,61 @@ const server = http.createServer((req, res) => {
       }
       
       let filePaths = [];
+      let promises = [];
+
       for (let i = 0; i < files.customPrint.length; i++) {
-        // Upload file to server
         let oldpath = files.customPrint[i].path;
-        let uploadFileName = userID + '_' + Date.now() + '_' + i; 
-        let newpath = './printUploads/' + uploadFileName + '.stl';
+
+        // If user is not logged in file prefix is 12 char random string, otherwise it's the uid
+        let prefix = randomstring.generate(12);
+        if (userID) prefix = userID;
+
+        // Upload file to server
+        let uploadFileName = prefix + '_' + Date.now() + '_' + i; 
+        let newpath = __dirname + '/printUploads/' + uploadFileName + '.stl';
         let send = newpath.substr(1);
-        fs.renameSync(oldpath, newpath);
+        let move = new Promise((resolve, reject) => {
+          mv(oldpath, newpath, err => {
+            if (err) {
+              reject('Hiba a fájlok átvitelekor');
+            }
+
+            // Create thumbnail from .stl file: used instead of a product image
+            let thumbnailer = new StlThumbnailer({
+              filePath: newpath,
+              requestThumbnails: [
+                {
+                  width: 500,
+                  height: 500
+                }
+              ] 	
+            }).then(function(thumbnails){
+              thumbnails[0].toBuffer(function(err, buf){      
+                fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFileName +
+                  '.png', buf);
+                resolve('success');
+              });
+            });
+          });
+        });
         filePaths.push(newpath);
+        promises.push(move);
       }
 
+
       // Build custom print page
-      buildCustomPrint(conn, userID, filePaths).then(data => {
-        let content = fs.readFileSync('src/printUpload.html');
-        content += data;
-        content += addTemplate(userID);
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(content);
-      }).catch(err => {
-        // Wrong size
-        imgError(res, userID, 'stlSizeError');
+      Promise.all(promises).then(data => {
+        buildCustomPrint(conn, userID, filePaths).then(data => {
+          let content = fs.readFileSync('src/printUpload.html');
+          content += data;
+          content += addTemplate(userID);
+          res.writeHead(200, {'Content-Type': 'text/html'});
+          res.end(content);
+        }).catch(err => {
+          // Wrong size
+          console.log(err);
+          imgError(res, userID, 'sizeError', err);
+        });
       });
     });
   } else if (req.url === '/validateOrder' && req.method.toLowerCase() === 'post') {
@@ -332,14 +405,50 @@ const server = http.createServer((req, res) => {
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
       let formData = JSON.parse(body);
-      buyItem(conn, formData).then(data => {
+      buyItem(conn, formData, req).then(data => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end('{"success": true}');
       }).catch(err => {
         console.log(err);
         errorFormResponse(res, err);
       })
-      console.log(formData);
+    });
+  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
+    // Admin page
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      buildAdminPage(conn, formData).then(data => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end('{"success": true}');
+      }).catch(err => {
+        console.log(err);
+        errorFormResponse(res, err);
+      })
+    });
+  } else if (req.url === '/UPDATE_STATUS_URL' && req.method.toLowerCase() === 'post') {
+    // On admin page we can update the status of an order: done / in progress
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    // User buys a product -> validate data on server side & push to db
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      updateStatus(conn, formData).then(data => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end('{"success": true}');
+      }).catch(err => {
+        console.log(err);
+        errorFormResponse(res, err);
+      })
     });
   } else {
     /*
@@ -357,18 +466,12 @@ const server = http.createServer((req, res) => {
       extension = '.html';
     }
 
+    // Set the proper content-type for server response
     if (extension === '.stl') {
-      res.writeHead(200, {'Content-Type': 'application/netfabb'});
-      let path = req.url.substr(1);
-      try {
-        var content = fs.readFileSync(path);
-      } catch (e) {
-        console.log(e);
-        // TODO: 404 page
-        var content = 'asdas';
-        res.writeHead(404, {'Content-Type': 'text/html'});
-      }
-      res.end(content);
+      fileResponse('application/netfabb', req.url, res);
+    // Response for custom print .png thumbnails
+    } else if (extension === '.png' && req.url.includes('printUploads')) {
+      fileResponse('image/png', req.url, res);
     }
 
     // Read files that are directly stored on the server under [name].html
@@ -379,17 +482,12 @@ const server = http.createServer((req, res) => {
           // Build pages dynamically that are not stored on the server 
           if (req.url.substr(0, 14) === '/item/product=') {
             let itemId = Number(req.url.substr(14));
-            if (!Number.isInteger(itemId)) {
-              itemId = 1;
-            }
             let content = fs.readFileSync('src/item.html');
             content += addCookieAccept(req);
-            buildItemSection(conn, itemId).then(data => {
-              content += data;
-              content += addTemplate(userID);
-              res.writeHead(200, {'Content-Type': 'text/html'});
-              res.end(content, 'utf8');
+            buildItemSection(conn, itemId, req).then(data => {
+              commonData(content, userID, data, res);
             }).catch(error => {
+              console.log(error);
               imgError(res, userID, 'parcel');
             });
           } else if (req.url.substr(0, 13) === '/buy?product=') {
@@ -401,13 +499,31 @@ const server = http.createServer((req, res) => {
   
             let content = fs.readFileSync('src/buy.html');
             content += addCookieAccept(req);
-            buildBuySection(conn, q, userID).then(data => {
+            buildBuySection(conn, q, req).then(data => {
+              commonData(content, userID, data, res);
+            }).catch(err => {
+              console.log(err);
+              imgError(res, userID, 'shop', err);
+            });
+          // Admin page login authentication
+          } else if (req.url.substr(0, 14) === '/ADMIN_LOGIN_AUTH') {
+            let q = url.parse(req.url, true); 
+            let qdata = q.query;
+            let user = decodeURIComponent(qdata.user);
+            let pass = decodeURIComponent(qdata.pass);
+
+            // Make sure username and password are correct
+            if (user != 'ADMIN_USER' || pass != 'ADMIN_PASS') {
+              res.writeHead(200, {'Content-Type': 'text/html'});
+              res.end('hiba', 'utf8');
+            }
+
+            // Build output
+            let content = fs.readFileSync('src/adminOrders.html');
+            buildAdminSection(conn).then(data => {
               content += data;
-              content += addTemplate(userID);
               res.writeHead(200, {'Content-Type': 'text/html'});
               res.end(content, 'utf8');
-            }).catch(err => {
-              // Handle errors
             });
           } else {
             imgError(res, userID, '404error');
@@ -442,20 +558,16 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, {'Content-Type': contentType});
             res.end(content, 'utf8');
           }).catch(err => {
-            pageCouldNotLoad(res, `Hoppá... sajnos nem sikerült betölteni az oldalt.
-              Próbáld újra.`);
+            pageCouldNotLoad(res, userID);
           });
         } else if (req.url === '/cart') {
+          // Build user cart page
           let content = fs.readFileSync('src/cart.html');
           content += addCookieAccept(req);
           buildCartSection(conn, req).then(data => {
-            content += data;
-            content += addTemplate(userID);
-            res.writeHead(200, {'Content-Type': contentType});
-            res.end(content, 'utf8');
+            commonData(content, userID, data, res);
           }).catch(err => {
-            pageCouldNotLoad(res, `Hoppá... sajnos nem sikerült betölteni az oldalt.
-              Próbáld újra.`);
+            pageCouldNotLoad(res, userID);
           });
         } else if (req.url === '/account') {
           // Make sure user is logged in when visiting account page
@@ -464,31 +576,22 @@ const server = http.createServer((req, res) => {
           let content = fs.readFileSync('src/account.html');
           content += addCookieAccept(req);
           buildAccountSection(conn, userID).then(data => {
-            content += data;
-            content += addTemplate(userID);
-            res.writeHead(200, {'Content-Type': contentType});
-            res.end(content, 'utf8');
+            commonData(content, userID, data, res);
           }).catch(err => {
-            pageCouldNotLoad(res, `Hoppá... sajnos nem sikerült betölteni az oldalt.
-              Próbáld újra.`);
+            pageCouldNotLoad(res, userID);
           });
         } else if (req.url === '/print') {
+          /*
+            User does not need to be logged in for experimenting with custom print only for
+            shopping
+          */
           let content = fs.readFileSync('src/print.html');
           content += addCookieAccept(req);
 
-          // Make sure user is logged in; otherwise show different content
-          if (!req.user.id) {
-            imgError(res, userID, 'custom_print');
-          } 
-
           buildPrintSection(conn).then(data => {
-            content += data;
-            content += addTemplate(userID);
-            res.writeHead(200, {'Content-Type': contentType});
-            res.end(content, 'utf8');
+            commonData(content, userID, data, res);
           }).catch(err => {
-            pageCouldNotLoad(res, `Hoppá... sajnos nem sikerült betölteni az oldalt.
-              Próbáld újra.`);
+            pageCouldNotLoad(res, userID);
           });
         } else {
           res.writeHead(200, {'Content-Type': contentType});

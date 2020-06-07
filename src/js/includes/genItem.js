@@ -1,3 +1,4 @@
+// Generate an html box for an item
 function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, data) {
   let output = `
     <div class="cartItemHolder">
@@ -22,6 +23,9 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
         </div>
         <div>
           <p>Sűrűség: ${data.suruseg}%</p>
+        </div>
+        <div>
+          <p>Szín: ${decodeURIComponent(data.color)}</p>
         </div>
         <div>
           <p>Méretezés: x${data.scale}</p>

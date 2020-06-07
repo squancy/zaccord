@@ -1,18 +1,22 @@
 const ITEMCOUNT = 15;
 
+// Implement fade in/out animation of a blue strip when hovering over a menu item
 const items = ['cart', 'register', 'login', 'bny'];
 for (let item of items) {
-  _(item).addEventListener('mouseover', () => {
-      animateElement(item + '_anim', 'fadeIn', 'fadeOut', 0.3, true);
-    }
-  );
+  if (_(item)) {
+    _(item).addEventListener('mouseover', () => {
+        animateElement(item + '_anim', 'fadeIn', 'fadeOut', 0.3, true);
+      }
+    );
 
-  _(item).addEventListener('mouseleave', () => {
-      animateElement(item + '_anim', 'fadeIn', 'fadeOut', 0.3, false);
-    }
-  );
+    _(item).addEventListener('mouseleave', () => {
+        animateElement(item + '_anim', 'fadeIn', 'fadeOut', 0.3, false);
+      }
+    );
+  }
 }
 
+// Animate the pop-up price box when hovering over an item
 function animateElement(element, start, end, dur, begin) {
   if (window.mobileCheck() && element != 'cookie') return;
   let el = _(element);

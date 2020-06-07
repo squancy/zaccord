@@ -1,3 +1,4 @@
+// Generate a form where the user can change the item's parameters
 function genSpecs(price, size) {
   let output = `
     <hr class="hrStyle">
@@ -8,7 +9,6 @@ function genSpecs(price, size) {
             <div class="specTitle">Rétegvastagság</div>
             <select class="specSelect" id="rvas" onchange="updateSpecs(this, ${price})">
               <option value="0.12">0.12mm</option>
-              <option value="0.16">0.16mm</option>
               <option value="0.20" selected>0.20mm</option>
               <option value="0.28">0.28mm</option>
             </select>
@@ -17,9 +17,10 @@ function genSpecs(price, size) {
           <div>
             <div class="specTitle">Sűrűség</div>
             <select class="specSelect" id="suruseg" onchange="updateSpecs(this, ${price})">
+              <option value="10">10%</option>
   `;
 
-  for (let i = 10; i <= 100; i += 10) {
+  for (let i = 20; i <= 80; i += 20) {
     let selected = i == 20 ? 'selected' : '';
     output += `
       <option value="${i}" ${selected}>${i}%</option>
@@ -52,7 +53,7 @@ function genSpecs(price, size) {
               onchange="updateScale(this, ${price}, '${size}')">
   `;
 
-  for (let i = 0.7; i <= 1.3; i+= 0.3) {
+  for (let i = 0.7; i <= 1.3; i += 0.3) {
     let selected = i == 1 ? 'selected' : '';
     output += `
       <option value="${i.toFixed(1)}" ${selected}>x${i.toFixed(1)}</option>
@@ -68,7 +69,7 @@ function genSpecs(price, size) {
             <select class="specSelect" id="fvas" onchange="updateSpecs(this, ${price})">
   `
 
-  for (let i = 0.4; i <= 3.6; i += 0.8) {
+  for (let i = 0.8; i <= 2.4; i += 0.4) {
     let selected = i.toFixed(2) == 1.2 ? 'selected' : '';
     output += `
       <option value="${i.toFixed(1)}" ${selected}>${i.toFixed(1)}mm</option>

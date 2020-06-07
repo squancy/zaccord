@@ -16,8 +16,10 @@
     "email-validator": "^2.0.4",
     "formidable": "^1.2.2",
     "galleria": "^1.6.1",
+    "mv": "^2.1.1",
     "mysql": "^2.18.1",
     "node-stl": "^0.7.0",
+    "node-stl-to-thumbnail": "^1.1.0",
     "nodemailer": "^6.4.6",
     "querystring": "^0.2.0",
     "randomstring": "^1.1.5"

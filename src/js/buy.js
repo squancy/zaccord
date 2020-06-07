@@ -23,14 +23,14 @@ function submitOrder() {
     return;
   }
 
-  data.payment = 'transfer';
-  data.name = name;
-  data.pcode = pcode;
-  data.city = city;
-  data.address = address;
-  data.mobile = mobile;
-  if (uvet) data.payment = 'uvet';
-  console.log(data);
+  // Add payment & delivery data to the 1st element of the array
+  data[0].payment = 'transfer';
+  data[0].name = name;
+  data[0].pcode = pcode;
+  data[0].city = city;
+  data[0].address = address;
+  data[0].mobile = mobile;
+  if (uvet) data[0].payment = 'uvet';
 
   // Send data to server for further validation
   fetch('/validateOrder', {
@@ -41,7 +41,9 @@ function submitOrder() {
     body: JSON.stringify(data)
   }).then(response => response.json()).then(data => {
     if (data.success) {
+      // On successful order remove items from the cookies (if order was not a single item)
       window.scrollTo(0, 0);
+      if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
       _('main').innerHTML = '';
       _('whoosh').style.display = 'none';
       _('succStatus').innerHTML = `

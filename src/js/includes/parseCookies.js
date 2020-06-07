@@ -1,3 +1,4 @@
+// Convert cookies into a usable structure
 function parseCookies(request) {
   var list = {}, rc = request.headers.cookie;
 

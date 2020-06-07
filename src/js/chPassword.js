@@ -1,5 +1,6 @@
 const userExists = require('./includes/userExists.js');
 const bcrypt = require('bcrypt');
+const sendEmail = require('./includes/sendEmail.js');
 
 // Validate user & on successful validation change their password in db
 const chPassword = (conn, userID, formData) => {
@@ -48,8 +49,23 @@ const chPassword = (conn, userID, formData) => {
             return;
           }
 
-          // Successful change
-          resolve('password changed');
+          let eQuery = 'SELECT email FROM users WHERE id = ? LIMIT 1';
+          conn.query(eQuery, [userID], (err, result, field) => {
+            // On successful ordering, send customer a notification email
+            let email = result[0].email;
+            let emailContent = `
+              <p style="font-size: 22px;">Sikeres jelszóváltoztatás!</p>
+              <p>
+                Értesítünk, hogy a fiókodhoz tartozó jelszavadat sikeresen megváltoztattad.<br>
+                Mostantól ezzel a jelszóval tudsz belépni a fiókba.
+              </p>
+            `;
+            let subject = 'Sikeres jelszóváltoztatás!';
+            sendEmail('info@zaccord.com', emailContent, email, subject);
+            
+            // Successful change
+            resolve('password changed');
+          });
         });
       });
     }).catch(err => {

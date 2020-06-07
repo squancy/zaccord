@@ -12,8 +12,11 @@ const userLogin = (conn, formData, req) => {
     // First check if there is a user with such an email in db
     conn.query('SELECT password, id FROM users WHERE email = ? LIMIT 1', [email],
     (err, result, fields) => {
-      if (result.length === 0) {
+      if (err) {
         reject('Egy nem várt hiba történt, kérlek próbáld újra');
+        return;
+      } else if (result.length === 0) {
+        reject('Hibás e-mail vagy jelszó');
         return;
       }
 

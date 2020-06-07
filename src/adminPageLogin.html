@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="hu">
   <head>
-    <title>Zaccord - Fiók</title>
+    <title>Zaccord - admin felület</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/animate/animate.css">
     <link rel="stylesheet" href="/style/style.css">
-    <meta name="description" content="Jelentkezz be a Zaccord fiókodba">
-    <meta name="keywords" content="Zaccord, rólunk">
-    <meta name="author" content="Mark Frankli">
-    <script src="/js/includes/mobileCheck.js" defer></script>
     <script src="/js/includes/short.js" defer></script>
-    <script src="/js/includes/year.js" defer></script>
+    <script src="/js/admin.js" defer></script>
     <script src="/js/main.js" defer></script>
-    <script src="/js/account.js" defer></script>
-    <script src="/js/includes/cookie.js" defer></script>
+    <script src="/js/includes/mobileCheck.js" defer></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
   </head>
-  <body>   
+  <body> 
+    <section class="keepBottom">
+      <p>Zaccord admin felület</p>
+      <input type="text" placeholder="User" id="user">
+      <input type="password" placeholder="Jelszó" id="pass">
+      <button id="ok">ok</button>
+      <div id="status"></div>
+    </section>
   </body>
 </html>

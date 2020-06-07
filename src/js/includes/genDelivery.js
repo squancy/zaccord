@@ -1,3 +1,4 @@
+// Generate a form for delivery information from db
 function genDelivery(conn, userID) {
   return new Promise((resolve, reject) => {
     let dQuery = `
@@ -6,6 +7,11 @@ function genDelivery(conn, userID) {
     conn.query(dQuery, [userID], (err, result, field) => {
       if (err) {
         reject('Egy nem várt hiba történt, kérlek proóbáld újra');
+        return;
+      }
+
+      if (result.length < 0) {
+        reject('Nincs ilyen felhasználó');
         return;
       }
 

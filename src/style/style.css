@@ -147,7 +147,7 @@ header {
   width: 100%;
   height: 70px; 
   display: none;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.8);
   color: #4285F4;
   position: absolute;
   bottom: 0;
@@ -413,12 +413,18 @@ footer > div a:hover {
   text-decoration: underline;
 }
 
-.errorBox, .successBox {
+.errorBox, .successBox, .infoBox {
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
   border-radius: 20px;
   text-align: center;
+}
+
+.infoBox {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
 }
 
 .successBox {
@@ -427,7 +433,7 @@ footer > div a:hover {
   border-color: #c3e6cb;
 }
 
-.errorBox > p, .successBox > p {
+.errorBox > p, .successBox > p, .infoBox > p {
   padding: 10px;
 }
 

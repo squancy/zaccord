@@ -1,21 +1,19 @@
-function calcPrice(price, rvas, suruseg, scale, fvas) {
-  let actualPrice = price;
-  if (rvas != 0.12) {
-    actualPrice += Math.round(-(price * (rvas / 2)));
-  }
+// Calculate the final price of a product, given its initial price + parameters
+function calcPrice(price, rvasVal, surusegVal, scaleVal, fvasVal) {
+  // Convert degrees to radians
+  rvasVal *= Math.PI / 180
+  surusegVal *= Math.PI / 180
+  fvasVal *= Math.PI / 180
 
-  if (suruseg != 10) { 
-    actualPrice += Math.round(price * (suruseg / 500));
-  }
+  // Formula for calculating the price with the given params
+  // Parameters values in the formula are degrees (converted to rads)
+  let nPrice = (price *
+    ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
+    (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
+    (Math.pow(scaleVal, 2)) +
+    (Math.sin(fvasVal) * 8 + 0.83246064094) - 3));
 
-  if (scale != 1) {
-    actualPrice += Math.round((price * scale - price) / 5); 
-  }
-
-  if (fvas != 0.4) {
-    actualPrice += Math.round(fvas / 20 * price); 
-  }
-  return actualPrice;
+  return Math.round(nPrice);
 }
 
 module.exports = calcPrice;

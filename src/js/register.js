@@ -47,10 +47,6 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
     _('submitBtn').disabled = false;
     return;
   } else {
-    _('email').value = ''; 
-    _('pass').value = '';
-    _('passConf').value = '';
-
     // If sign up is successful push data to server-side validation
     let data = {
       'email': email,
@@ -76,6 +72,9 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
         errStatus.innerHTML = data.error;
         return;
       } else if (data.hasOwnProperty('success') && data.success) {
+        _('email').value = ''; 
+        _('pass').value = '';
+        _('passConf').value = '';
         successStatus.innerHTML = data.success;
         return;
       }

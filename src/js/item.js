@@ -1,5 +1,8 @@
-let basePrice = Number(_('priceHolder').innerHTML);
+if (_('priceHolder')) {
+  var basePrice = Number(_('priceHolder').innerHTML);
+}
 
+// Add item to cart
 function addToCart(id) {
   let itemId = id;
 
@@ -12,12 +15,12 @@ function addToCart(id) {
   let fvas = Number(_('fvas').value);
   let quantity = Number(_('quantity').value); 
 
-  let surusegValues = [];
+  // Make sure all parameters have a valid value
+  let surusegValues = [10];
   let quantityValues = [];
   let colorValues = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Sárga', 'Piros'];
-  for (let i = 10; i <= 100; i += 10) {
+  for (let i = 20; i <= 80; i += 20) {
     surusegValues.push(i);
-    quantityValues.push(i / 10);
   }
 
   let scaleValues = [2];
@@ -26,13 +29,13 @@ function addToCart(id) {
   }
 
   let fvasValues = [];
-  for (let i = 0.4; i <= 3.6; i += 0.8) {
+  for (let i = 0.8; i <= 2.4; i += 0.4) {
     fvasValues.push(Number(i.toFixed(2)));
   }
 
   // Validation on client-side
   _('status').innerHTML = '';
-  if ([0.12, 0.16, 0.2, 0.28].indexOf(rvas) < 0) {
+  if ([0.12, 0.2, 0.28].indexOf(rvas) < 0) {
     _('status').innerHTML = '<p>A rétegvastagság értéke nem megfelelő</p>'; 
     return;
   } else if (surusegValues.indexOf(suruseg) < 0) {
@@ -47,7 +50,7 @@ function addToCart(id) {
   } else if (fvasValues.indexOf(fvas) < 0) {
     _('status').innerHTML = '<p>A falvastagság értéke nem megfelelő</p>'; 
     return 
-  } else if (quantityValues.indexOf(quantity) < 0) {
+  } else if (quantity % 1 !== 0 || quantity < 1 || quantity > 10) {
     _('status').innerHTML = '<p>A mennyiség értéke nem megfelelő</p>'; 
     return 
   }
@@ -58,15 +61,15 @@ function addToCart(id) {
     ['content_' + id]: {
       ['rvas_' + id]: rvas,
       ['suruseg_' + id]: suruseg,
-      ['color_' + id]: color,
+      ['color_' + id]: encodeURIComponent(color),
       ['scale_' + id]: scale,
       ['fvas_' + id]: fvas,
       ['quantity_' + id]: quantity
     }
   };
 
-  // If the same two products have the same configs update quantity by 1
-  // Basically implements an object equality comparison on content and updates it
+  // If the same two products have the same configs update quantity by [quantity]
+  // Basically implements an object equality comparison on the content 
   _('succBox').innerHTML = '';
   _('status').innerHTML = '';
   if (getCookie('cartItems')) {
@@ -137,54 +140,50 @@ function updateTotPrice(cartId, newPrice, oldPrice) {
     sumOfSums += Number(_('totpHolder_' + id).innerHTML);
   }
 
-  if (sumOfSums > 15000) sumOfSums *= 0.97;
+  if (sumOfSums > 15000) {
+    sumOfSums *= 0.97;
+  } else if (sumOfSums < 1500) {
+    sumOfSums += 1500;
+    _('extraPrice').innerHTML = '(+1500 Ft felár)';
+  } else {
+    _('extraPrice').innerHTML = '';
+  }
+
   _('fPrice').innerHTML = Math.round(sumOfSums);
+  manageDiscountTxt(Math.round(sumOfSums));
 
   // Also update the new parameter in cookies
   let contentSoFar = JSON.parse(getCookie('cartItems'))
   let names = ['rvas', 'suruseg', 'scale', 'color', 'quantity', 'fvas'];
   for (let name of names) {
     let currentVal = _(name + cartId).value;
-    contentSoFar['content_' + cartId][name + '_' + cartId] = currentVal;
+    console.log(name + '_' + cartId)
+    contentSoFar['content_' + cartId][name + '_' + cartId] = encodeURIComponent(currentVal);
   }
-  console.log(contentSoFar);
   setCookie('cartItems', JSON.stringify(contentSoFar), 365);
 }
 
+// Calculate the price while changing the parameters
 function calculatePrice(price, id = '') {
   let rvasVal = Number(_('rvas' + id).value);
   let surusegVal = Number(_('suruseg' + id).value);
   let scaleVal = Number(_('scale' + id).value);
   let fvasVal = Number(_('fvas' + id).value);
-  if ((surusegVal == 10 && rvasVal == 0.12 && scaleVal == 1 && fvasVal == 0.4)
-    || rvasVal == 0.12) {
-    var rvasP = 0;
-  } else {
-    var rvasP = Math.round(-(price * (rvasVal / 2)));
-  }
+ 
+  // Convert degrees to radians
+  rvasVal *= Math.PI / 180
+  surusegVal *= Math.PI / 180
+  fvasVal *= Math.PI / 180
 
-  if ((surusegVal == 10 && rvasVal == 0.12 && scaleVal == 1 && fvasVal == 0.4)
-    || surusegVal == 10) { 
-    var surusegP = 0;
-  } else {
-    var surusegP = Math.round(price * (surusegVal / 500));
-  }
+  // Formula for calculating the price with the given params
+  // Parameters values in the formula are degrees (converted to rads)
+  let nPrice = (price *
+    ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
+    (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
+    (Math.pow(scaleVal, 2)) +
+    (Math.sin(fvasVal) * 8 + 0.83246064094) - 3));
 
-  if ((surusegVal == 10 && rvasVal == 0.12 && scaleVal == 1 && fvasVal == 0.4)
-    || scaleVal == 1) {
-    var scaleP = 0;
-  } else {
-    var scaleP = Math.round((price * scaleVal - price) / 5); 
-  }
-
-  if ((surusegVal == 10 && rvasVal == 0.12 && scaleVal == 1 && fvasVal == 0.4)
-    || fvasVal == 0.4) {
-    var fvasP = 0;
-  } else {
-    var fvasP = Math.round(fvasVal / 20 * price); 
-  }
-
-  return rvasP + surusegP + scaleP + fvasP;
+  return Math.round(nPrice);
 }
 
 function getPriceHolder(id) {
@@ -197,9 +196,17 @@ function getPriceHolder(id) {
 
 function updatePrice(isInCart, price, domElement) {
   let id = isInCart ? isInCart : '';
-  let newPrice = price + calculatePrice(price, id); 
+  let newPrice = calculatePrice(price, id); 
   domElement.innerHTML = newPrice;
   return newPrice;
+}
+
+function manageDiscountTxt(newPrice) {
+  if (newPrice > 15000) {
+    _('discount').innerHTML = '(3% kedvezmény)';
+  } else {
+    _('discount').innerHTML = '';
+  }
 }
 
 function updateSpecs(e, price, isInCart = false) {
@@ -210,6 +217,7 @@ function updateSpecs(e, price, isInCart = false) {
   updateTotPrice(isInCart, newPrice, price);
 }
 
+// When changing the scale of the item the size also gets updated
 function updateScale(e, price, scale, isInCart) {
   let value = Number(e.value); 
   let domElement = getPriceHolder(isInCart);
@@ -228,7 +236,7 @@ function updateScale(e, price, scale, isInCart) {
   updateTotPrice(isInCart, newPrice, price);
 }
 
-// User buys the single item
+// User buys a single item: save specs and redirect to buy page
 function buyItem(id) {
   let rvas = _('rvas').value;
   let suruseg = _('suruseg').value;
@@ -236,7 +244,12 @@ function buyItem(id) {
   let scale = _('scale').value;
   let fvas = _('fvas').value;
   let q = _('quantity').value;
-  window.location.href = `
-    /buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale} &fvas=${fvas}&q=${q}
-  `;
+
+  // If user is not logged in display error msg
+  if (!isLoggedIn) {
+    _('info').innerHTML = '<p>A vásárláshoz kérlek jelentkezz be</p>';  
+  } else {
+    window.location.href = `
+      /buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale} &fvas=${fvas}&q=${q}`;
+  }
 }

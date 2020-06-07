@@ -16,10 +16,12 @@ function searchForItem() {
     'value': value
   }
 
+  // If search query is empty show all items
   if (!value) {
     data.isEmpty = true;
   }
 
+  // Push data to server side for output
   fetch('/search', {
     headers: {
       'Content-Type': 'application/json'
@@ -35,7 +37,7 @@ function searchForItem() {
     }
     _('dynamicShowcase').innerHTML = data;
   }).catch(err => {
-    console.log(err);
+    console.log('a', err);
     _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a keresés közben</p>';
   });
 }

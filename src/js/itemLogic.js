@@ -1,12 +1,21 @@
 const genSpecs = require('./includes/genSpecs.js');
+const escapeVars = require('./includes/escapeVars.js');
 
 // Build page for a specific item
-const buildItemSection = (conn, itemId) => {
+const buildItemSection = (conn, itemId, req) => {
   return new Promise((resolve, reject) => {
+    // Select the item from db & make sure it exists
+    itemId = Number(escapeVars(itemId));
     conn.query("SELECT * FROM fix_products WHERE id = ? LIMIT 1", [itemId],
     function (err, result, fields) {
       if (err) {
         reject('Egy nem várt hiba történt, kérlek próbáld újra')
+        return;
+      }
+
+      // Invalid item id
+      if (result.length === 0) {
+        reject('Nincs ilyen termékünk');
         return;
       }
 
@@ -15,12 +24,7 @@ const buildItemSection = (conn, itemId) => {
         <section class="keepBottom animate__animated animate__fadeIn">
       `;
 
-      // Invalid item id
-      if (result.length === 0) {
-        reject('Nincs ilyen termékünk');
-        return;
-      }
-
+      // Get properties of item
       let id = result[0]['id'];
       let url = result[0]['url'];
       let imgUrl = result[0]['img_url'];
@@ -44,8 +48,12 @@ const buildItemSection = (conn, itemId) => {
             </div>
                 <div class="itemInfo">
               <p class="prodName hideText">${productName}</p>
-              <p style="margin-top: 0;">Ár: <span id="priceHolder">${price}</span> Ft</p>
-              <p>Méret: <span id="sizeHolder">${size}</span></p>
+              <p style="margin-top: 0;">
+                <span class="blue">Ár:</span> <span id="priceHolder">${price}</span> Ft
+              </p>
+              <p>
+                <span class="blue">Méret:</span> <span id="sizeHolder">${size}</span>
+              </p>
               <p>${description}</p>
             </div>
           </div>
@@ -59,6 +67,7 @@ const buildItemSection = (conn, itemId) => {
         
         <div id="status" class="errorBox"></div>
         <div id="succBox" class="successBox"></div>
+        <div id="info" class="infoBox"></div>
 
         <div class="specBox">
           <button class="borderBtn btnCommon" onclick="buyItem(${id})">
@@ -84,6 +93,12 @@ const buildItemSection = (conn, itemId) => {
 
       output += `
         </section>
+      `;
+
+      output += `
+        <script type="text/javascript">
+          let isLoggedIn = ${req.user.id ? true : false};
+        </script>
       `;
       resolve(output);
     });

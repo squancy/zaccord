@@ -1,3 +1,4 @@
+// Set cookie to a specific value on the client side
 function setCookie(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -5,6 +6,7 @@ function setCookie(cname, cvalue, exdays) {
   document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
 
+// Get the content of a cookie
 function getCookie(cname) {
   var name = cname + "=";
   var ca = document.cookie.split(';');

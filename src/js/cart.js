@@ -1,7 +1,7 @@
 // User can change the color of an item in the cart
 function chColor(e, id) {
-  let value = e.value;
-
+  let value = encodeURIComponent(e.value);
+  console.log(value);
   // Change the value in the cookie
   let cartSoFar = JSON.parse(getCookie('cartItems'));
   cartSoFar['content_' + id]['color_' + id] = value;
@@ -34,8 +34,21 @@ function removeItem(tid) {
   let fPrice = Number(_('fPrice').innerHTML);
   if (fPrice - cPrice * 0.97 > 15000) {
     _('fPrice').innerHTML = Math.round(fPrice - cPrice * 0.97);
-  } else {
-    _('fPrice').innerHTML = Math.round(fPrice * 1.03092783505) - cPrice;
+  } else if (fPrice > 15000 && fPrice - cPrice * 0.97 <= 15000) {
+    _('fPrice').innerHTML = Math.round(fPrice * (1 / 0.97)) - cPrice;
     _('discount').innerHTML = '';
+  } else {
+    _('fPrice').innerHTML = fPrice - cPrice;
   }
+}
+
+// User buys the content of the cart
+if (_('buyCart')) {
+  _('buyCart').addEventListener('click', function buyCart(e) {
+    if (!isLoggedIn) {
+      _('infoLogin').innerHTML = '<p>A vásárláshoz kérlek jelentkezz be</p>';
+    } else {
+      window.location.href = '/buy?product=cart';
+    }
+  });
 }

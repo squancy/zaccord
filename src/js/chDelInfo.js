@@ -6,7 +6,7 @@ const changeDeliveryInfo = (conn, userID, formData) => {
     // Make sure user exists in db
     userExists(conn, userID).then(data => {
       let name = formData.name; 
-      let pcode = formData.pcode;
+      let pcode = Number(formData.pcode);
       let city = formData.city;
       let address = formData.address;
       let mobile = formData.mobile;

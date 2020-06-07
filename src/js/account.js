@@ -2,7 +2,7 @@
 _('cDel').addEventListener('click', function changeDelInfo(e) {
   // Gather values 
   let name = _('name').value;
-  let pcode = _('pcode').value;
+  let pcode = Number(_('pcode').value);
   let city = _('city').value;
   let address = _('address').value;
   let mobile = _('mobile').value;
@@ -11,7 +11,7 @@ _('cDel').addEventListener('click', function changeDelInfo(e) {
   _('errStatusDel').innerHTML = '';
 
   // Only postal code validation can be performed; other params are too ambiguous
-  if (isNaN(pcode) || pcode.length != 4) {
+  if (!Number.isInteger(pcode) || pcode < 1000 || pcode > 9985) {
     _('errStatusDel').innerHTML = '<p>Kérlek valós irányítószámot adj meg</p>';
     return;
   } else {

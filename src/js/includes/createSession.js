@@ -1,5 +1,6 @@
 const sessions = require("client-sessions");
 
+// Create session for storing the user's id in a secure way
 function createSession(name) { 
   let session = sessions({
     cookieName: name,

@@ -23,7 +23,7 @@ const buildMainSection = (conn) => {
         <div class="flexDiv" style="word-spacing: 10px;">
           <div>
             <input type="submit" class="btnCommon fillBtn" style="margin: auto;
-              margin-top: 20px;" value="Feltöltés"> <span> vagy
+              margin-top: 20px;" value="Feltöltés" id="submitBtn"> <span> vagy
               <a href="https://www.thingiverse.com/" class="blueLink">Thingiverse</a></span>
            </div>
         </div>
@@ -35,6 +35,7 @@ const buildMainSection = (conn) => {
         <span class="blue">Megjegyzés:</span> egyszerre maximum 10db fájl tölthető fel és egy
         fájl mérete maximum 20MB lehet!
       </p>
+      <div class="loadImg" id="status"></div>
     `;
 
     output += '</section>';

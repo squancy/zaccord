@@ -8,17 +8,18 @@ const buildAccountSection = (conn, userID) => {
     // Fetch user from database & make sure user exists in db
     userExists(conn, userID).then(data => {
       // Create html output 
-      // First build 'orders so far'
+      // First build 'orders so far': both fixed products & custom prints
       let output = `
         <section class="keepBottom">
           <p class="mainTitle">Rendelések & Felhasználói adatok</p>
       `;
 
       let sQuery = `
-        SELECT o.*, i.* FROM orders AS o LEFT JOIN fix_products AS i
+        SELECT o.price AS fprice, o.*, i.* FROM orders AS o LEFT JOIN fix_products AS i
           ON o.item_id = i.id WHERE o.uid = ?
       `;
 
+      // Fetch items & parameters from db
       conn.query(sQuery, [userID], function getOrders(err, result, field) {
         if (err) {
           reject('Egy nem várt hiba történt, kérlek próbáld újra');
@@ -31,13 +32,13 @@ const buildAccountSection = (conn, userID) => {
             <p class="blue align">Úgy tűnik, hogy eddig még nem adtál le rendelést</p>
           `;
         }
-        
+
         // Loop through items and build UI
         for (let i = 0; i < result.length; i++) {
           let orderTime = result[i]['order_time'];
           let prodURL = result[i]['url'];
           let imgURL = result[i]['img_url'];
-          let price = result[i]['price'];
+          let price = result[i]['fprice'];
           let size = result[i]['size'];
           let name = result[i]['name'];
           let rvas = result[i]['rvas'];
@@ -48,14 +49,20 @@ const buildAccountSection = (conn, userID) => {
           let quantity = result[i]['quantity'];
           let stat = Boolean(result[i]['status']);
           let paymentOption = Boolean(result[i]['is_transfer']);
+          let cpFname = result[i]['cp_fname'];
 
+          /*
+            If an order is a custom print item id is 0 and cp_fname is the name of the .stl
+            file & its thumbnail img
+          */
+          
           let data = {
             'orderTime': orderTime,
-            'prodURL': prodURL,
-            'imgURL': imgURL,
+            'prodURL': cpFname ? 'account' : prodURL,
+            'imgURL': cpFname ? 'printUploads/thumbnails/' + cpFname + '.png' : imgURL,
             'price': price,
             'size': size,
-            'name': name,
+            'name': cpFname ? 'Bérnyomtatás' : name,
             'rvas': rvas,
             'suruseg': suruseg,
             'scale': scale,
