@@ -7,6 +7,12 @@ We tried to create a great customer experience by simplifying the process of sho
 <b>Note:</b> the project is stil in development phase but you can check the live product at
 <a href="https://www.zaccord.com">zaccord.com</a>.
 
+## Target audience
+We aim to make Zaccord available for as many people as we can but currently we are limited
+to Hungary. Therefore, only Hungarain citizens and people with a valid Hungarian address are
+able to use the service and buy products since shipping is restricted to inland.<br>
+Also note that Zaccord is currently only available in Hungarian.
+
 ## Technical
 The site is written in vanilla Node.js & SQL (MySQL) for managing the database. It uses a handful of libraries for user authentication & security and managing STL files.
 
