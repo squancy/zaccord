@@ -1,6 +1,29 @@
-# Zaccord
-A webshop for selling 3D printed stuff.
+<img align="right" width="60" src="http://www.pearscom.com/company/complogo.png">
+<h1>Zaccord</h1>
+A webshop for selling 3D printed products.
 
-still in dev. will be done in like 2-3 days. me & my friend selling 3D printed models as a
-small company. only ships to Hungary, if you wanna join as a VC or dev drop me with an email at
-mark@pearscom.com
+Zaccord is a Hungary-based e-commerce website where users can order a variety of 3D-printed products or upload their STL files for custom printing.<br>
+We tried to create a great customer experience by simplifying the process of shopping & eliminating the need to ask for a bid when using our custom print service. This all makes shopping fun and instant.<br><br>
+<b>Note:</b> the project is stil in development phase but you can check the live product at
+<a href="https://www.beetster.pearscom.com">beetster.pearscom.com</a>.
+
+## Technical
+The site is written in vanilla Node.js & SQL (MySQL) for managing the database. It uses a handful of libraries for user authentication & security and managing STL files.
+
+## Source code
+We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
+
+## Distributing source code
+If you found any bugs or want to contribute to the development of Zaccord as a developer feel free to do it in a pull request.
+You can even use it as a reference for creating your project or getting ideas for 3D-printing websites.
+
+## Setting up the project
+After cloning the repository & installing Node.js create the database by importing `database.sql` to MySQL.<br>
+In `src/js/connectDb.js` configure the parameters for connecting to the database.<br>
+To install the dependencies run `npm install`.<br>
+To start the project run `node app.js` and the site should be up on port 5000.<br>
+If you also want to make the e-mail sending service work you will need to edit the connection parameters to your server in `src/js/includes/sendEmail.js`.<br>
+You may also want to edit the secret for sessions in `src/js/includes/createSession.js`.
+
+## Contact
+If you have any questions drop me with an e-mail at <a href="mailto:mark@pearscom.com">mark@pearscom.com</a>.
