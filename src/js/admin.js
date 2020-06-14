@@ -15,7 +15,7 @@ if (_('ok')) {
       if (data.success) {
         let u = encodeURIComponent(_('user').value);
         let p = encodeURIComponent(_('pass').value);
-        window.location.href = '/ADMIN_LOGIN_PAGE?user=' + u + '&pass=' + p;
+        window.location.href = '/lick_weebshit?user=' + u + '&pass=' + p;
       } else {
         _('status').innerText = 'hibás bejelentkezési adatok';
       }

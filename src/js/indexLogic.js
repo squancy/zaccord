@@ -7,12 +7,15 @@ const buildMainSection = (conn, sValue = null, isEmpty = false) => {
     if (!sValue && !isEmpty) {
       var sQuery = "SELECT * FROM fix_products";
     } else {
+      sValue = escapeVars(sValue);
+      var sQuery = `SELECT * FROM fix_products WHERE name LIKE '%${sValue}%' OR description
+        LIKE '%${sValue}%'`;
     }
 
     conn.query(sQuery, function (err, result, fields) {
       if (err) {
         console.log(err);
-        reject('Egy nem várt hiba történt, kérlek próbáld újra')
+        reject('Egy nem várt hiba történt, kérlek próbáld újra');
         return;
       }
 
@@ -58,6 +61,11 @@ const buildMainSection = (conn, sValue = null, isEmpty = false) => {
         `;
       }
 
+      // If, while searhing, there is no output display error msg
+      if (!result.length && !output) {
+        output = 'Sajnos nincs ilyen termékünk...';
+      }
+
       // Add lazy load of images
       output += `
         <script src="/js/includes/lazyLoad.js"></script>
@@ -66,12 +74,7 @@ const buildMainSection = (conn, sValue = null, isEmpty = false) => {
             elements_selector: ".lazy",
           });
         </script>
-      `
-
-      // If, while searhing, there is no output display error msg
-      if (!result.length && !output) {
-        output = 'Sajnos nincs ilyen termékünk...';
-      }
+      `;
       resolve(output);
     });
   });

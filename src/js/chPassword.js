@@ -13,7 +13,7 @@ const chPassword = (conn, userID, formData) => {
       let rpass = formData.rpass;
 
       // Get current hashed password form db
-      conn.query('SELECT password FROM users WHERE id = ? LIMIT 1', [userID],
+      conn.query('SELECT password, temp_password FROM users WHERE id = ? LIMIT 1', [userID],
       function (err, result, fields) {
         if (err) {
           reject('Egy nem várt hiba történt, kérlek próbáld újra');
@@ -25,8 +25,10 @@ const chPassword = (conn, userID, formData) => {
           return;
         }
 
+        // Make sure password (or temp password) is correct
         let hashedPass = result[0].password;
-        if (!bcrypt.compareSync(cpass, hashedPass)) {
+        let tmpPass = result[0].temp_password;
+        if (!bcrypt.compareSync(cpass, hashedPass) && !bcrypt.compareSync(cpass, tmpPass)) {
           reject('Hibás jelszót adtál meg');
           return;
         }
@@ -37,12 +39,13 @@ const chPassword = (conn, userID, formData) => {
           return;
         }
 
-        // Now update password in db
+        // Now update password in db & delete potential tmp password
         // First hash password
         const saltRounds = 10;
         const hash = bcrypt.hashSync(npass, saltRounds);
-        
-        conn.query('UPDATE users SET password = ? WHERE id = ? LIMIT 1', [hash, userID],
+       
+        let uQuery = 'UPDATE users SET password = ?, temp_password = ? WHERE id = ? LIMIT 1';
+        conn.query(uQuery, [hash, '', userID],
         (err, result, field) => {
           if (err) {
             reject('Egy nem várt hiba történt, kérlek proóbád újra');

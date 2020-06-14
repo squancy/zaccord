@@ -142,9 +142,10 @@ function updateTotPrice(cartId, newPrice, oldPrice) {
 
   if (sumOfSums > 15000) {
     sumOfSums *= 0.97;
-  } else if (sumOfSums < 1500) {
-    sumOfSums += 1500;
-    _('extraPrice').innerHTML = '(+1500 Ft felár)';
+  } else if (sumOfSums < 1000) {
+    let extraPrice = 1000 - sumOfSums;
+    sumOfSums += extraPrice;
+    _('extraPrice').innerHTML = `(+${extraPrice} Ft felár)`;
   } else {
     _('extraPrice').innerHTML = '';
   }
@@ -251,5 +252,49 @@ function buyItem(id) {
   } else {
     window.location.href = `
       /buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale} &fvas=${fvas}&q=${q}`;
+  }
+}
+
+let stlView = null;
+
+// Handle the displaying & hiding of pop-up 3D stl viewer
+function viewIn3D(stlPath) {
+  // Get window width & height
+  const width  = window.innerWidth || document.documentElement.clientWidth || 
+    document.body.clientWidth;
+  const height = window.innerHeight|| document.documentElement.clientHeight|| 
+    document.body.clientHeight;
+
+  if (_('overlay').style.display == 'block') {
+    _('overlay').style.display = 'none';
+    _('viewBox').style.display = 'none';
+    _('exitBtn').style.display = 'none';
+    document.body.style.overflow = 'auto';
+  } else {
+    _('overlay').style.display = 'block';
+    _('viewBox').style.display = 'block';
+    _('viewBox').style.width = width / 2 + 'px';
+    _('viewBox').style.height = height / 2 + 'px';
+    _('viewBox').style.top = height / 4 + 'px';
+    _('viewBox').style.left = width / 4 + 'px';
+    _('exitBtn').style.display = 'block';
+    _('exitBtn').style.left = width * (3 / 4) - 44 + 'px';
+    _('exitBtn').style.top = height / 4 + 24 + 'px';
+    document.body.style.overflow = 'hidden';
+
+    if (!stlView) {
+      // Use a 3rd party library for viewing .stl files
+      _('stlLoader').style.display = 'block';
+      stlView = new StlViewer(document.getElementById("viewBox"), {
+        all_loaded_callback: () => _('stlLoader').style.display = 'none',
+        models: [
+          {
+            'id': 0,
+            'filename': stlPath,
+            'color': '#cccccc',
+          }
+        ]
+      });
+    }
   }
 }

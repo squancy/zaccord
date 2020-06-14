@@ -49,12 +49,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     // 1500 Ft extra charge when ordering a [price] < 1500 Ft product
     let chargeText = '<span id="charge"></span>';
     let chargeNote = '';
-    if (totalPrice < 1500) {
-      //totalPrice += 1500;
-      chargeText = '<span id="charge">(+1500Ft felár)</span>';
+    let extraPrice = 0;
+    if (totalPrice < 1000) {
+      extraPrice = 1000 - totalPrice;
+      chargeText = `<span id="charge">(+${extraPrice} Ft felár)</span>`;
       chargeNote = `
         <p class="align note">
-          <span class="blue">Megjegyzés: </span> 1500 Ft alatti termékeknél plusz 1500 Ft
+          <span class="blue">Megjegyzés: </span> 1000 Ft alatti termékeknél 1000Ft - termékár
           felárat számolunk fel!
         </p>
       `;
@@ -216,7 +217,8 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           let obj = {
             id: i,
             filename: path,
-            color: "#ffffff"
+            color: "#ffffff",
+            x: i * 100
           };
           data.push(obj);
         }

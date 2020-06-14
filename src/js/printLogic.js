@@ -24,7 +24,9 @@ const buildMainSection = (conn) => {
           <div>
             <input type="submit" class="btnCommon fillBtn" style="margin: auto;
               margin-top: 20px;" value="Feltöltés" id="submitBtn"> <span> vagy
-              <a href="https://www.thingiverse.com/" class="blueLink">Thingiverse</a></span>
+              <a href="https://www.thingiverse.com/" class="blueLink" target="_blank">
+                Thingiverse
+              </a></span>
            </div>
         </div>
       </form>

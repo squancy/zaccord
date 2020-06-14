@@ -21,6 +21,11 @@ const buildItemSection = (conn, itemId, req) => {
 
       // Create html output 
       let output = `
+        <div class="overlay" id="overlay"></div>
+        <img src="/images/exit.png" class="exitBtn" id="exitBtn" onclick="viewIn3D()">
+        <div class="item3DViewer" id="viewBox">
+          <img src="/images/icons/loader.gif" id="stlLoader" /> 
+        </div>
         <section class="keepBottom animate__animated animate__fadeIn">
       `;
 
@@ -33,6 +38,7 @@ const buildItemSection = (conn, itemId, req) => {
       let size = result[0]['size'].replace(/x/g, 'mm x ');
       size += 'mm';
       let description = result[0]['description'];
+      let stlPath = result[0].stl_path;
       let showcaseImgs = result[0]['img_showcase'].split(',');
       let showcase = `<img src="/${imgUrl}">`;
       for (let img of showcaseImgs) {
@@ -53,6 +59,11 @@ const buildItemSection = (conn, itemId, req) => {
               </p>
               <p>
                 <span class="blue">Méret:</span> <span id="sizeHolder">${size}</span>
+              </p>
+              <p>
+                <span class="blue" id="view3D" onclick="viewIn3D('/fixedStl/${stlPath}.stl')">
+                  3D-s modell megtekintése
+                </span>
               </p>
               <p>${description}</p>
             </div>

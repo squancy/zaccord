@@ -1,11 +1,10 @@
-// Change the database connection params to your custom ones
 const mysql = require('mysql');
 
 var conn = mysql.createConnection({
-  host: "",
-  user: "",
+  host: "localhost",
+  user: "root",
   password: "",
-  database: "",
+  database: "3d",
   dateStrings: "date"
 });
 

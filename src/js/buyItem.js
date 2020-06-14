@@ -34,7 +34,7 @@ const buyItem = (conn, dDataArr, req) => {
 
     let discount = 0.97;
     if (localFinalPrice < 15000) discount = 1;
-    if (localFinalPrice < 1500) localFinalPrice += 1500;
+    if (localFinalPrice < 1000) localFinalPrice += 1000 - localFinalPrice;
 
     if (Math.round(finalPrice) != Math.round(localFinalPrice * discount)) {
       console.log(finalPrice, localFinalPrice * discount)

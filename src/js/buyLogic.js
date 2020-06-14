@@ -219,10 +219,12 @@ const buildBuySection = (conn, paramObj, req) => {
 
         let extraCharge = '';
         let charge = 0;
-        if (finalPrice < 1500) {
-          extraCharge = '<span>(+1500 Ft felár)</span>';
-          charge = 1500;
+        if (finalPrice < 1000) {
+          charge = 1000 - finalPrice;
+          extraCharge = `<span>(+${charge} Ft felár)</span>`;
         }
+
+        if (finalPrice < 15000) charge += 1450;
 
         genDelivery(conn, userID).then(result => {
           output += result;
@@ -286,8 +288,8 @@ const buildBuySection = (conn, paramObj, req) => {
           buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
             output += lastOutput;
 
-            // Order with a total value of less than 1500 Ft will get a +1500 Ft extra charge
-            if (finalPrice < 1500) finalPrice += 1500;
+            // Extra charge below 1000Ft
+            if (finalPrice < 1000) finalPrice += 1000 - finalPrice;
 
             output += `
               </section>
@@ -320,8 +322,8 @@ const buildBuySection = (conn, paramObj, req) => {
           output += lastOutput;
           let finalPrice = data[3];
 
-          // Order with a total value of less than 1500 Ft will get a +1500 Ft extra charge
-          if (finalPrice < 1500) finalPrice += 1500;
+          // Extra charge below 1000Ft
+          if (finalPrice < 1000) finalPrice += 1000 - finalPrice;
 
           output += `
             </section>
@@ -410,8 +412,8 @@ const buildBuySection = (conn, paramObj, req) => {
         buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
           output += lastOutput;
 
-          // Order with a total value of less than 1500 Ft will get a +1500 Ft extra charge
-          if (finalPrice < 1500) finalPrice += 1500;
+          // Order with a total value of less than 1000Ft will get a 1000 - price extra charge
+          if (finalPrice < 1000) finalPrice += 1000 - finalPrice;
           output += `
             </section>
             <script type="text/javascript">

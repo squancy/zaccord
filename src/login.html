@@ -15,9 +15,17 @@
     <script src="/js/includes/year.js" defer></script>
     <script src="/js/main.js" defer></script>
     <script src="/js/login.js" defer></script>
+    <script src="/js/includes/registerSW.js"></script>
     <script src="/js/includes/cookie.js" defer></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="Zaccord">
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+    <meta name="theme-color" content="#ffffff" />
   </head>
   <body>   
     <section class="keepBottom">
@@ -28,6 +36,9 @@
           style="margin-bottom: 0;">
         <p class="align">
           Nincs fiókod? <a href="/register">Regisztrálj</a> a Zaccord-ra most!
+        </p>
+        <p class="align">
+          <a href="/forgotPassword" class="blueLink">Elfelejtetted a jelszavad?</a>
         </p>
         <div id="errStatus" class="errorBox"></div>
         <div class="loadImg" id="loader"></div>

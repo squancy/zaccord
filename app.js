@@ -16,6 +16,7 @@ const updateStatus = require('./src/js/updateStatus.js');
 const changeDeliveryInfo = require('./src/js/chDelInfo.js');
 const changePassword = require('./src/js/chPassword.js');
 const userLogin = require('./src/js/loginLogic.js');
+const forgotPassword = require('./src/js/forgotPassword.js');
 const buildItemSection = require('./src/js/itemLogic.js');
 const buildCartSection = require('./src/js/cartLogic.js');
 const buildMainSection = require('./src/js/indexLogic.js');
@@ -26,7 +27,7 @@ const buildBuySection = require('./src/js/buyLogic.js');
 const buildAdminPage = require('./src/js/adminLogic.js');
 const buildAdminSection = require('./src/js/adminSectionLogic.js');
 
-// Note: change admin page password, user etc. to your data instead of using placeholders
+// Note: change ADMIN constants if you want to use that feature
 
 // Add cookie accept file if user has not yet accepted it
 function addCookieAccept(req) {
@@ -413,7 +414,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === 'ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
     // Admin page
     let body = '';
     req.on('data', data => {
@@ -431,7 +432,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/UPDATE_STATUS_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/updateOrderStatus' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -448,7 +449,26 @@ const server = http.createServer((req, res) => {
       }).catch(err => {
         console.log(err);
         errorFormResponse(res, err);
-      })
+      });
+    });
+  } else if (req.url === '/validateForgotPass' && req.method.toLowerCase() === 'post') {
+    // If user submits a temporary password request validate email addr & send tmp password
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    // Send JSON response
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      forgotPassword(conn, formData.email).then(data => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end('{"success": true}');
+      }).catch(err => {
+        console.log(err);
+        errorFormResponse(res, err);
+      });
     });
   } else {
     /*
@@ -469,9 +489,13 @@ const server = http.createServer((req, res) => {
     // Set the proper content-type for server response
     if (extension === '.stl') {
       fileResponse('application/netfabb', req.url, res);
-    // Response for custom print .png thumbnails
-    } else if (extension === '.png' && req.url.includes('printUploads')) {
+    } else if (extension === '.png' && (req.url.includes('printUploads') ||
+      req.url.includes('icon-'))) {
       fileResponse('image/png', req.url, res);
+    } else if (extension === '.json' && req.url.includes('manifest')) {
+      fileResponse('application/json', req.url, res);
+    } else if (extension === '.js' && req.url.includes('sworker')) {
+      fileResponse('text/javascript', req.url, res);
     }
 
     // Read files that are directly stored on the server under [name].html
@@ -506,14 +530,14 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'shop', err);
             });
           // Admin page login authentication
-          } else if (req.url.substr(0, 14) === '/ADMIN_LOGIN_AUTH') {
+          } else if (req.url.substr(0, 14) === 'ADMIN_URL') {
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);
             let pass = decodeURIComponent(qdata.pass);
 
             // Make sure username and password are correct
-            if (user != 'ADMIN_USER' || pass != 'ADMIN_PASS') {
+            if (user != 'USER' || pass != 'PASS') {
               res.writeHead(200, {'Content-Type': 'text/html'});
               res.end('hiba', 'utf8');
             }
@@ -594,7 +618,10 @@ const server = http.createServer((req, res) => {
             pageCouldNotLoad(res, userID);
           });
         } else {
-          res.writeHead(200, {'Content-Type': contentType});
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Cache-Control': 'max-age=31536000'
+          });
           res.end(content, 'utf8');
         }
       }

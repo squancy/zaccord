@@ -4,11 +4,13 @@ const buildAdminPage = (conn, formData) => {
     let user = formData.user;
     let pass = formData.pass;
 
-    if (user != 'ADMIN_USER' || pass != 'ADMIN_PASS') {
+    // Note: change USER and PASS to your arbitrary username and password
+    // These credentials should be the same as given in app.js
+    if (user != 'USER' || pass != 'PASS') {
       reject('hibás user vagy jelszó');
       return;
     } else {
-      resolve('success')
+      resolve('success');
     }
   });
 }

@@ -58,7 +58,9 @@ const buildAdminSection = (conn) => {
         let checked = status ? 'checked' : '';
         
         let charge = 0;
+        let tFinalPrice = quantity * aPrice;
         if (quantity * aPrice < 1500) charge = 1500;
+        if (quantity * aPrice < 1000) tFinalPrice += 1000 - tFinalPrice;
 
         // Build html output
         output += `
@@ -91,7 +93,7 @@ const buildAdminSection = (conn) => {
               height: 30px;" onclick="updateStatus(${oid}, ${i})">
             <p style="text-align: center;">
               <i><b>Összesen:</b></i>
-              <span id="allp_${i}">${quantity * aPrice}</span> Ft
+              <span id="allp_${i}">${tFinalPrice}</span> Ft
             </p>
             <p style="text-align: center; display: none;" id="totpHolder_${i}">
               <u><i><b>Egész rendelés ár:</b></i></u> <span id="totp_${i}"></span> Ft

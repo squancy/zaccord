@@ -36,6 +36,7 @@ function searchForItem() {
       return;
     }
     _('dynamicShowcase').innerHTML = data;
+    ll.update();
   }).catch(err => {
     console.log('a', err);
     _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a keresés közben</p>';
