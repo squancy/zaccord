@@ -23,7 +23,13 @@ default paramaters:
   - 20% infill
   - x1 scale
   - 1.2mm infill thickness
+where the pure value of these parameters are substituted into variables in degrees.
 <img src="https://www.zaccord.com/images/finalFormula.png">
+Eventually, it provides the desired price intervals for us. You can refine it to your needs by
+changing the <i>sine</i> expressions and decimal constants.<br>
+Note that due to the nature of the <i>sine</i> function 90% infill provides the highest
+price and any infill value above that will produce a smaller price, returning an undesirable
+outcome at the end.
 
 ## Source code
 We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
