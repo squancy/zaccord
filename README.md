@@ -16,6 +16,15 @@ Also note that Zaccord is currently only available in Hungarian.
 ## Technical
 The site is written in vanilla Node.js & SQL (MySQL) for managing the database. It uses a handful of libraries for user authentication & security and managing STL files.
 
+## Price calculation formula
+It calculates the price of a given product when knowing the base price with the following
+default paramaters:
+  - 0.20mm layer height
+  - 20% infill
+  - x1 scale
+  - 1.2mm infill thickness
+<img src="https://www.zaccord.com/finalFormula.png">
+
 ## Source code
 We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
 
