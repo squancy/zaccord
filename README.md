@@ -23,7 +23,7 @@ default paramaters:
   - 20% infill
   - x1 scale
   - 1.2mm infill thickness
-<img src="https://www.zaccord.com/finalFormula.png">
+<img src="https://www.zaccord.com/images/finalFormula.png">
 
 ## Source code
 We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
