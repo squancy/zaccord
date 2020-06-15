@@ -29,7 +29,7 @@ Eventually, it provides the desired price intervals for us. You can refine it to
 changing the <i>sine</i> expressions and decimal constants.<br>
 Note that due to the nature of the <i>sine</i> function 90% infill provides the highest
 price and any infill value above that will produce a smaller price, returning an undesirable
-outcome at the end.
+outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
 
 ## Source code
 We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
