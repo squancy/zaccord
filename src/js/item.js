@@ -178,11 +178,10 @@ function calculatePrice(price, id = '') {
 
   // Formula for calculating the price with the given params
   // Parameters values in the formula are degrees (converted to rads)
-  let nPrice = (price *
+  let nPrice = (price * scaleVal *
     ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
     (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
-    (Math.pow(scaleVal, 2)) +
-    (Math.sin(fvasVal) * 8 + 0.83246064094) - 3));
+    (Math.sin(fvasVal) * 8 + 0.83246064094) - 2));
 
   return Math.round(nPrice);
 }
@@ -256,6 +255,7 @@ function buyItem(id) {
 }
 
 let stlView = null;
+let isMobile = mobileCheck();
 
 // Handle the displaying & hiding of pop-up 3D stl viewer
 function viewIn3D(stlPath) {
@@ -273,20 +273,36 @@ function viewIn3D(stlPath) {
   } else {
     _('overlay').style.display = 'block';
     _('viewBox').style.display = 'block';
-    _('viewBox').style.width = width / 2 + 'px';
-    _('viewBox').style.height = height / 2 + 'px';
-    _('viewBox').style.top = height / 4 + 'px';
-    _('viewBox').style.left = width / 4 + 'px';
-    _('exitBtn').style.display = 'block';
-    _('exitBtn').style.left = width * (3 / 4) - 44 + 'px';
-    _('exitBtn').style.top = height / 4 + 24 + 'px';
     document.body.style.overflow = 'hidden';
+    
+    if (!isMobile) {
+      _('viewBox').style.width = width / 2 + 'px';
+      _('viewBox').style.height = height / 2 + 'px';
+      _('viewBox').style.top = height / 4 + 'px';
+      _('viewBox').style.left = width / 4 + 'px';
+      _('exitBtn').style.display = 'block';
+      _('exitBtn').style.left = width * (3 / 4) - 44 + 'px';
+      _('exitBtn').style.top = height / 4 + 24 + 'px';
+    } else {
+      console.log(isMobile)
+      _('viewBox').style.width = width / 1.1 + 'px';
+      _('viewBox').style.height = height / 2 + 'px';
+      _('viewBox').style.top = height / 4 + 'px';
+      _('viewBox').style.left = width / 22 + 'px';
+      _('exitBtn').style.display = 'block';
+      _('exitBtn').style.left = width * (21 / 22) - 44 + 'px';
+      _('exitBtn').style.top = height / 4 + 24 + 'px';
+    }
+    
 
     if (!stlView) {
       // Use a 3rd party library for viewing .stl files
       _('stlLoader').style.display = 'block';
       stlView = new StlViewer(document.getElementById("viewBox"), {
-        all_loaded_callback: () => _('stlLoader').style.display = 'none',
+        all_loaded_callback: () => {
+          _('stlLoader').style.display = 'none';
+          stlView.set_scale(0, 0.6);
+        },
         models: [
           {
             'id': 0,

@@ -23,7 +23,7 @@ const userLogin = (conn, formData, req) => {
       // Make sure password or temporary password is correct
       let passHash = result[0].password;
       let userId = result[0].id;
-      let tempPassword = result[0].temp_password;
+      let tempPassword = result[0].temp_password ? result[0].temp_password : '';
       let isCorrect = bcrypt.compareSync(password, passHash);
       let isCorrectTmp = bcrypt.compareSync(password, tempPassword);
       if (!isCorrect && !isCorrectTmp) {

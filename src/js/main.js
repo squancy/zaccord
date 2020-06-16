@@ -34,3 +34,35 @@ function animateElement(element, start, end, dur, begin) {
   }
   el.style.setProperty('--animate-duration', dur + 's');
 }
+
+// Handle category box dropdown menu
+function toggleCategory() {
+  if (_('catBox').style.display === 'flex') {
+    _('catBox').style.display = 'none';
+    _('categoryImg').style.backgroundColor = '';
+  } else {
+    _('catBox').style.display = 'flex';
+    _('categoryImg').style.backgroundColor = '#ececec';
+  }
+}
+
+// When category btn is clicked display only items with that category
+function sortByCat(cat) {
+  let data = {
+    'cat': cat
+  };
+
+  fetch('/category', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => {
+    return response.text();
+  }).then(data => {
+    _('dynamicShowcase').innerHTML = data;
+  }).catch(err => {
+    _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a rendezés során</p>';
+  });
+}

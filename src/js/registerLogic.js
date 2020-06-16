@@ -67,7 +67,7 @@ const userRegister = (conn, formData, req) => {
             }
 
             // Success
-            resolve('register success');
+            resolve(userID);
           });
         });
       });

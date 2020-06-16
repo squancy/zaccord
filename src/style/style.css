@@ -69,6 +69,29 @@ header {
   top: calc(50% - 14px);
 }
 
+.catBox {
+  width: 100%;
+  padding: 10px;
+  display: none;
+  padding-bottom: 0;
+}
+
+.catBox > div {
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 30px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.24);
+  margin: 10px;
+  text-align: center;
+  width: 20%;
+  cursor: pointer;
+  border: 1px solid #f1f1f1;
+}
+
+.catBox > div:hover {
+  background-color: #fbfbfb;
+}
+
 .inProgress {
   color: #d68a00;
 }
@@ -555,14 +578,37 @@ footer > div a:hover {
 
 .searchBox {
   display: block;
-  margin: 0 auto;
-  width: 50%;
+  width: calc(100% - 60px);
   border: 1px solid #dfdfdf;
   border-radius: 20px;
   padding: 15px;
   font-size: 16px;
   outline: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
+  float: left;
+}
+
+.categoryImg {
+  margin-top: 5px;
+  float: right;
+  cursor: pointer;
+  height: 43px;
+  border-radius: 50%;
+  padding: 5px;
+  border: 2px solid rgb(243, 243, 243)
+}
+
+.categoryImg > img {
+  height: 30px;
+}
+
+.categoryImg:hover {
+  background-color: #ececec;
+}
+
+.topHolder {
+  width: 60%;
+  margin: 0 auto;
 }
 
 .mainTitle {

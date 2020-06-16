@@ -76,6 +76,12 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
         _('pass').value = '';
         _('passConf').value = '';
         successStatus.innerHTML = data.success;
+
+        // Change header to logged in
+        _('register').innerText = 'Fiók';
+        _('register').href = '/account';
+        _('login').innerText = 'Kijelentkezés';
+        _('login').href = '/logout';
         return;
       }
     }).catch(err => {

@@ -3,7 +3,7 @@ const buildAdminPage = (conn, formData) => {
   return new Promise((resolve, reject) => {
     let user = formData.user;
     let pass = formData.pass;
-
+    
     // Note: change USER and PASS to your arbitrary username and password
     // These credentials should be the same as given in app.js
     if (user != 'USER' || pass != 'PASS') {

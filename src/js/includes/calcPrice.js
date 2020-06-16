@@ -7,11 +7,10 @@ function calcPrice(price, rvasVal, surusegVal, scaleVal, fvasVal) {
 
   // Formula for calculating the price with the given params
   // Parameters values in the formula are degrees (converted to rads)
-  let nPrice = (price *
+  let nPrice = (price * scaleVal *
     ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
     (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
-    (Math.pow(scaleVal, 2)) +
-    (Math.sin(fvasVal) * 8 + 0.83246064094) - 3));
+    (Math.sin(fvasVal) * 8 + 0.83246064094) - 2));
 
   return Math.round(nPrice);
 }
