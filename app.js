@@ -16,6 +16,7 @@ const updateStatus = require('./src/js/updateStatus.js');
 const changeDeliveryInfo = require('./src/js/chDelInfo.js');
 const changePassword = require('./src/js/chPassword.js');
 const userLogin = require('./src/js/loginLogic.js');
+const genOrder = require('./src/js/includes/genOrder.js');
 const forgotPassword = require('./src/js/forgotPassword.js');
 const buildItemSection = require('./src/js/itemLogic.js');
 const buildCartSection = require('./src/js/cartLogic.js');
@@ -26,6 +27,7 @@ const buildCustomPrint = require('./src/js/customPrintLogic.js');
 const buildBuySection = require('./src/js/buyLogic.js');
 const buildAdminPage = require('./src/js/adminLogic.js');
 const buildAdminSection = require('./src/js/adminSectionLogic.js');
+const buildLithophane = require('./src/js/buildLithophane.js');
 
 // Note: change ADMIN constants if you want to use that feature
 
@@ -215,9 +217,13 @@ const server = http.createServer((req, res) => {
         */
         
         userRegister(conn, formData, req).then(data => {
-          responseData.success = '<p>Sikeres regisztráció</p>';
-          res.writeHead(200, {'Content-Type': 'application/json'});
-          res.end(JSON.stringify(responseData));
+          // Auto log in user after successful registration
+          userSession(req, res, function uSession() {
+            req.user.id = data;
+            responseData.success = '<p>Sikeres regisztráció</p>';
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify(responseData));
+          });
         }).catch(err => {
           errorFormResponse(res, err);
         });
@@ -317,86 +323,150 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       });
     });
+  } else if (req.url === '/category' && req.method === 'POST') {
+    // Sort fixed items on the main page by their category in db
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      let responseData = {};
+
+      // User changes their password; validate on server side
+      buildMainSection(conn, formData.cat, false, true).then(data => {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }).catch(err => {
+        console.log(err)
+        errorFormResponse(res, 'Hoppá... hiba történt a rendezés során');
+      });
+    });
   } else if (req.url === '/uploadPrint' && req.method.toLowerCase() === 'post') {
     // Allow multiple files to be uploaded, max file size is 20MB
     const form = formidable({multiples: true, maxFileSize: 20 * 1024 * 1024});
 
     form.parse(req, (err, fields, files) => {
       // If user submits nothing or more than 10 files display error msg
-      if (!Array.isArray(files.customPrint) && !files.customPrint.size) {
+      let cFile = files['file[]'];
+      if (!Array.isArray(cFile) && !cFile.size) {
         imgError(res, userID, 'cFile', 'Válassz egy fájlt');
         return;
-      } else if (err || files.customPrint.length > 10) {
-        imgError(res, userID, 'sfupload', 'Maximum 10db fájlt tölthetsz fel');
+      } else if (cFile.length > 5) {
+        imgError(res, userID, 'sfupload', 'Maximum 5db fájlt tölthetsz fel');
+        return;
+      } else if (err) {
+        imgError(res, userID, 'sfupload', 'Hiba történt');
         return;
       }
 
-      if (!Array.isArray(files.customPrint)) {
-        files.customPrint = [files.customPrint];  
+      if (!Array.isArray(cFile)) {
+        cFile = [cFile];  
       }
       
       let filePaths = [];
       let promises = [];
 
-      for (let i = 0; i < files.customPrint.length; i++) {
-        let oldpath = files.customPrint[i].path;
+      for (let i = 0; i < cFile.length; i++) {
+        let oldpath = cFile[i].path;
+        let splitted = cFile[i].name.split('.');
+        let extension = splitted[splitted.length - 1].toLowerCase();
+
+        if (['png', 'jpg', 'jpeg', 'stl'].indexOf(extension) < 0) {
+          reject('Hibás fájlkiterjesztés');
+          return;
+        } else if (cFile.length > 1) {
+          // Make sure no more than 1 img is uploaded
+          imgError(res, userID, 'sfupload', 'Egyszerre csak 1 képet tölthetsz fel');
+          return; 
+        }
 
         // If user is not logged in file prefix is 12 char random string, otherwise it's the uid
         let prefix = randomstring.generate(12);
         if (userID) prefix = userID;
 
-        // Upload file to server
-        let uploadFileName = prefix + '_' + Date.now() + '_' + i; 
-        let newpath = __dirname + '/printUploads/' + uploadFileName + '.stl';
+        // Upload files to server
+        var isLit = false;
+        if (extension === 'stl') {
+          var uploadFileName = prefix + '_' + Date.now() + '_' + i; 
+          var newpath = __dirname + '/printUploads/' + uploadFileName + '.stl';
+        } else {
+          isLit = true;
+          var uploadFileName = prefix + '_' + Date.now() + '_lit_' + i; 
+          var newpath = __dirname + '/printUploads/lithophanes/' + uploadFileName + '.'
+            + extension;
+        }
+
         let send = newpath.substr(1);
         let move = new Promise((resolve, reject) => {
           mv(oldpath, newpath, err => {
             if (err) {
               reject('Hiba a fájlok átvitelekor');
+              return;
             }
 
             // Create thumbnail from .stl file: used instead of a product image
-            let thumbnailer = new StlThumbnailer({
-              filePath: newpath,
-              requestThumbnails: [
-                {
-                  width: 500,
-                  height: 500
-                }
-              ] 	
-            }).then(function(thumbnails){
-              thumbnails[0].toBuffer(function(err, buf){      
-                fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFileName +
-                  '.png', buf);
-                resolve('success');
+            if (extension === 'stl') {
+              let thumbnailer = new StlThumbnailer({
+                filePath: newpath,
+                requestThumbnails: [
+                  {
+                    width: 500,
+                    height: 500
+                  }
+                ] 	
+              }).then(function(thumbnails) {
+                thumbnails[0].toBuffer(function(err, buf) {      
+                  fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFileName +
+                    '.png', buf);
+                  resolve('success');
+                });
               });
-            });
+            } else {
+              resolve('success');
+            }
           });
         });
+
         filePaths.push(newpath);
         promises.push(move);
       }
 
-
       // Build custom print page
-      Promise.all(promises).then(data => {
-        buildCustomPrint(conn, userID, filePaths).then(data => {
-          let content = fs.readFileSync('src/printUpload.html');
-          content += data;
-          content += addTemplate(userID);
-          res.writeHead(200, {'Content-Type': 'text/html'});
-          res.end(content);
-        }).catch(err => {
-          // Wrong size
-          console.log(err);
-          imgError(res, userID, 'sizeError', err);
+      if (!isLit) {
+        Promise.all(promises).then(data => {
+          buildCustomPrint(conn, userID, filePaths).then(data => {
+            let content = fs.readFileSync('src/printUpload.html');
+            content += data;
+            content += addTemplate(userID);
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.end(content);
+          }).catch(err => {
+            // Wrong size
+            console.log(err);
+            imgError(res, userID, 'sizeError', err);
+          });
         });
-      });
+      } else {
+        Promise.all(promises).then(data => {
+          buildLithophane(conn, userID, filePaths).then(data => {
+            console.log('hello')
+            let content = fs.readFileSync('src/lithophane.html');
+            content += data;
+            content += addTemplate(userID);
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.end(content);
+          }).catch(err => {
+            // TODO
+            console.log(err);
+            imgError(res, userID, 'sizeError', err);
+          });
+        });
+      }
     });
   } else if (req.url === '/validateOrder' && req.method.toLowerCase() === 'post') {
-    // Make sure user is logged in
-    loggedIn(req, res);
-
     let body = '';
     req.on('data', data => {
       body += data;
@@ -406,7 +476,7 @@ const server = http.createServer((req, res) => {
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
       let formData = JSON.parse(body);
-      buyItem(conn, formData, req).then(data => {
+      buyItem(conn, formData, req, res, userSession).then(data => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end('{"success": true}');
       }).catch(err => {
@@ -414,7 +484,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === 'ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
     // Admin page
     let body = '';
     req.on('data', data => {
@@ -432,7 +502,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/updateOrderStatus' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/UPDATE_STAT_URL' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -470,6 +540,28 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       });
     });
+  } else if (req.url === '/moreOrders' && req.method.toLowerCase() === 'post') {
+    // Make sure user is logged in
+    if (!req.user.id) {
+      errorFormResponse(res, 'Nem vagy bejelentkezve');
+    }
+
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    // Send JSON response with more orders
+    req.on('end', () => {
+      genOrder(conn, req.user.id).then(data => {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }).catch(err => {
+        console.log(err);
+        errorFormResponse(res, err);
+      });
+    });
   } else {
     /*
       Render files that are either stored directly on the server or not fetched via a POST
@@ -489,13 +581,21 @@ const server = http.createServer((req, res) => {
     // Set the proper content-type for server response
     if (extension === '.stl') {
       fileResponse('application/netfabb', req.url, res);
-    } else if (extension === '.png' && (req.url.includes('printUploads') ||
-      req.url.includes('icon-'))) {
+    } else if (['.png', '.jpg', '.jpeg'].indexOf(extension) > - 1 
+      && (req.url.includes('printUploads') || req.url.includes('icon-'))) {
       fileResponse('image/png', req.url, res);
     } else if (extension === '.json' && req.url.includes('manifest')) {
       fileResponse('application/json', req.url, res);
     } else if (extension === '.js' && req.url.includes('sworker')) {
       fileResponse('text/javascript', req.url, res);
+    }
+
+    // Make sure user is not logged in when visiting /login and /register pages
+    if (['/register', '/login'].indexOf(req.url) > -1 && req.user.id) {
+      res.writeHead(302, {
+        'Location': '/'
+      });
+      res.end();
     }
 
     // Read files that are directly stored on the server under [name].html
@@ -515,9 +615,6 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'parcel');
             });
           } else if (req.url.substr(0, 13) === '/buy?product=') {
-            // Make sure user is logged in
-            loggedIn(req, res);
-
             // User buys a product
             let q = url.parse(req.url, true).query;
   
@@ -530,7 +627,7 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'shop', err);
             });
           // Admin page login authentication
-          } else if (req.url.substr(0, 14) === 'ADMIN_URL') {
+          } else if (req.url.substr(0, 14) === '/ADMIN_URL') {
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);
@@ -569,11 +666,6 @@ const server = http.createServer((req, res) => {
           content += addHeader(userID);
         }
 
-        // Make sure user is not logged in when visiting /login and /register pages
-        if (['/register', '/login'].indexOf(req.url) > -1 && req.user.id) {
-          loggedIn(req, res);
-        }
-
         // Build pages from database
         if (req.url === '/') {
           buildMainSection(conn).then(data => {
@@ -582,6 +674,7 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, {'Content-Type': contentType});
             res.end(content, 'utf8');
           }).catch(err => {
+            console.log(err)
             pageCouldNotLoad(res, userID);
           });
         } else if (req.url === '/cart') {
@@ -591,6 +684,7 @@ const server = http.createServer((req, res) => {
           buildCartSection(conn, req).then(data => {
             commonData(content, userID, data, res);
           }).catch(err => {
+            console.log(err)
             pageCouldNotLoad(res, userID);
           });
         } else if (req.url === '/account') {
