@@ -2,42 +2,43 @@
 const buildMainSection = (conn) => {
   return new Promise((resolve, reject) => {
     let output = `
-      <section class="keepBottom">     
+      <section class="keepBottom flexDiv" id="cprintHolder">     
     `; 
 
     // Build file upload form
     output += `
-      <form action="/uploadPrint" enctype="multipart/form-data" method="post">
-        <input type="file" name="customPrint" id="file-5" class="inputfile inputfile-4"
-          data-multiple-caption="{count} fájl kiválasztva" style="display: none"
-          accept=".stl" multiple/>
-        <label for="file-5">
-          <figure>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17">
-              <path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/></svg>
-          </figure>
-          <span style="text-align: center; display: block;">
-            Válassz a fájlok közül&hellip;
-          </span>
-        </label>
-        <div class="flexDiv" style="word-spacing: 10px;">
-          <div>
-            <input type="submit" class="btnCommon fillBtn" style="margin: auto;
-              margin-top: 20px;" value="Feltöltés" id="submitBtn"> <span> vagy
-              <a href="https://www.thingiverse.com/" class="blueLink" target="_blank">
-                Thingiverse
-              </a></span>
-           </div>
+      <div class="cPrintDivs leftDiv flexDiv" id="dropDiv" ondrop="dropFile(event)">
+        <form action="/uploadPrint" enctype="multipart/form-data" method="post" id="fdz">
+          <img src="/images/ddupload.png" width="90" style="margin: 0 auto;">
+          <p class="gotham font24 dgray" style="margin-bottom: 15px;" id="dragdrop">
+            Húzd ide a fájlokat
+          </p> 
+          <p class="gotham font18" style="margin-top: 0;" id="or">vagy</p>
+          <div class="btnCommon fillBtn" id="fdzB" style="width: 60%; margin: 0 auto;">
+            Böngéssz
+          </div>
+          <input type="file" name="file[]" style="display: none;" id="fileInput" multiple
+            accept="image/png,image/jpg,.stl">
+          <input type="submit" id="submitForm" style="display: none;">
+        </form>
+      </div>
+      <div class="cPrintDivs rightDiv flexDiv previews gotham" id="bigPrew">
+        <div id="prew">
+          <p class="gotham font24" style="color: #2d2d2d;">Még nem töltöttél fel fájlokat</p> 
+          <p class="gotham font18" style="color: #2d2d2d;">
+            Nincsen kinyomtatni való fájlod?<br>
+            <a class="blueLink" href="https://www.thingiverse.com">
+              Nézz körul a Thingiversen!
+            </a>
+          </p> 
+
+          <p class="gotham font18" style="color: #2d2d2d;">
+            <a class="blueLink" href="/printHelp">Bérnyomtatás</a> &amp;
+            <a class="blueLink" href="/lithophaneHelp">Litofánia</a>
+            tudnivalók
+          </p> 
         </div>
-      </form>
-      <p class="align">
-        <a href="/printHelp" class="blueLink">Segítség a bérnyomtatáshoz</a>
-      </p>
-      <p class="align note">
-        <span class="blue">Megjegyzés:</span> egyszerre maximum 10db fájl tölthető fel és egy
-        fájl mérete maximum 20MB lehet!
-      </p>
-      <div class="loadImg" id="status"></div>
+      </div>
     `;
 
     output += '</section>';

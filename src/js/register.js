@@ -1,11 +1,3 @@
-// Validate emails with regex
-function validateEmail(email) {
-  if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-    return true;
-  }
-  return false;
-}
-
 let startTime = new Date();
 
 _('submitBtn').addEventListener('click', function validateForm(e) {
@@ -29,22 +21,7 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
   }
 
   _('submitBtn').disabled = true;
-
-  if (!email || !pass || !passConf) {
-    errStatus.innerHTML = '<p>Kérlek tölts ki minden mezőt</p>';
-    _('submitBtn').disabled = false;
-    return;
-  } else if (!validateEmail(email)) {
-    errStatus.innerHTML = '<p>Kérlek valós e-mailt adj meg</p>';
-    _('submitBtn').disabled = false;
-    return;
-  } else if (pass.length < 6) {
-    errStatus.innerHTML = '<p>A jelszónak minimum 6 karakterből kell állnia</p>';
-    _('submitBtn').disabled = false;
-    return;
-  } else if (pass != passConf) {
-    errStatus.innerHTML = '<p>A jelszavak nem egyeznek</p>';
-    _('submitBtn').disabled = false;
+  if (!regVal(email, pass, passConf, 'errStatus', 'submitBtn')) {
     return;
   } else {
     // If sign up is successful push data to server-side validation

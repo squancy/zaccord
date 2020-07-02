@@ -10,6 +10,11 @@ function jsonSafe(data) {
 
 function searchForItem() {
   let value = _('sfi').value;
+
+  // Scroll to top
+  window.scrollTo({
+    top: 0
+  });
   
   // Make AJAX call to server
   let data = {
@@ -19,6 +24,9 @@ function searchForItem() {
   // If search query is empty show all items
   if (!value) {
     data.isEmpty = true;
+    toggleLower('block');
+  } else {
+    toggleLower('none');
   }
 
   // Push data to server side for output

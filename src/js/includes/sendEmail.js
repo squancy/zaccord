@@ -1,11 +1,11 @@
 const nodemailer = require('nodemailer');
 
-// Note: change e-mail credentials to yours
 // Send email from a specific addr with arbitrary content
+// NOTE: configure email server credentials to your needs
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
-      host: 'zaccord.com',
+      host: 'HOST',
       port: 465,
       secure: true, 
       auth: {
@@ -19,7 +19,7 @@ function sendEmail(from, content, email, subject) {
       <div style="font-family: sans-serif;">
         <div style="width: 100%; height: 60px; background-color: white;
           box-sizing: border-box;">
-          <img src="https://www.pearscom.com/company/complogo.png"
+          <img src="https://www.zaccord.com/images/logo.png"
             style="width: 50px; height: 50px; display: block;
             margin: 0 auto;">  
         </div>
@@ -42,13 +42,13 @@ function sendEmail(from, content, email, subject) {
 
     transporter.sendMail(mailOptions, function(error, info) {
       if (error) {
+          console.log(error);
         reject('Egy nem várt hiba történt, kérlek próbáld űjra');
         return;
+      } else {
+        resolve('success');
       }
     });
-
-    // Do not wait for checking error msg: proceed anyways
-    resolve('success');
   });
 }
 

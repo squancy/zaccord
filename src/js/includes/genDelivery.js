@@ -10,17 +10,17 @@ function genDelivery(conn, userID) {
         return;
       }
 
-      if (result.length < 0) {
-        reject('Nincs ilyen felhasználó');
-        return;
+      if (result.length > 0) {
+        // If there is value in db use that as value; otherwise nothing
+        var name = !result[0].name ? '' : result[0].name;
+        var postalCode = !result[0].postal_code ? '' : result[0].postal_code;
+        var city = !result[0].city ? '' : result[0].city;
+        var address = !result[0].address ? '' : result[0].address;
+        var mobile = !result[0].mobile ? '' : result[0].mobile;
+      } else {
+        var name, postalCode, city, address, mobile;
+        name = postalCode = city = address = mobile = '';
       }
-
-      // If there is value in db use that as value; otherwise nothing
-      let name = !result[0]['name'] ? '' : result[0]['name'];
-      let postalCode = !result[0]['postal_code'] ? '' : result[0]['postal_code'];
-      let city = !result[0]['city'] ? '' : result[0]['city'];
-      let address = !result[0]['address'] ? '' : result[0]['address'];
-      let mobile = !result[0]['mobile'] ? '' : result[0]['mobile'];
 
       let output = `
         <div class="flexDiv" style="flex-wrap: wrap;">
@@ -30,8 +30,8 @@ function genDelivery(conn, userID) {
             value="${postalCode}">
           <input type="text" class="dFormField" id="city" placeholder="Város"
             value="${city}">
-          <input type="text" class="dFormField" id="address" placeholder="Cím"
-            value="${address}">
+          <input type="text" class="dFormField" id="address"
+            placeholder="Cím (hsz., em., ajtó)" value="${address}">
           <input type="text" class="dFormField" id="mobile" placeholder="Telefonszám"
             value="${mobile}">
         </div>

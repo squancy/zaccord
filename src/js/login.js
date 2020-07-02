@@ -12,15 +12,18 @@ _('submitBtn').addEventListener('click', function loginSubmit(e) {
   _('submitBtn').disabled = true;
 
   // Validation on client side
+  console.log('rr')
   if (!email || !pass) {
-    _('errStatus').innerHTML = '<p>Kérlek tölts ki minden mezőt</p>';
+    statusFill('errStatus', 'Kérlek tölts ki minden mezőt');
+    _('submitBtn').disabled = false;
+    return;
+  } else if (Math.round(timeDiff) >= 300) {
+    statusFill('errStatus', 'Túllépted az időkorlátot, kérlek frissítsd az oldalt');
+    _('submitBtn').disabled = false;
     return;
   }
 
-  if (Math.round(timeDiff) >= 300) {
-    errStatus.innerHTML = '<p>Túllépted az időkorlátot, kérlek frissítsd az oldalt</p>';
-    return;
-  }
+  _('lstatus').innerHTML = '<img src="/images/icons/loader.gif" width="24">';
 
   let data = {
     'email': email,
@@ -42,11 +45,13 @@ _('submitBtn').addEventListener('click', function loginSubmit(e) {
       window.location.href = '/';
     } else if (data.error){
       _('errStatus').innerHTML = data.error;
+      _('lstatus').innerHTML = '';
     }
     _('submitBtn').disabled = false;
   }).catch(err => {
     // Something went wrong
-    _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>'; 
+    statusFill('errStatus', 'Egy nem várt hiba történt, kérlek próbáld újra');
     _('submitBtn').disabled = false;
+    _('lstatus').innerHTML = '';
   });
 });

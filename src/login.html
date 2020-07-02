@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
     <link rel="stylesheet" href="/style/style.css">
     <meta name="description" content="Jelentkezz be a Zaccord fiókodba és rendelj egy hozzád
       illő terméket">
@@ -16,9 +17,12 @@
     <script src="/js/main.js" defer></script>
     <script src="/js/login.js" defer></script>
     <script src="/js/includes/registerSW.js"></script>
+    <script src="/js/includes/statusFill.js"></script>
     <script src="/js/includes/cookie.js" defer></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +33,7 @@
   </head>
   <body>   
     <section class="keepBottom">
-      <p class="mainTitle">Bejelentkezés</p> 
+      <p class="mainTitle" style="margin-top: 0;">Bejelentkezés</p> 
       <div class="formContainer">
         <input type="text" class="formField" id="email" placeholder="Email">
         <input type="password" class="formField" id="pass" placeholder="Jelszó"
@@ -43,6 +47,7 @@
         <div id="errStatus" class="errorBox"></div>
         <div class="loadImg" id="loader"></div>
         <button class="fillBtn btnCommon" id="submitBtn">Bejelentkezés</button>
+        <div id="lstatus" class="align" style="margin-top: 20px;"></div>
       </div>
     </section>
   </body>

@@ -1,7 +1,7 @@
 const ITEMCOUNT = 15;
 
 // Implement fade in/out animation of a blue strip when hovering over a menu item
-const items = ['cart', 'register', 'login', 'bny'];
+const items = ['cart', 'register', 'login', 'bny', 'descTitle', 'specsTitle'];
 for (let item of items) {
   if (_(item)) {
     _(item).addEventListener('mouseover', () => {
@@ -37,20 +37,60 @@ function animateElement(element, start, end, dur, begin) {
 
 // Handle category box dropdown menu
 function toggleCategory() {
-  if (_('catBox').style.display === 'flex') {
-    _('catBox').style.display = 'none';
-    _('categoryImg').style.backgroundColor = '';
+  if (window.mobileCheck()) {
+    var def = '110px';  
+    var open = '170px';
   } else {
-    _('catBox').style.display = 'flex';
+    var def = '140px';
+    var open = '210px';
+  }
+
+  if (_('cbCont').style.opacity === '1') {
+    _('cbCont').style.opacity = '0';
+    _('cbCont').style.height = '0';
+    _('cbCont').style.overflow = 'hidden';
+    _('categoryImg').style.backgroundColor = '';
+    _('ms').style.marginTop = def
+  } else {
+    _('cbCont').style.opacity = '1';
+    _('cbCont').style.height = 'auto';
+    _('cbCont').style.overflow = 'auto';
     _('categoryImg').style.backgroundColor = '#ececec';
+    _('ms').style.marginTop = open;
   }
 }
 
+function toggleLower(disp) {
+  _('toggleLower').style.display = disp;
+}
+
 // When category btn is clicked display only items with that category
-function sortByCat(cat) {
+function sortByCat(cat, cid) {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+
   let data = {
     'cat': cat
   };
+
+  // Make that btn highlighted
+  let categories = document.getElementsByClassName('scat');
+  for (let i = 0; i < categories.length; i++) {
+    if (i === cid) {
+      categories[i].style.backgroundColor = '#ececec';
+    } else {
+      categories[i].style.backgroundColor = 'white';
+    }
+  }
+
+  // Do not display new products & more products when using 'All' category
+  if (cat === 'Összes') {
+    toggleLower('none');
+  } else {
+    toggleLower('block');
+  }
 
   fetch('/category', {
     headers: {
@@ -62,7 +102,34 @@ function sortByCat(cat) {
     return response.text();
   }).then(data => {
     _('dynamicShowcase').innerHTML = data;
+    ll.update();
   }).catch(err => {
     _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a rendezés során</p>';
   });
+}
+
+// Implement hortizontal scrolling when arrows are clicked
+let scrollAmount = 0;
+function scrollHor(dir) {
+  let step = _('catBox').scrollWidth / 9;
+  if (dir === 'left') {
+    if (scrollAmount >= step) scrollAmount -= step;
+    else scrollAmount = 0;
+    _('catBox').scrollTo({
+      top: 0,
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  } else {
+    if (_('catBox').scrollWidth - _('catBox').offsetWidth - scrollAmount > step) {
+      scrollAmount += step;
+    } else {
+      scrollAmount = _('catBox').scrollWidth - _('catBox').offsetWidth;
+    }
+    _('catBox').scrollTo({
+      top: 0,
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  }
 }

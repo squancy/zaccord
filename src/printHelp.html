@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="hu">
   <head>
-    <title>Zaccord - Segítség a bérnyomtatáshoz</title>
+    <title>Zaccord - Segítség bérnyomtatáshoz</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/animate/animate.css">
     <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
     <meta name="description" content="Mi is az a bérnyomtatás?">
     <meta name="keywords" content="zaccord, bérnyomtatás">
     <meta name="author" content="Mark Frankli">
@@ -18,7 +19,8 @@
     <script src="/js/includes/cookie.js" defer></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
-
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
@@ -27,29 +29,29 @@
     <meta name="theme-color" content="#ffffff" />
   </head>
   <body>   
-    <section class="keepBottom">
-      <p class="mainTitle">Segítség a bérnyomtatáshoz</p>
+    <section class="keepBottom lh">
+      <p class="mainTitle">Segítség bérnyomtatáshoz</p>
       <p class="blueHead">Mi az a bérnyomtatás?</p>
       <p class="shiftRight">
         A bérnyomtatás az a folyamat, amikor a vásárló egy előre letöltött
-        <span class="blue">.stl</span> fájlt szeretne kinyomtatni számos személyre szabható
+        <span class="blue">STL</span> fájlt szeretne kinyomtatni számos személyre szabható
         paraméterrel. A fájlt a vásárló maga is megtervezheti különbönző szoftverekkel, de le
         is töltheti az Internetről a neki tetsző tárgy modelljét.
       </p> 
 
       <p class="blueHead">Bérnyomtatás menete</p>
       <p class="shiftRight">
-        Ha rendelkezel a modell <span class="blue">.stl</span> fájljával, akkor a
-        <a href="/print" class="blueLink" style="font-size: 16px;">bérnyomtatás</a> oldalon
+        Ha a vásárló rendelkezik a modell <span class="blue">STL</span> fájljával, akkor a
+        <a href="/print" class="blueLink" style="font-size: 16px;">Bérnyomtatás</a> oldalon
         azt fel tudod tölteni. Ellenkező esetben lehetőség van számos weboldalról letölteni
-        előre elkészített tárgyak modelljét, ilyen például a népszerű
+        előre elkészített tárgyak modelljét, ilyen például a népszerű és ingyenes
         <a class="blueLink" style="font-size: 16px;" href="https://www.thingiverse.com/">
           Thingiverse
         </a>. Ezután a feltöltött modell a böngészőben is megjelenik interaktív formában, ahol
-        3D-ben megtekintheted a tárgyat. Itt lehetőség van
+        3D-ben is megtekintheti a vásárló a tárgyat. Itt lehetőség van
         <a href="/mitjelent" class="blueLink" style="font-size: 16px;">
           különböző paraméterek
-        </a> beállítására is. Amennyiben hiányos a tudásod e téren, érdemes lehet az
+        </a> beállítására is. Amennyiben a vásárló tudása hiányos e téren, érdemes lehet az
         alapbeállításokkal továbbhaladni. A legtöbb esetben ez megfelelő minőséget fog
         biztosítani.
       </p>
@@ -58,10 +60,10 @@
       <p class="shiftRight">
         A legtöbb 3D bérnyomtatást kínáló oldallal ellentétben a Zaccord nem hosszas egyeztetés
         után ad egy személyre szabott árat, hanem azonnal, a fájl feltöltésének pillanatában. A
-        szolgáltatás a térfogatból és más paraméterekből számít egy fix árat, így a vásárló
-        azonnal tudhatja mennyibe fog kerülni a termék. Abban az esetben, ha  1500 Ft
-        érték alatt töltesz fel fájlokat, a termék árán felül még 1500 Ft felárat számolunk fel.
-        Az 1500 Ft feletti termékekre nem vonatkozik felár.
+        szolgáltatás a tömegből és más paraméterekből számít egy fix árat, így a vásárló
+        azonnal tudhatja mennyibe fog kerülni a termék. A minimum ár 500 Ft, így abban az
+        esetben, ha 500 Ft érték alatt tölt fel a vásárló fájlokat 500 Ft - termékár felárat
+        számolunk fel.
       </p>
 
       <p class="blueHead">Mekkora lehet az objektum minimális/maximális mérete?</p>
@@ -71,13 +73,12 @@
 
       <p class="blueHead">Paraméterek változtatása</p>
       <p class="shiftRight">
-        A bérnyomtatásra szánt termékek paramétereit tetszés szerint változtathatod. Általában
+        A bérnyomtatásra szánt termékek paraméterei tetszés szerint változtathatók. Általában
         az alap paraméterek megfelelően működnek, de speciális igény esetén van lehetőség ezek
-        megváltoztatására is. Ha az Internetről töltöttél le termékeket, akkor a szerző által
-        javasolt paramétereket érdemes beállítani. Fontos, hogy a paraméterek változtatása az
-        összes egyszerre feltöltött modellre kiterjed. Például ha három fájlt töltöttél fel és
-        a rétegvastagságot megváltoztatod, akkor mindhárom fájl rétegvastagsága egyszerre fog
-        változni. Ezeket később termékenként is módosíthatod a kosaradban.
+        megváltoztatására is. Internetről letöltött fájloknál érdemes a szerző által
+        javasolt paramétereket beállítani. Fontos, hogy a paraméterek változtatása az
+        összes egyszerre feltöltött modellre kiterjed, viszont ezeket később termékenként is
+        módosíthatod a kosaradban.
       </p>
 
       <p class="blueHead">Mennyi idő a szállítás?</p>

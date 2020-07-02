@@ -12,7 +12,7 @@ _('cDel').addEventListener('click', function changeDelInfo(e) {
 
   // Only postal code validation can be performed; other params are too ambiguous
   if (!Number.isInteger(pcode) || pcode < 1000 || pcode > 9985) {
-    _('errStatusDel').innerHTML = '<p>Kérlek valós irányítószámot adj meg</p>';
+    statusFill('errStatusDel', 'Kérlek valós irányítószámot adj meg');
     return;
   } else {
     // Send data to server for further validation
@@ -34,14 +34,14 @@ _('cDel').addEventListener('click', function changeDelInfo(e) {
       return response.json();
     }).then(data => {
       if (data.success) { 
-        _('succStatusDel').innerHTML = '<p>A szállítási adatok sikeresen megváltoztak</p>';
+        statusFill('succStatusDel', 'A szállítási adatok sikeresen megváltoztak');
       } else if (data.error) {
         _('errStatusDel').innerHTML = data.error;
       } else {
-        _('errStatusDel').innerHTML = '<p>Egy nem várt hiba történt, próbáld újra</p>';
+        statusFill('errStatusDel', 'Egy nem várt hiba történt, próbáld újra');
       }
     }).catch(err => {
-      _('errStatusDel').innerHTML = '<p>Egy nem várt hiba történt, próbáld újra</p>';
+      statusFill('errStatusDel', 'Egy nem várt hiba történt, próbáld újra');
     });
   }
 });
@@ -57,9 +57,7 @@ _('cPass').addEventListener('click', function changePassword(e) {
 
   // Make sure new password is at least 6 characters long
   if (npass.length < 6) {
-    _('errStatusPass').innerHTML = `
-      <p>A jelszónak minimum 6 karakter hosszúnak kell lennie</p>
-    `;
+    statusFill('errStatusPass', 'A jelszónak minimum 6 karakter hosszúnak kell lennie');
     return;
   } else {
     // Send data to server for further validation
@@ -82,9 +80,30 @@ _('cPass').addEventListener('click', function changePassword(e) {
         _('errStatusPass').innerHTML = data.error;
         return;
       }
-      _('succStatusPass').innerHTML = '<p>Sikeresen megváltoztattad a jelszavad</p>';
+      statusFill('succStatusPass', 'Sikeresen megváltoztattad a jelszavad');
     }).catch(err => {
-      _('errStatusPass').innerHTML = '<p>Egy nem várt hiba történt, próbáld újra</p>';
-    })
+      statusFill('errStatusPass', 'Egy nem várt hiba történt, próbáld újra');
+    });
   }
+});
+
+// Show more orders when user clicks btn
+_('moreOrders').addEventListener('click', function showMore(e) {
+  _('moreHolder').innerHTML = '<img src="/images/icons/loader.gif" width="24">';
+
+  // Send a request to server for more orders
+  fetch('/moreOrders', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST'
+  }).then(response => {
+    return response.text();
+  }).then(data => {
+    _('moreHolder').style.display = 'none';
+    _('allOrders').classList = 'animate__animated animate__fadeIn';
+    _('allOrders').innerHTML += data;
+  }).catch(err => {
+    _('moreHolder').innerHTML = '<p>Hiba történt, kérlek próbáld újra</p>';
+  });
 });

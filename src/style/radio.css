@@ -11,6 +11,7 @@
   user-select: none;
   border: 2px solid #dfdfdf;
   border-radius: 30px;
+  transition: all ease-in-out 0.2s;
 }
 
 .container > div {
@@ -41,11 +42,13 @@
   width: 25px;
   background-color: #eee;
   border-radius: 50%;
+  transition: all ease-in-out 0.2s;
 }
 
 /* On mouse-over, add a grey background color */
 .container:hover input ~ .checkmark {
   background-color: #ccc;
+  transition: all ease-in-out 0.2s;
 }
 
 /* When the radio button is checked, add a blue background */

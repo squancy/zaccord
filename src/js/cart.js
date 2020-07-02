@@ -45,10 +45,6 @@ function removeItem(tid) {
 // User buys the content of the cart
 if (_('buyCart')) {
   _('buyCart').addEventListener('click', function buyCart(e) {
-    if (!isLoggedIn) {
-      _('infoLogin').innerHTML = '<p>A vásárláshoz kérlek jelentkezz be</p>';
-    } else {
-      window.location.href = '/buy?product=cart';
-    }
+    window.location.href = '/buy?product=cart';
   });
 }

@@ -2,6 +2,8 @@ const NodeStl = require('node-stl');
 const genSpecs = require('./includes/genSpecs.js');
 const checkStlSize = require('./includes/checkStlSize.js');
 const calcPrice = require('./includes/calcPrice.js');
+const cookieFuncs = require('./includes/cookieFuncs.js');
+const genQuan = require('./includes/genQuan.js');
 const randomstring = require('randomstring');
 
 // Build custom print page; add interactive .stl file viewer + customization
@@ -11,13 +13,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     let totalPrice = 0;
     let sizes = [];
     let sizeMM = 0;
-    let paths = [];
     let subPrices = [];
+    let totWeight = 0;
     for (let i = 0; i < filePaths.length; i++) {
       let path = filePaths[i];
       let stl = new NodeStl(path);
       let volume = (stl.volume).toFixed(2); // cm^3
       let weight = (stl.weight).toFixed(2); // gramm
+      totWeight += Number(weight);
       let boxVolume = stl.boundingBox.reduce((a, c) => a * c);
       if (boxVolume > sizeMM) {
         sizeMM = stl.boundingBox.map(a => a.toFixed(2) + 'mm x ').join(' ');
@@ -32,34 +35,35 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       let centerOfMass = stl.centerOfMass.map(x => x.toFixed(2) + 'mm'); // mm
       let fname = path.split('/');
       fname = fname[fname.length - 1].replace('.stl', '');
-      totalPrice += calcPrice(Math.round(weight * 60), 0.2, 20, 1, 1.2);
-      subPrices.push(Math.round(weight * 60));
+      totalPrice += calcPrice(Math.round(weight * 100 + weight * 1300 / 60), 0.2, 20, 1, 1.2);
+      subPrices.push(Math.round(weight * 100 + weight * 1300 / 60));
       sizes.push(boxVolume);
-      paths.push(fname);
     }
 
     // Only select the maximum size when having more models
     let maxSize = Math.max(...sizes);
     let label = 'Méret';
     if (filePaths.length > 1) {
-      label = 'Legnagyobb méret';
+      label = 'Legnagyobb termék mérete';
     }
     sizeMM = sizeMM.substr(0, sizeMM.length - 3);
 
     // 1500 Ft extra charge when ordering a [price] < 1500 Ft product
     let chargeText = '<span id="charge"></span>';
-    let chargeNote = '';
+    let dp = 'display: none';
     let extraPrice = 0;
-    if (totalPrice < 1000) {
-      extraPrice = 1000 - totalPrice;
+    if (totalPrice < 500) {
+      extraPrice = 500 - totalPrice;
       chargeText = `<span id="charge">(+${extraPrice} Ft felár)</span>`;
-      chargeNote = `
-        <p class="align note">
-          <span class="blue">Megjegyzés: </span> 1000 Ft alatti termékeknél 1000Ft - termékár
-          felárat számolunk fel!
-        </p>
-      `;
+      dp = 'display: block';
     }
+
+    let chargeNote = `
+      <p class="align note ddgray" id="chargeNote" style='${dp}'>
+        500 Ft alatti termékeknél 500Ft - termékár
+        felárat számolunk fel!
+      </p>
+    `;
 
     // Build html output
     let content = `
@@ -68,48 +72,57 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         <div class="loadImg" id="status">
           <img src="/images/icons/loader.gif" style="margin-bottom: 0;">
         </div>
-        <div id="colorPicker" class="flexDiv" style="display: none;">
-          <div class="colorPick" onclick="chooseColor('#4285f4')"
+        <div id="colorPicker" class="flexDiv animate__animated animate__fadeIn"
+          style="display: none;">
+          <div class="colorPick" onclick="chooseColor('#4285f4', 0)"
             style="background-color: #4285f4;">
           </div>
-          <div class="colorPick" onclick="chooseColor('#ffffff')"
+          <div class="colorPick" onclick="chooseColor('#ffffff', 1)"
             style="background-color: #ffffff;">
           </div>
-          <div class="colorPick" onclick="chooseColor('#dc143c')"
+          <div class="colorPick" onclick="chooseColor('#dc143c', 2)"
             style="background-color: #dc143c;">
           </div>
-          <div class="colorPick bgCommon" onclick="chooseDisplay('flat')"
+          <div class="colorPick bgCommon" onclick="chooseDisplay('flat', 3)"
             style="background-image: url('/images/flat.png')">
           </div>
-          <div class="colorPick bgCommon" onclick="chooseDisplay('smooth')"
+          <div class="colorPick bgCommon" onclick="chooseDisplay('smooth', 4)"
             style="background-image: url('/images/smooth.png')">
           </div>
-          <div class="colorPick bgCommon" onclick="chooseDisplay('wireframe')"
+          <div class="colorPick bgCommon" onclick="chooseDisplay('wireframe', 5)"
             style="background-image: url('/images/wireframe.png')">
           </div>
         </div>
         <div class="flexDiv" id="customProps" style="flex-wrap: wrap; margin-top: 10px;">
           <div>
             <p>
-              <span class="blue">Ár:</span>
+              <span class="blue gotham">Ár:</span>
               <span id="priceHolder">${totalPrice}</span> Ft ${chargeText}
             </p>
           </div>
           <div>
             <p>
-              <span class="blue">${label}:</span>
+              <span class="blue gotham">Becsült Tömeg:</span>
+              <span id="weightHolder">${totWeight.toFixed(2)}g</span>
+            </p>
+          </div>
+          <div>
+            <p>
+              <span class="blue gotham">${label}:</span>
               <span id="sizeHolder">${sizeMM}</span>
             </p>
           </div>
         </div>
-      ${chargeNote}
     `;
-
+    
+    content += genQuan(chargeNote);
     content += genSpecs(totalPrice, sizeMM);
 
     content += `
         <div class="specBox">
-          <button class="borderBtn btnCommon" id="buyCP">Vásárlás</button> 
+          <button class="fillBtn btnCommon" id="buyCP" style="margin-right: 0;">
+            Vásárlás
+          </button> 
         </div>
         <div id="infoStat" class="infoBox"></div>
 
@@ -117,14 +130,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           <a href="/mitjelent" target="_blank" class="blueLink">Mit jelentenek ezek?</a>
         </p>
 
-        <p class="align note">
-          <span class="blue">Megjegyzés: </span> a specifikációk megváltoztatása
-          árváltozást vonhat maga után!
+        <p class="align note ddgray">
+          A specifikációk megváltoztatása árváltozást vonhat maga után!
+          Több termék esetén ezek változtatása minden egyes termékre értendő!
         </p>
 
-        <p class="align note">
-          <span class="blue">Tipp: </span> ha nem szeretnél bajlódni a paraméterekkel, hagyd az
-          alapbeállításokon!
+        <p class="align note ddgray">
+          Ha nem szeretnél bajlódni a paraméterekkel, hagyd az alapbeállításokon!
         </p>
       </section>
     `;
@@ -132,35 +144,12 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     // JS content for displaying the interactive stl viewer
     content += `
       <script type="text/javascript">
-        // Set cookie to a specific value
-        function setCookie(cname, cvalue, exdays) {
-          var d = new Date();
-          d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-          var expires = "expires="+d.toUTCString();
-          document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-        }
+    `;
 
-        // Get value of a specific cookie
-        function getCookie(cname) {
-          var name = cname + "=";
-          var ca = document.cookie.split(';');
-          for(var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') {
-              c = c.substring(1);
-            }
-            if (c.indexOf(name) == 0) {
-              return c.substring(name.length, c.length);
-            }
-          }
-          return "";
-        }
-
+    content += cookieFuncs();
+    content += `
         // Initialize vars used globally
         let data = [];
-        let isLoggedIn = Boolean(${userID});
-        let thName = 'ads';
-        let paths = '${paths}';
         let arr = [];
         let subPrices = Array.from('${subPrices}'.split(','));
         let thumbs = [];
@@ -218,7 +207,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
             id: i,
             filename: path,
             color: "#ffffff",
-            x: i * 100
+            x: i * 220
           };
           data.push(obj);
         }
@@ -240,15 +229,29 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           document.getElementById('colorPicker').style.display = 'flex';
         }
 
-        function chooseDisplay (display) {
+        function chooseDisplay (display, id) {
           for (let i = 0; i < ${filePaths.length}; i++) {
             stlView.set_display(i, display);
           }          
+          highlightBtn(id);
         }
 
-        function chooseColor(color) {
+        function chooseColor(color, id) {
+          console.log()
           for (let i = 0; i < ${filePaths.length}; i++) {
             stlView.set_color(i, color);
+          }
+          highlightBtn(id);
+        }
+
+        function highlightBtn(id) {
+          let btns = document.getElementsByClassName('colorPick');
+          for (let i = 0; i < btns.length; i++) {
+            if (i === id) {
+              btns[i].style.border = '2px solid #4285F4';
+            } else {
+              btns[i].style.border = '2px solid #dfdfdf';
+            }
           }
         }
       </script>

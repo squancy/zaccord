@@ -1,5 +1,10 @@
+if (_('weightHolder')) {
+  var baseWeight = Number(_('weightHolder').innerText.replace('g', ''));
+  var bwSave = baseWeight;
+}
+
 // Change color of the stl model in the browser
-if (_('color')) {
+if (_('color') && _('stlCont')) {
   _('color').addEventListener('change', function changeColor(e) {
     let v = _('color').value;
     let colorMaps = {
@@ -16,10 +21,15 @@ if (_('color')) {
 
 // Update the price of the stl model if parameters are changed
 function priceChange() {
-  console.log(basePrice)
   let v = _('quantity').value;
-  if (basePrice * v >= 1500) _('charge').style.display = 'none';
-  else _('charge').style.display = 'inline-block';
+  if (basePrice * v >= 500) {
+    _('charge').style.display = 'none';
+    _('chargeNote').style.display = 'none';
+  } else {
+    _('charge').innerText = `(+${500 - basePrice} Ft felár)`;
+    _('charge').style.display = 'inline-block';
+    _('chargeNote').style.display = 'block';
+  }
   _('priceHolder').innerHTML = basePrice * v;
 }
 
@@ -34,16 +44,21 @@ if (_('quantity') && _('fvas') && _('scale') && _('suruseg') && _('rvas')) {
   _('quantity').addEventListener('change', () => updateCookie('quantity'));
   _('fvas').addEventListener('change', () => updateCookie('fvas'));
   _('scale').addEventListener('change', () => updateCookie('scale'));
+  _('scale').addEventListener('change', () => updateWeight());
   _('suruseg').addEventListener('change', () => updateCookie('suruseg'));
   _('rvas').addEventListener('change', () => updateCookie('rvas'));
   _('color').addEventListener('change', () => updateCookie('color'));
+}
 
+function updateWeight() {
+  let scale = Number(_('scale').value);
+  _('weightHolder').innerText = (scale * baseWeight).toFixed(2) + 'g';
 }
 
 function updateCookie(param) {
   let soFar = JSON.parse(getCookie('cartItems'));
   for (let a of arr) {
-    let id = a.split('/')[2].replace('.stl', '');
+    let id = a.split('/')[2].replace('.stl', '').replace('.jpg', '').replace('.jpeg', '');
     soFar['content_' + id][param + '_' + id] = _(param).value;
   } 
   setCookie('cartItems', JSON.stringify(soFar), 365);
@@ -60,19 +75,9 @@ if (_('buyCP')) {
     let fvas = _('fvas').value;
     let quantity = _('quantity').value;
 
-    // If user is logged in allow him to buy the product
-    if (isLoggedIn) {
-      window.onbeforeunload = function() {};
-      window.location.href =
-      `/buy?product=cp&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale}&fvas=${fvas}&q=${quantity}&thName=${thName}&files=${paths}`;
-    } else {
-      _('infoStat').innerHTML = `
-        <p>
-          A várásláshoz kérlek jelentkezz be!
-          Addig is, a nyomtatni kívánt termékeket megtalálod a kosaradban.
-        </p>
-      `;
-    }
+    window.onbeforeunload = function() {};
+    window.location.href =
+    `/buy?product=cp&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale}&fvas=${fvas}&q=${quantity}&thName=${thName}&files=${paths}`;
   });
 }
 

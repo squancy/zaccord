@@ -13,6 +13,7 @@ const userLogin = (conn, formData, req) => {
     conn.query('SELECT password, temp_password, id FROM users WHERE email = ? LIMIT 1', [email],
     (err, result, fields) => {
       if (err) {
+        console.log(err);
         reject('Egy nem várt hiba történt, kérlek próbáld újra');
         return;
       } else if (result.length === 0) {
@@ -38,6 +39,7 @@ const userLogin = (conn, formData, req) => {
 
       conn.query(sQuery, [userAgent, ip, email], function (err, result, fields) {
         if (err) {
+          console.log(err)
           reject('Egy nem várt hiba történt, kérlek próbáld újra');
           return;
         }

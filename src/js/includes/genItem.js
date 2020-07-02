@@ -1,5 +1,6 @@
 // Generate an html box for an item
-function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, data) {
+function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, data,
+  isLit = false) {
   let output = `
     <div class="cartItemHolder">
       <div class="itemLeftCenter">
@@ -18,24 +19,49 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
         <div>
           <p>Egységár: ${data.price} Ft</p>
         </div>
-        <div>
-          <p>Rétegvastagság: ${data.rvas}mm</p>
-        </div>
-        <div>
-          <p>Sűrűség: ${data.suruseg}%</p>
-        </div>
-        <div>
-          <p>Szín: ${decodeURIComponent(data.color)}</p>
-        </div>
-        <div>
-          <p>Méretezés: x${data.scale}</p>
-        </div>
-        <div>
-          <p>Falvastagság: ${data.fvas}mm</p>
-        </div>
-        <div>
-          <p>Mennyiség: ${data.quantity}db</p>
-        </div>
+      `;
+      
+  if (!isLit) {
+    output += `
+      <div>
+        <p>Rétegvastagság: ${data.rvas}mm</p>
+      </div>
+      <div>
+        <p>Sűrűség: ${data.suruseg}%</p>
+      </div>
+    `;
+  }
+
+  output += `
+    <div>
+      <p>Szín: ${decodeURIComponent(data.color)}</p>
+    </div>
+  `;
+  
+  if (!isLit) {
+    output += `
+      <div>
+        <p>Méretezés: x${data.scale}</p>
+      </div>
+      <div>
+        <p>Falvastagság: ${data.fvas}mm</p>
+      </div>
+    `;
+  } else {
+    output += `
+      <div>
+        <p>Forma: ${data.sphere}</p>
+      </div>
+      <div>
+        <p>Méret: ${data.size.replace(/x/g, 'mm x ') + 'mm'}</p>
+      </div>
+    `; 
+  }
+
+  output += `
+    <div>
+      <p>Mennyiség: ${data.quantity}db</p>
+    </div>
   `;
 
   if (isStat) {
@@ -67,7 +93,7 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
 
   output += `
         <div>
-          <p>Összesen: ${data.quantity * data.price} Ft</p>
+          <p class="bold">Összesen: ${data.quantity * data.price} Ft</p>
         </div>
       </div>
       <div class="clear"></div>

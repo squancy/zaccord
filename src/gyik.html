@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
     <link rel="stylesheet" href="/style/style.css">
     <meta name="description" content="Gyakran ismételt kérdések a Zaccordon">
     <meta name="keywords" content="Zaccord, gyik, kérdés, gyakran">
@@ -18,6 +19,8 @@
     <script src="/js/includes/cookie.js" defer></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,39 +30,29 @@
     <meta name="theme-color" content="#ffffff" />
   </head>
   <body>
-    <section class="keepBottom">
+    <section class="keepBottom lh">
       <p class="mainTitle">GYIK</p>      
-      <p class="blueHead">Mi van a főoldalon?</p>
+      <p class="blueHead">Milyek termékeket tudok vásárolni?</p>
       <p class="shiftRight">
-        Itt találhatók azok a fix termékek, amik a termékpalettánkat képezik és azonnal
-        megvásárolhatók. Lehetőség van a termékek közötti gyors keresésre is, abban az esetben,
-        ha van egy konkrét modell amit szeretnél.
+        A Zaccordon kizárólag 3D nyomtatóval készült egyedi termékeket tudsz vásárolni. A
+        <a href="/" class="blueLink font16">főoldalon</a> található termékeket a felhasználó
+        azonnal megvásárolhatja és kosárba teheti. Lehetőség van
+        <a class="blueLink font16" href="/print">bérnyomtatásra és litofániára</a> is, amikor
+        rendre egy 3D-s <a href="/printHelp" class="blueLink font16">STL fájlból</a>
+        vagy egy képből készül el a termék, amit a felhasználó tölt fel.
       </p>
 
-      <p class="blueHead">Mi van a termék oldalon?</p>
+      <p class="blueHead">Miért éppen a Zaccord?</p>
       <p class="shiftRight">
-        Egy adott termék kiválasztása után a termék oldalon meg tudod nézni annak pontosabb
-        leírását és specifikációit. Ha szeretnéd teljesen személyre szabni a modellt, akkor
-        lehetőség van a nyomtatási folyamat pontos bekonfigurálására is,
-        <a class="blueLink" href="/mitjelent" style="font-size: 16px;">
-          különböző paraméterekkel
-        </a>. Ha nem szeretnél bajlódni ezzel, akkor hagyd az alapbeállításokon, ez szinte
-        minding jó minőséget fog eredményezni.
+        A többi webshoppal ellentétben a Zaccord az egyszerűséget és a használhatóságot helyezi
+        előtérbe, így időt és energiát spórolva meg a felhasználóknak. A bérnyomtatásnál és
+        litofánia készítésnél nincs szükség egyedi árajánlatra és kapcsolatfelvételre, hiszen a
+        fájlok feltöltése után minden azonnal megvásárolható.
       </p>
 
-      <p class="blueHead">Mi van a kosaramban?</p>
+      <p class="blueHead">Mit az a bérnyomtatás?</p>
       <p class="shiftRight">
-        Bármely kiválasztott terméket beleteheted a kosaradba, viszont egyszerre maximum 15
-        különböző termék lehet benne és mindegyik termékből maximum 10db. A kosár tartalma a
-        <a href="/cookies" class="blueLink" style="font-size: 16px;">sütikben</a> tárolódik,
-        ezért a tartalma az oldal elhagyása után is megmarad, így később is tudod folytatni a
-        vásárlást. Bejelentkezés nélkül is tudod a kosarat használni, viszont vásárolni már
-        csak bejeletkezve tudsz.
-      </p>
-
-      <p class="blueHead">Mit tud a bérnyomtatás?</p>
-      <p class="shiftRight">
-        Az ehhez szükséges <span class="blue">.stl</span> fájl birtokában teljesen egyedi
+        Az ehhez szükséges <span class="blue">STL</span> fájl birtokában teljesen egyedi
         termékeket tudunk kinyomtatni és a vásárlókhoz eljuttatni. További információt a
         <a href="/printHelp" class="blueLink" style="font-size: 16px;">
           Segítség a bérnyomtatáshoz
@@ -67,34 +60,47 @@
         oldalon találsz.
       </p>
 
-      <p class="blueHead">Mi van a fiók oldalon?</p>
+      <p class="blueHead">Mit az a litofánia?</p>
       <p class="shiftRight">
-        Miután bejelentkeztél az oldalra, a <span class="blue">Fiók</span> menüpont alatt
-        lehetőséged van megtekinteni az eddigi rendeléseidet, a szállítási adatokat, és jelszót
-        is itt tudsz változtatni. A szállítási adatokat bármely vásárlás előtt meg tudod
-        változtatni, az itt megadott adatok támpontként szolgálnak.
+        Olyan vékony, 3D nyomtatóval készült felület, ami alapesetben egy nehezen kivehető
+        dombornyomott képet ábrázol. Megfelelő háttérfénnyel megvilágítva viszont tisztán
+        előtűnik maga a kép. A felhasználó a
+        <a class="blueLink font16" href="/print">Bérnyomtatás &amp; Litofánia</a> oldalon tudja
+        feltölteni a saját litofániára szánt képeit.
       </p>
 
       <p class="blueHead">Hogyan tudom megvásárolni a terméket?</p>
       <p class="shiftRight">
-        A kosaradban lévő termékeket vagy a termék oldalon lévő egyetlen terméket a
+        A kosárban lévő termékeket, vagy a termék oldalon lévő egyetlen terméket a
         <span class="blue">Vásárlás</span> gombra kattintva tudod megvenni. Ezután a szállítási
-        és fizetési adatokat kell megadnod. Erről bővebben olvashatsz a
+        és fizetési adatokat kell megadni és sikeres rendelés esetén azonnal elkezdjük
+        feldolgozni azt. Erről több információ a
         <a href="/vasarlas" class="blueLink" style="font-size: 16px;">Vásárlás menete</a>
-        oldalon.
+        oldalon található.
+      </p>
+
+      <p class="blueHead">Milyen fizetési módok közül választhatok?</p>
+      <p class="shiftRight">
+        Jelenleg utánvétellel és banki átutalással lehet fizetni. Átutalás során fontos, hogy a
+        felhasználó a közleményben tüntesse fel az ott generált azonosító kódot.
       </p>
 
       <p class="blueHead">Hogyan tudok regisztrálni/bejelentkezni?</p>
       <p class="shiftRight">
-        Ahhoz, hogy rendelni tudj az oldalról először egy fiókkal kell rendelkezned. Ha még nem
-        rendelkezel ilyen fiókkal, akkor regisztrálnod kell egy e-mail/jelszó párossal. Sikeres
-        regisztráció után azonnal be tudsz jelentkezni az oldalra és képes leszel rendeléseket
-        indítani.
+        Bejelentkezni és regisztrálni rendre a
+        <a href="/login" class="blueLink font16">Bejelentkezés</a> és 
+        <a href="/register" class="blueLink font16">Regisztráció</a> oldalon lehet.
+        Összesen egy e-mail címre és egy jelszóra van szükség a regisztrációhoz és ezután
+        azonnal be is lehet lépni a fiókba. A vásárláshoz nem szükséges előre regisztrálni vagy
+        bejelentkezni, az ehhez szükséges információk a termék megvásárlása előtt is
+        megadhatók.
       </p>
 
       <p class="blueHead">Biztonságban vannak az adataim?</p>
       <p class="shiftRight">
-        Teljes mértékben. Az oldal https protokollon keresztül érhető el, így a teljes hálózati
+        Teljes mértékben. Az oldal
+        <a href="https://hu.wikipedia.org/wiki/Https" class="blueLink font16">https</a>
+        protokollon keresztül érhető el, így a teljes hálózati
         kommunikáció titkosítva van. A Zaccord garantálja, hogy harmadik félnek nem ad ki semmi
         féle információt annak felhasználóiról és tevékenységükről.
       </p>

@@ -1,6 +1,7 @@
 const parseCookies = require('./includes/parseCookies.js');
 const calcPrice = require('./includes/calcPrice.js');
 const escapeVars = require('./includes/escapeVars.js');
+const calcLitPrice = require('./includes/calcLitPrice.js');
 const fs = require('fs');
 
 // Build cart page from cookies & validate them on server side
@@ -25,6 +26,7 @@ const buildCartSection = (conn, req) => {
       let tid = key.replace('content_', '');
       let dbId = escapeVars(tid.split('_')[1]);
       let content = cart['content_' + tid]; 
+
       let rvas = content['rvas_' + tid];
       let suruseg = content['suruseg_' + tid];
       let color = content['color_' + tid];
@@ -32,16 +34,8 @@ const buildCartSection = (conn, req) => {
       let fvas = content['fvas_' + tid];
       let quantity = content['quantity_' + tid];
 
-      /*
-        Check for the integrity of these values: if a value is empty do not display the item
-        User can still manipulate cookies on client-side but it will be validated on the server
-        side when they buy a product
-      */
-      if (!content || !rvas || !suruseg || !color || !scale || !fvas || !quantity) {
-        continue;
-      }
-
       // Get the item from db & make sure it exists
+      let isLit = false;
       let sqlQuery = new Promise((resolve, reject) => {
         conn.query("SELECT * FROM fix_products WHERE id = ? LIMIT 1", [dbId],
         function (err, result, fields) {
@@ -51,21 +45,43 @@ const buildCartSection = (conn, req) => {
           }
 
           // Check if cookie item is a saved custom print
-          if (result.length === 0 && tid.split('_').length > 2) {
+          if (result.length === 0 && tid.split('_').length > 2
+            && !content.hasOwnProperty('file_' + tid)) {
             // Make sure there is such a file  
             let fPath = __dirname.replace('/src/js', '') + '/printUploads/' + tid + '.stl';
             let tPath = __dirname.replace('/src/js', '') + '/printUploads/thumbnails/' +
               tid + '.png';
-            console.log(fPath, tPath)
             if (!fs.existsSync(fPath) || !fs.existsSync(tPath)) {
               reject('Nem létezik ilyen fájl');
               return;
             }
 
-            var url = '/';
+            var url = 'cart';
             var imgUrl = 'printUploads/thumbnails/' + tid + '.png';
             var productName = 'Bérnyomtatás Termék';
             var price = Number(content['price_' + tid]);
+
+          // Check if cookie item is a lithophane
+          } else if (result.length === 0 && content.hasOwnProperty('sphere_' + tid)) {
+            isLit = true;
+            let lithophaneFile = content['file_' + tid];
+
+            // Make sure file exists
+            let fPath = __dirname.replace('/src/js', '') + '/printUploads/lithophanes/'
+              + lithophaneFile;
+
+            // No such lithophane
+            if (!fs.existsSync(fPath)) {
+              reject('Nem létezik ilyen fájl');
+              return;
+            }
+
+            var url = 'cart';
+            var imgUrl = 'printUploads/lithophanes/' + lithophaneFile;
+            var productName = 'Litofánia';
+            var litSphere = content['sphere_' + tid];
+            var litSize = content['size_' + tid];
+            var litColor = content['color_' + tid];
           } else if (result.length === 0) {
             // Item is not found in db
             reject('Egy nem várt hiba történt, kérlek próbáld újra');
@@ -79,7 +95,25 @@ const buildCartSection = (conn, req) => {
           }
 
           // Calculate the actual price of the product with all extras
-          let actualPrice = calcPrice(price, rvas, suruseg, scale, fvas);
+          if (!isLit) {
+            console.log(quantity)
+            var actualPrice = calcPrice(price, rvas, suruseg, scale, fvas);
+            var selQuan = `updateSpecs(this, ${price}, '${tid}')`;
+          } else {
+            var actualPrice = calcLitPrice(content['size_' + tid]);
+            var selQuan = `updateSpecs(this, ${price}, '${tid}', true)`;
+            let splitted = litSize.split('x');
+
+            // Calculate the ration of width and height of lithophane
+            var ratio = Math.min(Number(splitted[0]) / Number(splitted[1]), 
+              Number(splitted[1]) / Number(splitted[0]));
+
+            // With the calculated ratio provide the possible sizes
+            var litSizes = [100, 150, 200].map(v => {
+              let middleParam = (v * ratio).toFixed(2);
+              return `${v}mm x ${middleParam}mm x 2mm`;
+            });
+          }
 
           // Build html output
           let output = `
@@ -93,7 +127,7 @@ const buildCartSection = (conn, req) => {
                 </a>
                 <div style="padding: 10px;" class="hideText">
                   <p>
-                    <a href="/${url}" class="linkTitle">${productName}</a>
+                    <a href="/${url}" class="linkTitle gotham">${productName}</a>
                   </p>
                 </div>
               </div>
@@ -102,60 +136,130 @@ const buildCartSection = (conn, req) => {
                 <div>
                   <p>Egységár: <span id="priceHolder_${tid}">${actualPrice}</span> Ft</p>
                 </div>
-                <div>
-                  <p>
-                    Rétegvastagság:
-                    <select class="specSelect chItem" id="rvas${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}')">
-          `;
-          
-          for (let vas of [0.12, 0.2, 0.28]) {
-            let selected = vas == rvas ? 'selected' : '';
-            console.log(vas, rvas)
-            output += `<option value="${vas}" ${selected}>${vas}mm</option>`;
-          }
-
-          output += `            
-                    </select>
-                  </p>
-                </div>
-                <div>
-                  <p>
-                    Sűrűség:
-                    <select class="specSelect chItem" id="suruseg${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}')">
-                    <option value="10">10%</option>
           `;
 
-          for (let i = 20; i <= 80; i += 20) {
-            let selected = i == suruseg ? 'selected' : '';
+          if (!isLit) {
             output += `
-              <option value="${i}" ${selected}>${i}%</option>
+                  <div>
+                    <p>
+                      Rétegvastagság:
+                      <select class="specSelect chItem" id="rvas${tid}"
+                        onchange="updateSpecs(this, ${price}, '${tid}')">
+            `;
+            
+            for (let vas of [0.12, 0.2, 0.28]) {
+              let selected = vas == rvas ? 'selected' : '';
+              output += `<option value="${vas}" ${selected}>${vas}mm</option>`;
+            }
+
+            output += `            
+                      </select>
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      Sűrűség:
+                      <select class="specSelect chItem" id="suruseg${tid}"
+                        onchange="updateSpecs(this, ${price}, '${tid}')">
+                      <option value="10">10%</option>
+            `;
+
+            for (let i = 20; i <= 80; i += 20) {
+              let selected = i == suruseg ? 'selected' : '';
+              output += `
+                <option value="${i}" ${selected}>${i}%</option>
+              `;
+            }
+
+            output += `
+                      </select>
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      Méretezés:
+                      <select class="specSelect chItem" id="scale${tid}"
+                        onchange="updateSpecs(this, ${price}, '${tid}')">
+            `;
+
+            for (let i = 0.7; i <= 1.3; i += 0.3) {
+              let selected = i == scale ? 'selected' : '';
+              output += `
+                <option value="${i.toFixed(1)}" ${selected}>x${i.toFixed(1)}</option>
+              `; 
+            }
+
+            output += `
+                      </select>
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      Falvastagság:
+                      <select class="specSelect chItem" id="fvas${tid}"
+                        onchange="updateSpecs(this, ${price}, '${tid}')">
+            `;
+
+            for (let i = 0.8; i <= 2.4; i += 0.4) {
+              let selected = i.toFixed(1) == fvas ? 'selected' : '';
+              output += `
+                <option value="${i.toFixed(1)}" ${selected}>${i.toFixed(1)}mm</option>
+              `; 
+            }
+
+            output += `
+                      </select>
+                    </p>
+                  </div>
+            `;
+
+          } else {
+            output += `
+                <div>
+                  <p> 
+                    Forma:
+                    <select class="specSelect chItem" id="sphere${tid}"
+                      onchange="updateLit('sphere', 'sphere${tid}', '${tid}')">
+            `;
+
+            for (let c of ['Domború', 'Homorú', 'Sima']) {
+              let selected = decodeURIComponent(litSphere) == c ? 'selected' : '';
+              output += `
+                <option value="${c}" ${selected}>${c}</option>
+              `;
+            }
+
+            output += `
+                      </select>
+                    </p>
+                  </div>
+            `;
+
+            output += `
+                  <div>
+                    <p> 
+                      Méret:
+                      <select class="specSelect chItem" id="size${tid}"
+                        onchange="${selQuan}">
+            `;
+
+            for (let c of litSizes) {
+              let selected = litSize == c ? 'selected' : '';
+              output += `
+                <option value="${c.replace(/\s/g, '').replace(/mm/g, '')}" ${selected}>
+                  ${c}
+                </option>
+              `;
+            }
+
+            output += `
+                      </select>
+                    </p>
+                  </div>
             `;
           }
 
           output += `
-                    </select>
-                  </p>
-                </div>
-                <div>
-                  <p>
-                    Méretezés:
-                    <select class="specSelect chItem" id="scale${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}')">
-          `;
-
-          for (let i = 0.7; i <= 1.3; i += 0.3) {
-            let selected = i == scale ? 'selected' : '';
-            output += `
-              <option value="${i.toFixed(1)}" ${selected}>x${i.toFixed(1)}</option>
-            `; 
-          }
-
-          output += `
-                    </select>
-                  </p>
-                </div>
                 <div>
                   <p> 
                     Szín:
@@ -176,25 +280,9 @@ const buildCartSection = (conn, req) => {
                 </div>
                 <div>
                   <p>
-                    Falvastagság:
-                    <select class="specSelect chItem" id="fvas${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}')">
-          `;
-
-          for (let i = 0.8; i <= 2.4; i += 0.4) {
-            let selected = i.toFixed(1) == fvas ? 'selected' : '';
-            output += `<option value="${i.toFixed(1)}" ${selected}>${i.toFixed(1)}mm</option>`; 
-          }
-
-          output += `
-                    </select>
-                  </p>
-                </div>
-                <div>
-                  <p>
                     Mennyiség:
                     <select class="specSelect chItem" id="quantity${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}')">
+                      onchange="${selQuan}">
           `;
 
           for (let i = 1; i <= 10; i++) {
@@ -208,15 +296,15 @@ const buildCartSection = (conn, req) => {
                     </select>
                   </p>
                 </div>
-                <div>
-                  <p>Összesen: <span id="totpHolder_${tid}">
-                    ${quantity * actualPrice}</span> Ft
-                  </p>
-                </div>
+              <div>
+                <p class="bold">Összesen: <span id="totpHolder_${tid}">
+                  ${quantity * actualPrice}</span> Ft
+                </p>
               </div>
-              <div class="clear"></div>
-            </div>`;
-          resolve([output, quantity * actualPrice]);
+            </div>
+            <div class="clear"></div>
+          </div>`;
+        resolve([output, quantity * actualPrice]);
         });
       });      
       queries.push(sqlQuery);
@@ -239,8 +327,8 @@ const buildCartSection = (conn, req) => {
 
       let ePriceText = '<span id="extraPrice"></span>';
       let extraPrice = 0; 
-      if (finalPrice < 1000){
-        extraPrice = 1000 - finalPrice;
+      if (finalPrice < 500){
+        extraPrice = 500 - finalPrice;
         finalPrice += extraPrice;
         ePriceText = `<span id="extraPrice">(+${extraPrice} Ft felár)</span>`;
       }
@@ -259,7 +347,7 @@ const buildCartSection = (conn, req) => {
       }
 
       output += `
-        <p class="align" id="finalPrice">
+        <p class="align bold" id="finalPrice">
           <span style="color: #4285f4;">
             Végösszeg:
           </span>
@@ -267,7 +355,7 @@ const buildCartSection = (conn, req) => {
           ${ePriceText}
         </p>
         <div class="infoBox" id="infoLogin"></div>
-        <button class="borderBtn btnCommon centerBtn" id="buyCart">Vásárlás</button> 
+        <button class="fillBtn btnCommon centerBtn" id="buyCart">Vásárlás</button> 
       `;
       output += '</section>';
       output += `

@@ -2,6 +2,30 @@ if (_('priceHolder')) {
   var basePrice = Number(_('priceHolder').innerHTML);
 }
 
+function displayErrorMsg(msg) {
+  _('broHolder').style.marginBottom = '20px';
+  statusFill('status', msg);
+}
+
+function calcLitPrice(size) {
+  let firstCoord = size.split('x')[0].replace('mm', '');
+  let sizesObj = {
+    '100': 3490,
+    '150': 4990,
+    '200': 7990
+  };
+  return sizesObj[firstCoord];
+}
+
+// Change page title, desc, kw args
+if (_('pname')) {
+  document.title = _('pname').innerText;
+  let desc = _('descHS').innerText.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, "");
+  let kw = String(desc.toLowerCase().replace('.', '').split(' '));
+  document.querySelector('meta[name="description"]').setAttribute("content", desc);
+  document.querySelector('meta[name="keywords"]').setAttribute("content", kw);
+}
+
 // Add item to cart
 function addToCart(id) {
   let itemId = id;
@@ -36,22 +60,22 @@ function addToCart(id) {
   // Validation on client-side
   _('status').innerHTML = '';
   if ([0.12, 0.2, 0.28].indexOf(rvas) < 0) {
-    _('status').innerHTML = '<p>A rétegvastagság értéke nem megfelelő</p>'; 
+    displayErrorMsg('A rétegvastagság értéke nem megfelelő');
     return;
   } else if (surusegValues.indexOf(suruseg) < 0) {
-    _('status').innerHTML = '<p>A sűrűség értéke nem megfelelő</p>'; 
+    displayErrorMsg('A sűrűség értéke nem megfelelő');
     return 
   } else if (colorValues.indexOf(color) < 0) {
-    _('status').innerHTML = '<p>A szín értéke nem megfelelő</p>'; 
+    displayErrorMsg('A szín értéke nem megfelelő');
     return 
   } else if (scaleValues.indexOf(scale) < 0) {
-    _('status').innerHTML = '<p>A méretezés értéke nem megfelelő</p>'; 
+    displayErrorMsg('A méretezés értéke nem megfelelő');
     return 
   } else if (fvasValues.indexOf(fvas) < 0) {
-    _('status').innerHTML = '<p>A falvastagság értéke nem megfelelő</p>'; 
+    displayErrorMsg('A falvastagság értéke nem megfelelő');
     return 
   } else if (quantity % 1 !== 0 || quantity < 1 || quantity > 10) {
-    _('status').innerHTML = '<p>A mennyiség értéke nem megfelelő</p>'; 
+    displayErrorMsg('A mennyiség értéke nem megfelelő');
     return 
   }
 
@@ -80,7 +104,7 @@ function addToCart(id) {
     
     // Do not allow more than 15 different items in cart
     if (props.length >= 15) {
-      _('status').innerHTML = '<p>Egyszerre maximum 15 különböző termék rendelhető</p>'; 
+      displayErrorMsg('Egyszerre maximum 15 különböző termék rendelhető');
       return;
     }
 
@@ -97,12 +121,13 @@ function addToCart(id) {
           if (y == 4) {
             // Maximum quantity for a single item is 10
             if (itemsSoFar['content_' + cid]['quantity_' + cid] + quantity > 10) {
-              _('status').innerHTML = '<p>Egyféle termékből maximum 10db rendelhető</p>'; 
+              displayErrorMsg('Egyféle termékből maximum 10db rendelhető')
               return;
             }
             itemsSoFar['content_' + cid]['quantity_' + cid] += quantity;
             setCookie('cartItems', JSON.stringify(itemsSoFar), 365);
-            _('succBox').innerHTML = '<p>A terméket sikeresen a kosárba helyezted</p>';
+            statusFill('succBox', 'A terméket sikeresen a kosárba helyezted');
+            _('broHolder').style.marginBottom = "20px";
             return;
           }
         } else {
@@ -116,11 +141,12 @@ function addToCart(id) {
     setCookie('cartItems', JSON.stringify(value), 365);
   }
 
-  _('succBox').innerHTML = '<p>A terméket sikeresen a kosárba helyezted</p>';
+  statusFill('succBox', 'A terméket sikeresen a kosárba helyezted');
+  _('broHolder').style.marginBottom = "20px";
 }
 
 // Update price in the DOM, in real-time
-function updateTotPrice(cartId, newPrice, oldPrice) {
+function updateTotPrice(cartId, newPrice, oldPrice, isLit) {
   if (!cartId) {
     basePrice = Number(_('priceHolder').innerHTML);
     return;
@@ -156,34 +182,38 @@ function updateTotPrice(cartId, newPrice, oldPrice) {
   // Also update the new parameter in cookies
   let contentSoFar = JSON.parse(getCookie('cartItems'))
   let names = ['rvas', 'suruseg', 'scale', 'color', 'quantity', 'fvas'];
+  if (isLit) names = ['sphere', 'size', 'color', 'quantity'];
   for (let name of names) {
     let currentVal = _(name + cartId).value;
-    console.log(name + '_' + cartId)
     contentSoFar['content_' + cartId][name + '_' + cartId] = encodeURIComponent(currentVal);
   }
   setCookie('cartItems', JSON.stringify(contentSoFar), 365);
 }
 
 // Calculate the price while changing the parameters
-function calculatePrice(price, id = '') {
-  let rvasVal = Number(_('rvas' + id).value);
-  let surusegVal = Number(_('suruseg' + id).value);
-  let scaleVal = Number(_('scale' + id).value);
-  let fvasVal = Number(_('fvas' + id).value);
- 
-  // Convert degrees to radians
-  rvasVal *= Math.PI / 180
-  surusegVal *= Math.PI / 180
-  fvasVal *= Math.PI / 180
+function calculatePrice(price, id = '', isLit) {
+  if (!isLit) {
+    let rvasVal = Number(_('rvas' + id).value);
+    let surusegVal = Number(_('suruseg' + id).value);
+    let scaleVal = Number(_('scale' + id).value);
+    let fvasVal = Number(_('fvas' + id).value);
+   
+    // Convert degrees to radians
+    rvasVal *= Math.PI / 180
+    surusegVal *= Math.PI / 180
+    fvasVal *= Math.PI / 180
 
-  // Formula for calculating the price with the given params
-  // Parameters values in the formula are degrees (converted to rads)
-  let nPrice = (price * scaleVal *
-    ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
-    (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
-    (Math.sin(fvasVal) * 8 + 0.83246064094) - 2));
+    // Formula for calculating the price with the given params
+    // Parameters values in the formula are degrees (converted to rads)
+    let nPrice = (price * scaleVal *
+      ((1 / (Math.sin(rvasVal) * 140 + 0.51130880187)) +
+      (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
+      (Math.sin(fvasVal) * 8 + 0.83246064094) - 2));
 
-  return Math.round(nPrice);
+    return Math.round(nPrice);
+  } else {
+    return calcLitPrice(_('size' + id).value); 
+  }
 }
 
 function getPriceHolder(id) {
@@ -194,9 +224,9 @@ function getPriceHolder(id) {
   }
 }
 
-function updatePrice(isInCart, price, domElement) {
+function updatePrice(isInCart, price, domElement, isLit) {
   let id = isInCart ? isInCart : '';
-  let newPrice = calculatePrice(price, id); 
+  let newPrice = calculatePrice(price, id, isLit); 
   domElement.innerHTML = newPrice;
   return newPrice;
 }
@@ -209,12 +239,13 @@ function manageDiscountTxt(newPrice) {
   }
 }
 
-function updateSpecs(e, price, isInCart = false) {
+function updateSpecs(e, price, isInCart = false, isLit = false) {
   let value = Number(e.value);
+  if (isLit) value = e.value;
   let domElement = getPriceHolder(isInCart);
   
-  var newPrice = updatePrice(isInCart, price, domElement);
-  updateTotPrice(isInCart, newPrice, price);
+  var newPrice = updatePrice(isInCart, price, domElement, isLit);
+  updateTotPrice(isInCart, newPrice, price, isLit);
 }
 
 // When changing the scale of the item the size also gets updated
@@ -245,17 +276,11 @@ function buyItem(id) {
   let fvas = _('fvas').value;
   let q = _('quantity').value;
 
-  // If user is not logged in display error msg
-  if (!isLoggedIn) {
-    _('info').innerHTML = '<p>A vásárláshoz kérlek jelentkezz be</p>';  
-  } else {
-    window.location.href = `
-      /buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale} &fvas=${fvas}&q=${q}`;
-  }
+  window.location.href = `/buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale}&fvas=${fvas}&q=${q}`;
 }
 
-let stlView = null;
-let isMobile = mobileCheck();
+if (typeof stlView === 'undefined') var stlView = null;
+if (typeof isMobile === 'undefined') var isMobile = mobileCheck();
 
 // Handle the displaying & hiding of pop-up 3D stl viewer
 function viewIn3D(stlPath) {
@@ -265,26 +290,31 @@ function viewIn3D(stlPath) {
   const height = window.innerHeight|| document.documentElement.clientHeight|| 
     document.body.clientHeight;
 
-  if (_('overlay').style.display == 'block') {
-    _('overlay').style.display = 'none';
-    _('viewBox').style.display = 'none';
+  if (_('overlay').style.opacity == '1') {
+    _('overlay').style.opacity = '0';
+    setTimeout(function removeOverlay() {
+      _('overlay').style.height = '0';
+      _('viewBox').style.height = '0';
+    }, 500);
+    _('viewBox').style.opacity = '0';
     _('exitBtn').style.display = 'none';
     document.body.style.overflow = 'auto';
   } else {
-    _('overlay').style.display = 'block';
-    _('viewBox').style.display = 'block';
+    _('overlay').style.height = document.body.scrollHeight + "px";
+    _('overlay').style.opacity = '1';
+    _('viewBox').style.opacity = '1';
+    _('viewBox').style.height = 'auto';
     document.body.style.overflow = 'hidden';
     
     if (!isMobile) {
-      _('viewBox').style.width = width / 2 + 'px';
-      _('viewBox').style.height = height / 2 + 'px';
-      _('viewBox').style.top = height / 4 + 'px';
-      _('viewBox').style.left = width / 4 + 'px';
+      _('viewBox').style.width = width / 1.3 + 'px';
+      _('viewBox').style.height = height / 1.3 + 'px';
+      _('viewBox').style.top = height / (26 / 3) + 'px';
+      _('viewBox').style.left = width / (26 / 3) + 'px';
       _('exitBtn').style.display = 'block';
-      _('exitBtn').style.left = width * (3 / 4) - 44 + 'px';
-      _('exitBtn').style.top = height / 4 + 24 + 'px';
+      _('exitBtn').style.left = width * (23 / 26) - 44 + 'px';
+      _('exitBtn').style.top = height * (3 / 26) + 24 + 'px';
     } else {
-      console.log(isMobile)
       _('viewBox').style.width = width / 1.1 + 'px';
       _('viewBox').style.height = height / 2 + 'px';
       _('viewBox').style.top = height / 4 + 'px';
@@ -307,10 +337,71 @@ function viewIn3D(stlPath) {
           {
             'id': 0,
             'filename': stlPath,
-            'color': '#cccccc',
+            'color': '#999999',
           }
         ]
       });
     }
   }
+}
+
+function incDec(qty, name, threshold, mul) {
+  if (_('quantity').value * mul < threshold * mul) {
+    _('quantity').value = Number(_('quantity').value) + qty;
+    _(name == 'minus' ? 'plus' : 'minus').style.opacity = '1';
+    _(name == 'minus' ? 'plus' : 'minus').style.cursor = 'pointer';
+  }
+  
+  if (_('quantity').value == threshold) {
+    _(name).style.opacity = '0.4';
+    _(name).style.cursor = 'not-allowed';
+  }
+}
+
+if (_('plus')) {
+  _('plus').addEventListener('click', function increase(){
+    incDec(1, 'plus', 10, 1);
+  });
+
+  _('minus').addEventListener('click', function decrease(){
+    incDec(-1, 'minus', 1, -1);
+  });
+}
+
+function clickClock(title, specs, show, hide) {
+  _(title).style.display = 'block'; 
+  _(title).classList.remove("animate__animated");
+  _(show).style.height = 'auto';
+  _(show).style.opacity = '1';
+
+  _(hide).style.height = '0';
+  _(hide).style.opacity = '0';
+  _(specs).style.display = 'none';  
+  _(specs).classList.add("animate__animated");
+}
+
+
+if (document.getElementsByClassName('itemSpecifications')[0]) {
+  document.getElementsByClassName('itemSpecifications')[0].style.marginTop = '20px';
+
+  document.getElementsByClassName('hrStyle')[0].style.marginTop = '0';
+  if (document.getElementsByClassName('hrStyle')[1]) {
+    document.getElementsByClassName('hrStyle')[1].style.display = 'none';
+  }
+}
+
+if (_('specsTitle')) {
+  _('descTitle').addEventListener('click', function clickDesc(e) {
+    clickClock('descTitle_anim', 'specsTitle_anim', 'descHS', 'specsHS');
+  });
+
+  _('specsTitle').addEventListener('click', function clickSpecs(e) {
+    clickClock('specsTitle_anim', 'descTitle_anim', 'specsHS', 'descHS');
+  });
+}
+
+function updateLit(param, dom, id) {
+  let soFar = JSON.parse(getCookie('cartItems'));
+  soFar['content_' + id][param + '_' + id] = _(dom).value;
+  setCookie('cartItems', JSON.stringify(soFar), 365);
 }

@@ -1,0 +1,64 @@
+.quantity {
+ display: inline-block; }
+
+.quantity .input-text.qty {
+ width: 35px;
+ height: 39px;
+ padding: 0 5px;
+ text-align: center;
+ background-color: transparent;
+ border: none;
+ font-weight: bold;
+ font-size: 16px;
+}
+
+.quantity.buttons_added {
+ text-align: left;
+ position: relative;
+ white-space: nowrap;
+ vertical-align: top; }
+
+.quantity.buttons_added input {
+ display: inline-block;
+ margin: 0;
+ vertical-align: top;
+ box-shadow: none;
+}
+
+.quantity.buttons_added .minus,
+.quantity.buttons_added .plus {
+ padding: 7px 10px 8px;
+ height: 41px;
+ background-color: #ffffff;
+ border: none;
+  font-size: 18px;
+  font-weight: bold;
+ cursor:pointer;
+}
+
+.quantity.buttons_added .minus {
+  opacity: 0.4;
+  cursor: not-allowed;
+  padding-left: 2px;
+}
+
+.quantity input::-webkit-outer-spin-button,
+.quantity input::-webkit-inner-spin-button {
+ -webkit-appearance: none;
+ -moz-appearance: none;
+ margin: 0; }
+ 
+ .quantity.buttons_added .minus:focus,
+.quantity.buttons_added .plus:focus {
+ outline: none; }
+
+@media only screen and (max-width: 900px) {
+  .quantity.buttons_added {
+    display: block;
+    text-align: center;
+  }
+
+  .quantity.buttons_added .minus {
+    padding-left: 11px;
+  }
+}
