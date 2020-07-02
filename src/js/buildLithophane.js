@@ -1,6 +1,7 @@
 const genQuan = require('./includes/genQuan.js');
 const cookieFuncs = require('./includes/cookieFuncs.js');
 const genSpecs = require('./includes/genSpecs.js');
+const isVisited = require('./includes/isVisited.js');
 
 // Build page for uploaded images --> create a lithophane
 const buildLithophane = (conn, userID, filePaths) => {
@@ -56,7 +57,9 @@ const buildLithophane = (conn, userID, filePaths) => {
     output += genSpecs(null, null, true);
     output += `
       <p class="align">
-        <a href="/lithophaneHelp" target="_blank" class="blueLink">Mit jelent a litofánia formája?</a>
+        <a href="/lithophaneHelp" target="_blank" class="blueLink">
+          Mit jelent a litofánia formája?
+        </a>
       </p>
 
       <p class="align note ddgray">
@@ -73,6 +76,7 @@ const buildLithophane = (conn, userID, filePaths) => {
     // Save the lithophane to cookies
     output += `<script type="text/javascript">`;
     output += cookieFuncs();
+    output += isVisited();
     output += `
         let fileBuy = null;
         function saveToCookies(ratio) {
@@ -90,10 +94,14 @@ const buildLithophane = (conn, userID, filePaths) => {
             return document.getElementById(el);
           }
 
+          window.onbeforeunload = function() {
+            return "Biztos vagy benne, hogy újratöltöd az oldalt?";
+          };
+
           // Make sure the num of items in cookies do not exceed 15
           let canGo = true;
           if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + 
-            arr.length > 15) {
+            arr.length > 15 || !isFirstVisit) {
             canGo = false;
           }
 

@@ -3,6 +3,7 @@ const genSpecs = require('./includes/genSpecs.js');
 const checkStlSize = require('./includes/checkStlSize.js');
 const calcPrice = require('./includes/calcPrice.js');
 const cookieFuncs = require('./includes/cookieFuncs.js');
+const isVisited = require('./includes/isVisited.js');
 const genQuan = require('./includes/genQuan.js');
 const randomstring = require('randomstring');
 
@@ -147,6 +148,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     `;
 
     content += cookieFuncs();
+    content += isVisited();
     content += `
         // Initialize vars used globally
         let data = [];
@@ -167,8 +169,10 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         }
 
         // Make sure the num of items in cookies do not exceed 15
+        console.log(isFirstVisit);
         let canGo = true;
-        if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + arr.length > 15) {
+        if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + arr.length > 15
+          || !isFirstVisit) {
           canGo = false;
         }
 

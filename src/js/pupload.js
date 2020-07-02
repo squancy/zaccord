@@ -174,3 +174,6 @@ function dropFile(e) {
   
   _('dropDiv').style.border = '2px solid #f4f4f4';
 }
+
+// Set cookie to a false state when uploading, allow exactly 1 time to add the item to cookies
+setCookie('isVisited', 'no', 365);
