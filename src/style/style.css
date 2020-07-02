@@ -1092,7 +1092,7 @@ ul li::before {
   }
 
   .cPrintDivs {
-    height: 45vh;
+    height: calc(50vh - 45px);
   }
 
   .ddFile > div {
