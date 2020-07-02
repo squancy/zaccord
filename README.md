@@ -2,7 +2,8 @@
 <h1>Zaccord</h1>
 A webshop for selling 3D printed products.
 
-Zaccord is a Hungary-based e-commerce website where users can order a variety of 3D-printed products or upload their STL files for custom printing.<br>
+Zaccord is a Hungary-based e-commerce website where users can order a variety of 3D-printed
+products or upload their STL files for custom printing & creating lithophanes.<br>
 We tried to create a great customer experience by simplifying the process of shopping & eliminating the need to ask for a bid when using our custom print service. This all makes shopping fun and instant.<br><br>
 <b>Note:</b> the project is still in development phase but you can check the live product at
 <a href="https://www.zaccord.com">zaccord.com</a>.
