@@ -29,10 +29,9 @@ where the pure value of these parameters are substituted into variables in degre
 Eventually, it provides the desired price intervals for us. You can refine it to your needs by
 changing the <i>sine</i> expressions and decimal constants.<br>
 Note that due to the nature of the <i>sine</i> function 90% infill provides the highest
-price and any infill value above that will produce a smaller price, returning an undesirable
-outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
+price and any infill value above that will produce a smaller price, returning an undesirable outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
 
-## TODOs
+## TODOs
 Implementing one or more of the following features would be nice:
   - A product review system with 1-5 stars & comments
   - View lithophanes in STL mode (see 3DRocks)
