@@ -1,7 +1,7 @@
 {
-  "name": "company",
+  "name": "Zaccord",
   "version": "1.0.0",
-  "description": "Webshop prototype",
+  "description": "A webshop for selling 3D printed products.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
