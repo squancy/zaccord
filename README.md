@@ -32,7 +32,7 @@ Note that due to the nature of the <i>sine</i> function 90% infill provides the 
 price and any infill value above that will produce a smaller price, returning an undesirable outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
 
 ## TODOs
-Implementing one or more of the following features would be nice:
+Implementing one or more of the following features would be nice & you may also get a reward:
   - A product review system with 1-5 stars & comments
   - View lithophanes in STL mode (see 3DRocks)
   - A clever algorithm for giving a close enough price estimate for custom printed products &
