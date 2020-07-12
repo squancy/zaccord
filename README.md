@@ -51,7 +51,7 @@ You can even use it as a reference for creating your project or getting ideas fo
 If you want to contribute to the development of Zaccord feel free to do it. We are grateful for
 anyone who contributes to the project.<br>
 In addition, if you implement one or more of the TODOs listed above or significantly contribute
-to this project we may send you a free 3D printed product of your choice and we also give a
+to this project we may send you a free 3D printed product of your choice and we also give you a
 chance to join our team and work with us.
 
 ## Setting up the project
