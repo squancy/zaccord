@@ -32,12 +32,27 @@ Note that due to the nature of the <i>sine</i> function 90% infill provides the 
 price and any infill value above that will produce a smaller price, returning an undesirable
 outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
 
+## TODOs
+Implementing one or more of the following features would be nice:
+  - A product review system with 1-5 stars & comments
+  - View lithophanes in STL mode (see 3DRocks)
+  - A clever algorithm for giving a close enough price estimate for custom printed products &
+    lithophanes
+  - Anything else you think would be cool...
+
 ## Source code
 We made this project open source because we want to spread 3D-printed products especially in Hungary & inspire people for trying out new technologies.
 
 ## Distributing source code
 If you found any bugs or want to contribute to the development of Zaccord as a developer feel free to do it in a pull request.
 You can even use it as a reference for creating your project or getting ideas for 3D-printing websites.
+
+## Contributing
+If you want to contribute to the development of Zaccord feel free to do it. We are grateful for
+anyone who contributes to the project.<br>
+In addition, if you implement one or more of the TODOs listed above or significantly contribute
+to this project we may send you a free 3D printed product of your choice and we also give a
+chance to join our team and work with us.
 
 ## Setting up the project
 After cloning the repository & installing Node.js create the database by importing `database.sql` to MySQL.<br>
