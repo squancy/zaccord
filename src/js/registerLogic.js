@@ -29,6 +29,7 @@ const userRegister = (conn, formData, req) => {
 
       conn.query(sQuery, [email, hash, userAgent, ip], function (err, result, fields) {
         if (err) {
+          console.log(err);
           reject('Egy nem várt hiba történt, kérlek próbáld űjra');
           throw err;
         }
@@ -54,6 +55,7 @@ const userRegister = (conn, formData, req) => {
         let sQuery = 'SELECT id FROM users WHERE email = ? LIMIT 1';
         conn.query(sQuery, [email], (err, result, field) => {
           if (err) {
+            console.log(err);
             reject('Egy nem várt hiba történt, kérlek próbáld űjra');
             return;
           }
@@ -62,11 +64,13 @@ const userRegister = (conn, formData, req) => {
           let iQuery = 'INSERT INTO delivery_data (uid, date) VALUES (?, NOW())';
           conn.query(iQuery, [userID], (err, result, field) => {
             if (err) {
+          console.log(err);
               reject('Egy nem várt hiba történt, kérlek próbáld űjra');
               return;
             }
 
             // Success
+            console.log('hEEEEEE');
             resolve(userID);
           });
         });

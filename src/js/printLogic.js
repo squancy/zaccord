@@ -7,6 +7,7 @@ const buildMainSection = (conn) => {
 
     // Build file upload form
     output += `
+      <div class="flexDiv styleHolder" style="border-radius: 30px; width: 100%;">
       <div class="cPrintDivs leftDiv flexDiv" id="dropDiv" ondrop="dropFile(event)">
         <form action="/uploadPrint" enctype="multipart/form-data" method="post" id="fdz">
           <img src="/images/ddupload.png" width="90" style="margin: 0 auto;">
@@ -38,6 +39,7 @@ const buildMainSection = (conn) => {
             tudnivalók
           </p> 
         </div>
+      </div>
       </div>
     `;
 

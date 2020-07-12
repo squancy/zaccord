@@ -28,7 +28,7 @@ const userLogin = (conn, formData, req) => {
       let isCorrect = bcrypt.compareSync(password, passHash);
       let isCorrectTmp = bcrypt.compareSync(password, tempPassword);
       if (!isCorrect && !isCorrectTmp) {
-        reject('Helytelen jelszó')
+        reject('Hibás e-mail vagy jelszó');
         return;
       }
 

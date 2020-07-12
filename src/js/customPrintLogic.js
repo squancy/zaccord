@@ -75,13 +75,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         </div>
         <div id="colorPicker" class="flexDiv animate__animated animate__fadeIn"
           style="display: none;">
-          <div class="colorPick" onclick="chooseColor('#4285f4', 0)"
+          <div class="colorPick" onclick="chooseColor('#4285f4', 0, true)"
             style="background-color: #4285f4;">
           </div>
-          <div class="colorPick" onclick="chooseColor('#ffffff', 1)"
+          <div class="colorPick" onclick="chooseColor('#ffffff', 1, true)"
             style="background-color: #ffffff;">
           </div>
-          <div class="colorPick" onclick="chooseColor('#dc143c', 2)"
+          <div class="colorPick" onclick="chooseColor('#dc143c', 2, true)"
             style="background-color: #dc143c;">
           </div>
           <div class="colorPick bgCommon" onclick="chooseDisplay('flat', 3)"
@@ -218,10 +218,6 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
         document.getElementsByClassName('hrStyle')[0].style.margin = 0;
 
-        window.onbeforeunload = function() {
-          return "Biztos vagy benne, hogy újratöltöd az oldalt?";
-        };
-
         // Use a 3rd party library for viewing .stl files
         var stlView = new StlViewer(document.getElementById("stlCont"), {
           all_loaded_callback: stlFinished,
@@ -231,6 +227,12 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         function stlFinished() {
           document.getElementById('status').innerHTML = '';
           document.getElementById('colorPicker').style.display = 'flex';
+
+          // Set color of model
+          let soFar = JSON.parse(getCookie('cartItems'));
+          let id = localStorage.getItem('refresh');
+          let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
+          chooseColor(colorMaps[colorVal]);
         }
 
         function chooseDisplay (display, id) {
@@ -240,12 +242,28 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           highlightBtn(id);
         }
 
-        function chooseColor(color, id) {
-          console.log()
+        function chooseColor(color, id, isRev = false) {
           for (let i = 0; i < ${filePaths.length}; i++) {
             stlView.set_color(i, color);
           }
-          highlightBtn(id);
+
+          let hexToName = {
+            '#ffffff': 'Fehér',
+            '#dc143c': 'Piros',
+            '#4285f4': 'Kék'
+          };
+
+          if (isRev) {
+            _('color').value = hexToName[color];
+            highlightBtn(id);
+          } else {
+            let hexToNum = {
+              '#4285f4': 0,
+              '#ffffff': 1,
+              '#dc143c': 2
+            };
+            highlightBtn(hexToNum[color]);
+          }
         }
 
         function highlightBtn(id) {

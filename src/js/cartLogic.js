@@ -118,7 +118,7 @@ const buildCartSection = (conn, req) => {
           // Build html output
           let output = `
             <div class="cartItemHolder" id="cartItem_${tid}">
-              <img src="/images/icons/delete.png" class="topRight"
+              <img src="/images/icons/delete.png" class="topRight trans"
                 onclick="removeItem('${tid}')">
               <div class="itemLeftCenter">
                 <a href="/${url}">
@@ -244,9 +244,11 @@ const buildCartSection = (conn, req) => {
             `;
 
             for (let c of litSizes) {
-              let selected = litSize == c ? 'selected' : '';
+              let pure = c.replace(/\s/g, '').replace(/mm/g, '');
+              console.log(litSize, litSizes, c);
+              let selected = pure == litSize ? 'selected' : '';
               output += `
-                <option value="${c.replace(/\s/g, '').replace(/mm/g, '')}" ${selected}>
+                <option value="${pure}" ${selected}>
                   ${c}
                 </option>
               `;

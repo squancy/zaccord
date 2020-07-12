@@ -10,6 +10,9 @@ _('submitBtn').addEventListener('click', function submitEmail(e) {
       'email': email
     };
 
+    _('succStatus').innerHTML = '';
+    _('errStatus').innerHTML = '';
+
     fetch('/validateForgotPass', {
       headers: {
         'Content-Type': 'application/json'
@@ -19,6 +22,7 @@ _('submitBtn').addEventListener('click', function submitEmail(e) {
     }).then(response => response.json()).then(data => {
       if (data.success) {
         _('succStatus').innerHTML = `<p>Ideiglenes jelszó sikeresen idényelve</p>`;
+        _('email').value = '';
       } else {
         _('errStatus').innerHTML = data.error;
       }

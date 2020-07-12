@@ -17,15 +17,6 @@ function calcLitPrice(size) {
   return sizesObj[firstCoord];
 }
 
-// Change page title, desc, kw args
-if (_('pname')) {
-  document.title = _('pname').innerText;
-  let desc = _('descHS').innerText.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, "");
-  let kw = String(desc.toLowerCase().replace('.', '').split(' '));
-  document.querySelector('meta[name="description"]').setAttribute("content", desc);
-  document.querySelector('meta[name="keywords"]').setAttribute("content", kw);
-}
-
 // Add item to cart
 function addToCart(id) {
   let itemId = id;
@@ -108,23 +99,22 @@ function addToCart(id) {
       return;
     }
 
-    let cnt = 0;
     for (let i = 0; i < props.length; i++) {
       let y = 0;
       let objKeys = Object.keys(value['content_' + id]);
       let ind = objKeys.indexOf('quantity_' + id);
-      objKeys.splice(ind, 1);
       for (let p1 of objKeys) {
-        let cid = props[cnt];
+        let cid = props[i];
         let begin = p1.split('_')[0];
         if (value['content_' + id][p1] == itemsSoFar['content_' + cid][begin + '_' + cid]) {
           if (y == 4) {
             // Maximum quantity for a single item is 10
-            if (itemsSoFar['content_' + cid]['quantity_' + cid] + quantity > 10) {
-              displayErrorMsg('Egyféle termékből maximum 10db rendelhető')
+            let tmpQuantity = Number(itemsSoFar['content_' + cid]['quantity_' + cid]);
+            if (tmpQuantity + quantity > 10) {
+              displayErrorMsg('Egyféle termékből maximum 10db rendelhető');
               return;
             }
-            itemsSoFar['content_' + cid]['quantity_' + cid] += quantity;
+            itemsSoFar['content_' + cid]['quantity_' + cid] = tmpQuantity + quantity;
             setCookie('cartItems', JSON.stringify(itemsSoFar), 365);
             statusFill('succBox', 'A terméket sikeresen a kosárba helyezted');
             _('broHolder').style.marginBottom = "20px";
@@ -168,8 +158,8 @@ function updateTotPrice(cartId, newPrice, oldPrice, isLit) {
 
   if (sumOfSums > 15000) {
     sumOfSums *= 0.97;
-  } else if (sumOfSums < 1000) {
-    let extraPrice = 1000 - sumOfSums;
+  } else if (sumOfSums < 500) {
+    let extraPrice = 500 - sumOfSums;
     sumOfSums += extraPrice;
     _('extraPrice').innerHTML = `(+${extraPrice} Ft felár)`;
   } else {
@@ -402,6 +392,6 @@ if (_('specsTitle')) {
 
 function updateLit(param, dom, id) {
   let soFar = JSON.parse(getCookie('cartItems'));
-  soFar['content_' + id][param + '_' + id] = _(dom).value;
+  soFar['content_' + id][param + '_' + id] = encodeURIComponent(_(dom).value);
   setCookie('cartItems', JSON.stringify(soFar), 365);
 }

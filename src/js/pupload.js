@@ -75,7 +75,7 @@ function displayFiles() {
 
     // Make sure images for lithophane and STLs for custom print are not mixed
     if (hasStl && hasImg) {
-      errorMsg('Egyszerre csak képeket vagy csak STL fájlokat tölthtesz fel');
+      errorMsg('Egyszerre vagy csak képeket vagy csak STL fájlokat tölthtesz fel');
       return;
     // Make sure only STls and images (PNG, JPG/JPEG) are uploaded
     } else if (wrongFileType) {
@@ -177,3 +177,4 @@ function dropFile(e) {
 
 // Set cookie to a false state when uploading, allow exactly 1 time to add the item to cookies
 setCookie('isVisited', 'no', 365);
+localStorage.setItem('refresh', '');

@@ -47,7 +47,6 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
       _('submitBtn').disabled = false;
       if (data.hasOwnProperty('error') && data.error) {
         errStatus.innerHTML = data.error;
-        return;
       } else if (data.hasOwnProperty('success') && data.success) {
         _('email').value = ''; 
         _('pass').value = '';
@@ -59,7 +58,6 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
         _('register').href = '/account';
         _('login').innerText = 'Kijelentkezés';
         _('login').href = '/logout';
-        return;
       }
     }).catch(err => {
       // Something unexpected happened, report error

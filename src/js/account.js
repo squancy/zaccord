@@ -88,22 +88,24 @@ _('cPass').addEventListener('click', function changePassword(e) {
 });
 
 // Show more orders when user clicks btn
-_('moreOrders').addEventListener('click', function showMore(e) {
-  _('moreHolder').innerHTML = '<img src="/images/icons/loader.gif" width="24">';
+if (_('moreOrders')) {
+  _('moreOrders').addEventListener('click', function showMore(e) {
+    _('moreHolder').innerHTML = '<img src="/images/icons/loader.gif" width="24">';
 
-  // Send a request to server for more orders
-  fetch('/moreOrders', {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    method: 'POST'
-  }).then(response => {
-    return response.text();
-  }).then(data => {
-    _('moreHolder').style.display = 'none';
-    _('allOrders').classList = 'animate__animated animate__fadeIn';
-    _('allOrders').innerHTML += data;
-  }).catch(err => {
-    _('moreHolder').innerHTML = '<p>Hiba történt, kérlek próbáld újra</p>';
+    // Send a request to server for more orders
+    fetch('/moreOrders', {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      method: 'POST'
+    }).then(response => {
+      return response.text();
+    }).then(data => {
+      _('moreHolder').style.display = 'none';
+      _('allOrders').classList = 'animate__animated animate__fadeIn';
+      _('allOrders').innerHTML += data;
+    }).catch(err => {
+      _('moreHolder').innerHTML = '<p>Hiba történt, kérlek próbáld újra</p>';
+    });
   });
-});
+}

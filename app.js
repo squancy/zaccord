@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 const mv = require('mv');
+const HTMLParser = require('node-html-parser');
 const randomstring = require("randomstring");
 const formidable = require('formidable');
 const validateEmail = require('email-validator');
@@ -94,6 +95,7 @@ function fileResponse(contentType, url, res) {
   try {
     var content = fs.readFileSync(path);
   } catch (e) {
+    if (typeof userID === 'undefined') var userID;
     imgError(res, userID, '404error');
   }
   res.end(content);
@@ -156,7 +158,7 @@ let userSession = createSession('user');
 
 const server = http.createServer((req, res) => {
   userSession(req, res, () => {});
-  let userID = req.user.id;
+  var userID = req.user.id;
 
   /*
     Implement searching on the main page; every time the user types in something -> fetch to
@@ -502,7 +504,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/UPDATE_STAT_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/updateOrderStatus' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -588,6 +590,8 @@ const server = http.createServer((req, res) => {
       fileResponse('application/json', req.url, res);
     } else if (extension === '.js' && req.url.includes('sworker')) {
       fileResponse('text/javascript', req.url, res);
+    } else if (extension === '.xml') {
+      fileResponse('application/xml', req.url, res);
     }
 
     // Make sure user is not logged in when visiting /login and /register pages
@@ -607,9 +611,23 @@ const server = http.createServer((req, res) => {
           if (req.url.substr(0, 14) === '/item/product=') {
             let itemId = Number(req.url.substr(14));
             let content = fs.readFileSync('src/item.html');
-            content += addCookieAccept(req);
             buildItemSection(conn, itemId, req).then(data => {
-              commonData(content, userID, data, res);
+              // Add custom, dynamic title & description meta tag
+              let dataBack = data[0];
+              let title = data[1];
+              let description = data[2];
+              let root = HTMLParser.parse(content);
+
+              // Set title
+              root.querySelector('title').childNodes[0].rawText = title;
+              let descTag = root.querySelectorAll('meta')
+                .filter(v => v.rawAttrs.includes('name="description"'));
+
+              // Set description meta tag
+              descTag[0].rawAttrs = `name="description" content="${description}"`;
+              content = root.toString();
+              content += addCookieAccept(req);
+              commonData(content, userID, dataBack, res);
             }).catch(error => {
               console.log(error);
               imgError(res, userID, 'parcel');
@@ -648,6 +666,7 @@ const server = http.createServer((req, res) => {
             });
           } else {
             imgError(res, userID, '404error');
+            return;
           }
 
         // Server error

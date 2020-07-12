@@ -40,6 +40,13 @@ function removeItem(tid) {
   } else {
     _('fPrice').innerHTML = fPrice - cPrice;
   }
+
+  // Check if item needs an extra price (below 500 Ft)
+  console.log(cPrice, fPrice);
+  if (fPrice - cPrice < 500) {
+    _('fPrice').innerHTML = 500;
+    _('extraPrice').innerHTML = '(+' + (500 - (fPrice - cPrice)) + ' Ft felár)'; 
+  }
 }
 
 // User buys the content of the cart

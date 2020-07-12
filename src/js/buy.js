@@ -1,18 +1,18 @@
 // Countries for billing
 let countries = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria", "Azerbajdzsán",
-"Belgium", "Bosznia-Hercegovina", "Brazília", "Bulgária", "Kanada", "Chile", "Kína",
-"Horvátország", "Kuba", "Ciprus", "Cseh köztársaság", "Dánia", "Egyiptom", "Észtország",
-"Faroe-szigetek", "Finnország", "Franciaország", "Grúzia", "Németország", "Gibraltár",
-"Görögország", "Hong Kong", "Magyarország", "Izland", "India", "Indonézia", "Irán", "Irak",
-"Írország", "Izrael", "Olaszország", "Japán", "Kazahsztán", "Dél-Koreai Köztársaság", "Kuwait",
-"Lettország", "Liechtenstein", "Litvánia", "Luxemburg", "Makedónia", "Malajzia", "Málta",
-"Mexikó", "Monaco", "Marokkó", "Hollandia", "Új-Zéland", "Norvégia", "Paraguay",
-"Fülöp-szigetek", "Lengyelország", "Portugália", "Katar", "Románia", "Oroszország",
-"San Marino", "Szaud-Arábia", "Szlovákia", "Szlovénia", "Dél-afrikai Köztársaság",
-"Spanyolország", "Svédország", "Svájc", "Thaiföld", "Tunézia", "Törökország", "Türkmenisztán",
-"Ukrajna", "Egyesült Arab Emirátusok", "Egyesült Királyság", "Amerikai Egyesült Államok",
-"Uruguay", "Üzbégisztán", "Vatikáni városállam", "Venezuela", "Vietnám", "Szerbia", "Koszovó",
-"Montenegró"];
+    "Belgium", "Bosznia-Hercegovina", "Brazília", "Bulgária", "Kanada", "Chile", "Kína",
+    "Horvátország", "Kuba", "Ciprus", "Cseh köztársaság", "Dánia", "Egyiptom", "Észtország",
+    "Faroe-szigetek", "Finnország", "Franciaország", "Grúzia", "Németország", "Gibraltár",
+    "Görögország", "Hong Kong", "Magyarország", "Izland", "India", "Indonézia", "Irán", "Irak",
+    "Írország", "Izrael", "Olaszország", "Japán", "Kazahsztán", "Dél-Koreai Köztársaság", "Kuwait",
+    "Lettország", "Liechtenstein", "Litvánia", "Luxemburg", "Makedónia", "Malajzia", "Málta",
+    "Mexikó", "Monaco", "Marokkó", "Hollandia", "Új-Zéland", "Norvégia", "Paraguay",
+    "Fülöp-szigetek", "Lengyelország", "Portugália", "Katar", "Románia", "Oroszország",
+    "San Marino", "Szaud-Arábia", "Szlovákia", "Szlovénia", "Dél-afrikai Köztársaság",
+    "Spanyolország", "Svédország", "Svájc", "Thaiföld", "Tunézia", "Törökország", "Türkmenisztán",
+    "Ukrajna", "Egyesült Arab Emirátusok", "Egyesült Királyság", "Amerikai Egyesült Államok",
+    "Uruguay", "Üzbégisztán", "Vatikáni városállam", "Venezuela", "Vietnám", "Szerbia", "Koszovó",
+    "Montenegró"];
 
 // User submits order, process their request
 function submitOrder() {
@@ -23,7 +23,7 @@ function submitOrder() {
   let city = _('city').value;
   let address = _('address').value;
   let mobile = _('mobile').value;
-  
+
   _('errStatus').innerHTML = '';
   _('succStatus').innerHTML = '';
 
@@ -40,11 +40,11 @@ function submitOrder() {
     statusFill('errStatus', 'Kérlek valós irányítószámot adj meg');
     return;
   } else if (!isLoggedIn && !_('email').value && !_('pass').value && !_('emailReg').value
-    && !_('passReg').value && !_('repassReg').value) {
+      && !_('passReg').value && !_('repassReg').value) {
     statusFill('errStatus', 'Regisztrálj vagy jelentkezz be');
     return;
   } else if (!isLoggedIn && (_('email').value || _('pass').value)
-    && (_('emailReg').value || _('passReg').value || _('repassReg').value)) {
+      && (_('emailReg').value || _('passReg').value || _('repassReg').value)) {
     statusFill('errStatus', 'Egyszerre próbálsz bejelentkezni és regisztrálni');
     return;
   } else if (!isLoggedIn && (_('email').value || _('pass').value)) {
@@ -55,7 +55,7 @@ function submitOrder() {
     }
     authType = 'login';
   } else if (!isLoggedIn && (_('emailReg').value || _('passReg').value || 
-    _('repassReg').value)) {
+        _('repassReg').value)) {
     // Validate registration on client side
     let email = _('emailReg').value;
     let pass = _('passReg').value;
@@ -63,11 +63,11 @@ function submitOrder() {
     if (!regVal(email, pass, passConf, 'errStatus', 'submitBtn')) return;
     authType = 'register';
   } else if (_('billingName') && (_('billingName').value || _('billingPcode').value ||
-    _('billingCity').value || _('billingAddress').value || _('billingCompname') &&
-    (_('billingCompname').value || _('billingCompnum').value))) {
+        _('billingCity').value || _('billingAddress').value || _('billingCompname') &&
+        (_('billingCompname').value || _('billingCompnum').value))) {
     let isComp = false;
     if (_('billingCompname') && (_('billingCompname').value || _('billingCompnum').value 
-      || _('buyAsComp').checked)) {
+          || _('buyAsComp').checked)) {
       isComp = true;
     }
 
@@ -77,9 +77,9 @@ function submitOrder() {
   }
 
   /*
-    Add payment & delivery data + login/registration credentials to the 1st element of the
-    array
-  */
+     Add payment & delivery data + login/registration credentials to the 1st element of the
+     array
+   */
   data[0].payment = 'transfer';
   data[0].name = name;
   data[0].pcode = pcode;
@@ -115,40 +115,40 @@ function submitOrder() {
 
   // Send data to server for further validation
   fetch('/validateOrder', {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    method: 'POST',
-    body: JSON.stringify(data)
-  }).then(response => response.json()).then(data => {
-    if (data.success) {
-      // On successful order remove items from the cookies (if order was not a single item)
-      window.scrollTo(0, 0);
-      if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
-      _('main').classList = 'flexDiv';
-      _('main').style.flexDirection = 'column';
-      _('main').style.alignItems = 'center';
-      _('main').innerHTML = `
-        <img src="/images/icons/deliver.png" width="100">
+headers: {
+'Content-Type': 'application/json'
+},
+method: 'POST',
+body: JSON.stringify(data)
+}).then(response => response.json()).then(data => {
+  if (data.success) {
+  // On successful order remove items from the cookies (if order was not a single item)
+  window.scrollTo(0, 0);
+  if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
+  _('main').classList = 'flexDiv';
+  _('main').style.flexDirection = 'column';
+  _('main').style.alignItems = 'center';
+  _('main').innerHTML = `
+  <img src="/images/icons/deliver.png" width="100">
 
-        <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
-        <p class="align dgray">
-          A termék(ek) legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
-          szállítva.<br>
-          Köszönjük, hogy a Zaccordot választottad!
-        </p>
-        <button class="btnCommon fillBtn" style="margin: 20px auto;"
-          onclick="window.location.href='/'">
-          Vissza a főoldalra
-        </button>
-      `;
-    } else {
-      _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
-    }
+  <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
+  <p class="align dgray">
+  A termék(ek) legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
+  szállítva.<br>
+  Köszönjük, hogy a Zaccordot választottad!
+  </p>
+  <button class="btnCommon fillBtn" style="margin: 20px auto;"
+  onclick="window.location.href='/'">
+  Vissza a főoldalra
+  </button>
+  `;
+  } else {
+    _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
+  }
   }).catch(err => {
     console.log(err);
     _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
-  });
+    });
 }
 
 // Validate parameters if user has a different billing address
@@ -183,25 +183,25 @@ let compAdded = false;
 
 // Toggle 'different billing address' form
 _('diffBilling').addEventListener('click', function toggleForm(e) { 
-  if (this.getAttribute('data-status') != 'close') {
+    if (this.getAttribute('data-status') != 'close') {
     _('diffBilling').innerText = 'Megegyező számlázási cím';
     _('billingForm').style.display = 'flex';
     if (_('bac')) _('bac').style.display = 'block';
     _('diffBilling').classList = `
-      btnCommon fillBtn pad centr animate__animated animate__fadeIn
+    btnCommon fillBtn pad centr animate__animated animate__fadeIn
     `;
 
     _('billingForm').innerHTML = `
-      <input type="text" class="dFormField" id="billingName" placeholder="Név"> 
+    <input type="text" class="dFormField" id="billingName" placeholder="Név"> 
     `; 
 
     _('billingHolder').classList = `animate__animated animate__fadeIn`;
 
     let res = '<select id="billingCountry" class="dFormField" style="margin-top: 0;">';
     for (let i = 0; i < countries.length; i++) {
-      let selected = '';
-      if (countries[i] === 'Magyarország') selected = 'selected';
-      res += `<option value="${countries[i]}" ${selected}>${countries[i]}</option>`;
+    let selected = '';
+    if (countries[i] === 'Magyarország') selected = 'selected';
+    res += `<option value="${countries[i]}" ${selected}>${countries[i]}</option>`;
     }
 
     res += '</section>';
@@ -209,8 +209,8 @@ _('diffBilling').addEventListener('click', function toggleForm(e) {
       <input type="text" class="dFormField" id="billingPcode" placeholder="Irányítószám"> 
       <input type="text" class="dFormField" id="billingCity" placeholder="Város"> 
       <input type="text" class="dFormField" id="billingAddress"
-        placeholder="Cím (hsz., em., ajtó)"> 
-    `;
+      placeholder="Cím (hsz., em., ajtó)"> 
+      `;
 
     if (!compAdded) {
       _('billingHolder').innerHTML += `

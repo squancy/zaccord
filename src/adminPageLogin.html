@@ -4,6 +4,7 @@
     <title>Zaccord - admin felület</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex" />
     <link rel="stylesheet" href="/animate/animate.css">
     <link rel="stylesheet" href="/style/style.css">
     <link rel="stylesheet" href="/style/nprogress.css">
@@ -25,11 +26,18 @@
   </head>
   <body> 
     <section class="keepBottom">
-      <p>Zaccord admin felület</p>
-      <input type="text" placeholder="User" id="user">
-      <input type="password" placeholder="Jelszó" id="pass">
-      <button id="ok">ok</button>
-      <div id="status"></div>
+      <p class="mainTitle">Zaccord admin felület</p>
+      <div class="formContainer">
+        <input type="text" class="formField" id="user" placeholder="Felhasználónév">
+        <input type="password" class="formField" id="pass" placeholder="Jelszó"
+          style="margin-bottom: 0;">
+        <div id="errStatus" class="errorBox"></div>
+        <div class="loadImg" id="loader"></div>
+        <button class="fillBtn btnCommon" id="ok" style="margin-top: 20px;">
+          Baszassuk neki
+        </button>
+        <div id="status" class="align" style="margin-top: 20px;"></div>
+      </div>
     </section>
   </body>
 </html>

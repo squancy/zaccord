@@ -8,8 +8,44 @@ function jsonSafe(data) {
   return true;
 }
 
+function toggleShowcase(status) {
+  if (status === 'show') {
+    _('wideShowcase').style.display = 'block';
+    _('popProds').style.display = 'block';
+    _('ms').style.marginTop = '0';
+    if (window.mobileCheck()) {
+      _('wideShowcase').style.marginTop = '110px';
+    } else {
+      _('wideShowcase').style.marginTop = '150px';
+    }
+  } else {
+    _('wideShowcase').style.display = 'none';
+    _('popProds').style.display = 'none';
+    if (!window.mobileCheck()) {
+      _('ms').style.marginTop = '140px';
+    } else {
+      _('ms').style.marginTop = '110px';
+    }
+  }
+}
+
+let startTime = Date.now();
+let to;
 function searchForItem() {
+  let currentTime = Date.now();
   let value = _('sfi').value;
+
+  _('dynamicShowcase').innerHTML = `
+    <img src="/images/icons/loader.gif" style="height: 40px; margin-bottom: 10px;">
+  `;
+
+  if (currentTime - startTime < 0.75 * Math.pow(10, 3)) {
+    clearTimeout(to);
+    to = setTimeout(searchForItem, currentTime - startTime);
+    return;
+  } else {
+    startTime = currentTime;
+  }
 
   // Scroll to top
   window.scrollTo({
@@ -25,8 +61,10 @@ function searchForItem() {
   if (!value) {
     data.isEmpty = true;
     toggleLower('block');
+    toggleShowcase('show');
   } else {
     toggleLower('none');
+    toggleShowcase('hide');
   }
 
   // Push data to server side for output
@@ -46,7 +84,11 @@ function searchForItem() {
     _('dynamicShowcase').innerHTML = data;
     ll.update();
   }).catch(err => {
-    console.log('a', err);
-    _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a keresés közben</p>';
+    _('dynamicShowcase').innerHTML = `
+      <div>
+        <img src="/images/icons/nofound.png" class="emptyCart">
+        <p class="dgray font18">Hiba történt a keresés során</p>
+      </div>
+    `;
   });
 }

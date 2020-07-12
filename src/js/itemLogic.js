@@ -42,8 +42,20 @@ const buildItemSection = (conn, itemId, req) => {
       let stlPath = result[0].stl_path;
       let showcaseImgs = result[0].img_showcase.split(',');
       let showcase = `<img src="/${imgUrl}">`;
+      let isBest = result[0].is_best;
       for (let img of showcaseImgs) {
         showcase += `<img src="/images/${img}">`;
+      }
+
+      let popularTxt = '';
+      if (isBest) {
+        popularTxt = `
+          <p class="gotham ddgray">Népszerű termék</p>
+        `;
+      } else {
+        popularTxt = `
+          <p class="gotham ddgray">Kategória: ${category}</p>
+        `;
       }
       
       output += `
@@ -62,6 +74,7 @@ const buildItemSection = (conn, itemId, req) => {
               <p class="gotham">
                 <span id="sizeHolder">${size}</span>
               </p>
+              ${popularTxt}
               <p class="gotham font14 qty" style="margin-bottom: 0;">
                 Mennyiség
               </p> 
@@ -188,7 +201,10 @@ const buildItemSection = (conn, itemId, req) => {
             }
           </script>
         `;
-        resolve(output);
+        let descToTag = description.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, '')
+        descToTag = descToTag.replace(/<a .*?>/, '').replace(/<\/a>/, '')
+          .replace(/<br>/g, '');
+        resolve([output, productName, descToTag]);
       });      
     });
   });

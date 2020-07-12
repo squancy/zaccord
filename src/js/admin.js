@@ -1,3 +1,4 @@
+// Change the admin url if you want
 if (_('ok')) {
   _('ok').addEventListener('click', function submitLogin(e) {
     let data = {
@@ -5,7 +6,7 @@ if (_('ok')) {
       'pass': _('pass').value
     };
 
-    fetch('/adminLogin', {
+    fetch('/ADMIN_LOGIN_URL', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -23,22 +24,24 @@ if (_('ok')) {
   });
 }
 
-if (_('hr_0')) {
+function hideU(i) {
+  _('transT_' + i).style.display = 'none';
+  _('pers_' + i).style.display = 'none';
+  _('bot_' + i).style.display = 'none';
+  _('binfo_' + i).style.display = 'none';
+}
+
+if (_('box_0')) {
   let i = 0;
   let priceSum = 0;
-  while (_('hr_' + i)) {
-    if (!_('hr_' + i)) break; 
+  while (_('box_' + i)) {
+    if (!_('box_' + i)) break; 
     let cuid =  _('uid_' + i) ? _('uid_' + i).innerText : NaN;
     let cot = _('ot_' + i) ? _('ot_' + i).innerText : NaN;
     let nuid = _('uid_' + (i + 1)) ? _('uid_' + (i + 1)).innerText : NaN;
     let not = _('ot_' + (i + 1)) ? _('ot_' + (i + 1)).innerText : NaN;
     let puid = _('uid_' + (i - 1)) ? _('uid_' + (i - 1)).innerText : NaN;
     let pot = _('ot_' + (i - 1)) ? _('ot_' + (i - 1)).innerText : NaN;
-
-    if (cuid == nuid && cot == not)  {
-      _('hr_' + i).style.display = 'none';
-      priceSum += Number(_('allp_' + i).innerText);
-    }
 
     if ((cuid != nuid || cot != not) && (cuid != puid || cot != pot)) {
       let cPrice = Number(_('allp_' + i).innerText);
@@ -50,6 +53,28 @@ if (_('hr_0')) {
       _('totp_' + i).innerText = priceSum + Number(_('allp_' + i).innerText) + sprices[i];
       priceSum = 0;
     }
+
+    if (cuid == nuid && cot == not)  {
+      _('box_' + i).style.borderBottom = 'none';
+      _('box_' + (i + 1)).style.borderTop = 'none';
+      _('box_' + i).style.borderRadius = '0';
+      
+      if (cot != pot && i > 0) {
+        _('box_' + i).style.borderRadius = '30px 30px 0 0';
+      } else {
+        hideU(i);
+      }
+      priceSum += Number(_('allp_' + i).innerText);
+    } else {
+      _('box_' + i).style.marginBottom = '20px';
+    }
+
+    if (cot != not && cot == pot && i > 0 && _('box_' + (i + 1))) {
+      _('box_' + i).style.borderRadius = '0 0 30px 30px';
+      _('box_' + i).style.marginBottom = '20px';
+      hideU(i);
+    }
+
     i++;
   }
 }

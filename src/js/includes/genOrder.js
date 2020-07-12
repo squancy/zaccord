@@ -16,11 +16,17 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
         return;
       }
 
+      if (result.length === 0) {
+        resolve(output);
+        return;
+      }
+
       let lim = result.length;
       if (threeLimit) lim = 3;
 
       // Loop through items and build UI
       for (let i = 0; i < lim; i++) {
+        console.log(result, result[i], result.length)
         let itemID = result[i].item_id;
         let orderTime = result[i].order_time;
         let prodURL = result[i].url;

@@ -1,5 +1,5 @@
 // Build the index page from fixed products
-// NOTE: change user and password to your needs
+// NOTE: change user and pass to your needs
 const buildAdminPage = (conn, formData) => {
   return new Promise((resolve, reject) => {
     let user = formData.user;

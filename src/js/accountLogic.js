@@ -12,7 +12,6 @@ const buildAccountSection = (conn, userID) => {
       // First build 'orders so far': both fixed products & custom prints
       let output = `
         <section class="keepBottom">
-          <p class="mainTitle">Rendelések & Felhasználói adatok</p>
       `;
 
       let sQuery = `
@@ -30,7 +29,12 @@ const buildAccountSection = (conn, userID) => {
         // No orders so far
         if (result.length < 1) {
           output += `
-            <p class="blue align">Úgy tűnik, hogy eddig még nem adtál le rendelést</p>
+            <div>
+              <img src="/images/icons/orderHistory.png" class="emptyCart">
+              <p class="dgray align font22">
+                Úgy tűnik, hogy eddig még nem adtál le rendelést
+              </p>
+            </div>
           `;
         }
 

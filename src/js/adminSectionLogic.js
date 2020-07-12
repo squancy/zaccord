@@ -8,15 +8,15 @@ const buildAdminSection = (conn) => {
       ON f.id = o.item_id ORDER BY o.status ASC, o.order_time DESC`;
     conn.query(aQuery, [], (err, result, field) => {
       if (err) {
-        reject('hiba történt');
+        reject('Hiba történt');
         return;
       } else if (result.length === 0) {
-        resolve('nincsen rendelés az adatbázisban');
+        resolve('Nincsen rendelés az adatbázisban');
         return;
       }
 
       // There are orders in db so display them
-      let output = '';
+      let output = '<section class="keepBottom" style="margin-top: 40px;">';
       let sprices = {};
       for (let i = 0; i < result.length; i++) {
         let oid = result[i].oid;
@@ -42,70 +42,152 @@ const buildAdminSection = (conn) => {
         let address = result[i].address;
         let mobile = result[i].mobile;
 
-        let productName = result[i].name ? result[i].name : 'Bérnyomtatott termék';
+        let litSphere = result[i].lit_sphere;
+        let litSize = result[i].lit_size;
+        let litFname = result[i].lit_fname;
+
+        let billingName = result[i].billing_name;
+        let billingCountry = result[i].billing_country;
+        let billingCity = result[i].billing_city;
+        let billingPcode = result[i].billing_pcode;
+        let billingAddress = result[i].billing_address;
+        let billingCompname = result[i].billing_compname;
+        let billingCompTaxNum = result[i].billing_comp_tax_num;
+
+        if (litSphere) {
+          var productName = 'Litofánia';
+        } else {
+          var productName = result[i].name ? result[i].name : 'Bérnyomtatott termék';
+        }
 
         let transferText = '';
         if (isTransfer === 'előre utalás') {
-          transferText = '<b>Utalási azonosító:</b> ' + transferID;
+          transferText = `
+            <div class="inBox">
+              <b>Utalási azonosító:</b> ${transferID}
+            </div>
+          `;
         }
 
         let cpText = '';
         if (cpFname) {
-          cpText = `<a download href="/printUploads/${cpFname}.stl">STL fájl</a>`;
+          cpText = `
+            <div class="inBox">
+              <b>Forrás:</b>
+              <a download href="/printUploads/${cpFname}.stl" class="blueLink">STL fájl</a>
+            </div>
+          `;
+        } else if (litFname) {
+          var litLink = `
+            <div class="inBox">
+              <b>Forrás:</b>
+              <a download href="/printUploads/lithophanes/${litFname}" class="blueLink">
+                Kép
+              </a>
+            </div>
+          `;
         }
 
         let style = status ? 'opacity: 0.3' : 'opacity: 1';
         let checked = status ? 'checked' : '';
         
-        let charge = 0;
         let tFinalPrice = quantity * aPrice;
-        if (quantity * aPrice < 1500) charge = 1500;
-        if (quantity * aPrice < 1000) tFinalPrice += 1000 - tFinalPrice;
+        if (quantity * aPrice < 500) tFinalPrice += 500 - tFinalPrice;
+        
+        let bInfo = `
+          <div class="inBox">
+            <b>Számlázási cím = szállítási cím</b>
+          </div>
+        `;
+        if (billingName) {
+          bInfo = `
+            <div class="inBox"><b>Név:</b> ${billingName}</div>
+            <div class="inBox"><b>Ország:</b> ${billingCountry}</div>
+            <div class="inBox"><b>Város:</b> ${billingCity}</div>
+            <div class="inBox"><b>Irsz.:</b> ${billingPcode}</div>
+            <div class="inBox"><b>Cím:</b> ${billingAddress}</div>
+          `; 
+
+          if (billingCompname) {
+            bInfo += `
+              <div class="inBox"><b>Cégnév:</b> ${billingCompname}</div>
+              <div class="inBox"><b>Adószám:</b> ${billingCompTaxNum}</div>
+            `; 
+          }
+        }
 
         // Build html output
         output += `
-          <div style="${style}; text-align: center;" id="box_${i}">
-            <span style="margin: 10px;"><b>Terméknév:</b> ${productName}</span>
-            <span style="margin: 10px;"><b>Ár:</b> ${aPrice} Ft</span>
-            <span style="margin: 10px;"><b>Rvas:</b> ${rvas}mm</span>
-            <span style="margin: 10px;"><b>Sűrűség:</b> ${suruseg}%</span>
-            <span style="margin: 10px;"><b>Szín:</b> ${color}</span>
-            <span style="margin: 10px;"><b>Méretezés:</b> x${rvas}</span>
-            <span style="margin: 10px;"><b>Fvas:</b> ${rvas}mm</span>
-            <span style="margin: 10px;"><b>Mennyiség:</b> ${quantity}db</span>
-            <br><br>
-            <span style="margin: 10px;"><b>Fizetési mód:</b> ${isTransfer}</span>
-            <span style="margin: 10px;">${transferText}</span>
-            <br><br>
-            <span style="display: none;" id="uid_${i}">${uid}</span>
-            <span style="margin: 10px;"><b>Név:</b> ${name}</span>
-            <span style="margin: 10px;"><b>Irsz.:</b> ${postalCode}</span>
-            <span style="margin: 10px;"><b>Város:</b> ${city}</span>
-            <span style="margin: 10px;"><b>Cím:</b> ${address}</span>
-            <span style="margin: 10px;"><b>Tel.:</b> ${mobile}</span>
-            <span style="margin: 10px;">
-              <b>Rendelési idő:</b> <span id="ot_${i}">${orderTime}</span>
-            </span>
-            <span style="margin: 10px;">${cpText}</span>
-            <br>
-            <input type="checkbox" id="ch_${i}" ${checked} value="${Number(!status)}"
-              style="display: block; margin: 0 auto; margin-top: 10px; width: 30px;
-              height: 30px;" onclick="updateStatus(${oid}, ${i})">
-            <p style="text-align: center;">
-              <i><b>Összesen:</b></i>
-              <span id="allp_${i}">${tFinalPrice}</span> Ft
-            </p>
-            <p style="text-align: center; display: none;" id="totpHolder_${i}">
-              <u><i><b>Egész rendelés ár:</b></i></u> <span id="totp_${i}"></span> Ft
-              (szállítással együtt)
-            </p>
+          <div style="${style}; text-align: center;" id="box_${i}" class="flexDiv bigBox trans">
+            <div class="flexDiv smallBox">
+              <div class="inBox"><b>Terméknév:</b> ${productName}</div>
+              <div class="inBox"><b>Ár:</b> ${aPrice} Ft</div>
+              <div class="inBox"><b>Szín:</b> ${color}</div>
+        `;
+
+        if (!litSphere) {
+          output += `
+              <div class="inBox"><b>Rvas:</b> ${rvas}mm</div>
+              <div class="inBox"><b>Sűrűség:</b> ${suruseg}%</div>
+              <div class="inBox"><b>Méretezés:</b> x${rvas}</div>
+              <div class="inBox"><b>Fvas:</b> ${rvas}mm</div>
+          `;
+        } else {
+          output += `
+              <div class="inBox"><b>Forma:</b> ${litSphere}</div>
+              <div class="inBox"><b>Méret:</b> ${litSize}</div>
+              ${litLink}
+          `;
+        }
+
+        output += `
+              <div class="inBox"><b>Mennyiség:</b> ${quantity}db</div>
+            </div>
+            <div class="flexDiv smallBox" id="transT_${i}">
+              <div class="inBox"><b>Fizetési mód:</b> ${isTransfer}</div>
+              ${transferText}
+            </div>
+            <div class="flexDiv smallBox" id="pers_${i}">
+              <div style="display: none;" id="uid_${i}">${uid}</div>
+              <div class="inBox"><b>Név:</b> ${name}</div>
+              <div class="inBox"><b>Irsz.:</b> ${postalCode}</div>
+              <div class="inBox"><b>Város:</b> ${city}</div>
+              <div class="inBox"><b>Cím:</b> ${address}</div>
+              <div class="inBox"><b>Tel.:</b> ${mobile}</div>
+            </div>
+            <div class="flexDiv smallBox">
+              <div class="inBox" id="bot_${i}">
+                <b>Rendelési idő:</b> <div id="ot_${i}">${orderTime}</div>
+              </div>
+              ${cpText}
+            </div>
+            <div class="flexDiv smallBox" id="binfo_${i}">
+              ${bInfo} 
+            </div>
+            <div class="align" style="margin: 10px 0 20px 0;" id="bac">
+              <label class="chCont">Megjelölés készként
+                <input type="checkbox" id="ch_${i}" ${checked} value="${Number(!status)}"
+                onclick="updateStatus(${oid}, ${i})">
+                <span class="cbMark"></span>
+              </label>
+            </div>
+            <div class="gotham blue align font18" style="margin-bottom: 20px;">
+              <b>Összesen:</b>
+              <b id="allp_${i}" class="pc">${tFinalPrice}</b>
+              <span class="blk">Ft</span>
+              <span style="display: none; margin-top: 10px;" id="totpHolder_${i}" class="align">
+                <b class="gotham blue">Egész rendelés ár:</b>
+                <span id="totp_${i}" class="blk"></span>
+                <span class="blk">Ft (szállítással együtt)</span>
+              </span>
+            </div>
           </div>
-          <hr id="hr_${i}">
         `;
         sprices[i] = shippingPrice;
       }
 
       output += `
+        </section>
         <script type="text/javascript">
           let sprices = JSON.parse('${JSON.stringify(sprices)}');
         </script>

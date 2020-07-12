@@ -40,7 +40,7 @@ const buildLithophane = (conn, userID, filePaths) => {
       <div class="flexDiv" id="customProps" style="flex-wrap: wrap; margin-top: 10px;">
         <div>
           <p>
-            <span class="blue gotham">Ár:</span>
+            <span class="blue gotham">Egységár:</span>
             <span id="priceHolder">${totalPrice}</span> Ft 
           </p>
         </div>
@@ -79,24 +79,20 @@ const buildLithophane = (conn, userID, filePaths) => {
     output += isVisited();
     output += `
         let fileBuy = null;
-        function saveToCookies(ratio) {
-          // Initialize vars used globally
-          let data = [];
-          let arr = [];
+        // Initialize vars used globally
+        let data = [];
+        let arr = [];
 
+        function _(el) {
+          return document.getElementById(el);
+        }
+
+        function saveToCookies(ratio) {
           // Loop over file paths and extract file names 
           for (let f of Array.from('${filePaths}'.split(','))) {
             let x = f.split('/');
             arr.push('/' + x[x.length - 2] + '/' + x[x.length - 1])
           }
-
-          function _(el) {
-            return document.getElementById(el);
-          }
-
-          window.onbeforeunload = function() {
-            return "Biztos vagy benne, hogy újratöltöd az oldalt?";
-          };
 
           // Make sure the num of items in cookies do not exceed 15
           let canGo = true;
@@ -112,6 +108,7 @@ const buildLithophane = (conn, userID, filePaths) => {
             // Unique id
             let extension = arr[i].split('/')[2].split('.')[1];
             let id = arr[i].split('/')[2].replace('.' + extension, '');
+
             if ((!getCookie('cartItems') ||
               !Object.keys(JSON.parse(getCookie('cartItems'))).length ||
               !JSON.parse(getCookie('cartItems'))['content_' + id]) && canGo) {
@@ -138,6 +135,10 @@ const buildLithophane = (conn, userID, filePaths) => {
         }
 
         document.getElementsByClassName('hrStyle')[0].style.margin = 0;
+
+        window.onbeforeunload = function() {
+
+        };
       </script>
     `;
     output += `

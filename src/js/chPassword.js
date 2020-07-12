@@ -27,7 +27,7 @@ const chPassword = (conn, userID, formData) => {
 
         // Make sure password (or temp password) is correct
         let hashedPass = result[0].password;
-        let tmpPass = result[0].temp_password;
+        let tmpPass = result[0].temp_password ? result[0].temp_password : '';
         if (!bcrypt.compareSync(cpass, hashedPass) && !bcrypt.compareSync(cpass, tmpPass)) {
           reject('Hibás jelszót adtál meg');
           return;

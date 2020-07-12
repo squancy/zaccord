@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // Send email from a specific addr with arbitrary content
-// NOTE: configure email server credentials to your needs
+// NOTE: configure the parameters of the email server for yourself
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
