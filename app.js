@@ -5,7 +5,9 @@ const url = require('url');
 const mv = require('mv');
 const HTMLParser = require('node-html-parser');
 const randomstring = require("randomstring");
+const resizeImg = require('resize-img');
 const formidable = require('formidable');
+const sizeOf = require('image-size');
 const validateEmail = require('email-validator');
 const conn = require('./src/js/connectDb.js');
 const StlThumbnailer = require('node-stl-to-thumbnail');
@@ -371,6 +373,24 @@ const server = http.createServer((req, res) => {
       let filePaths = [];
       let promises = [];
 
+      // Check if only images are uploaded
+      let allImgs = true;
+      for (let i = 0; i < cFile.length; i++) {
+        let sp = cFile[i].name.split('.');
+        if (['png', 'jpg', 'jpeg'].indexOf(sp[sp.length - 1].toLowerCase()) < 0) {
+          allImgs = false;
+          break;
+        }
+      }
+
+      // Make sure no more than 1 img is uploaded
+      if (cFile.length > 1 && allImgs) {
+        imgError(res, userID, 'sfupload', 'Egyszerre csak 1 képet tölthetsz fel');
+        return; 
+      }
+
+      let uploadFnames = [];
+
       for (let i = 0; i < cFile.length; i++) {
         let oldpath = cFile[i].path;
         let splitted = cFile[i].name.split('.');
@@ -379,11 +399,7 @@ const server = http.createServer((req, res) => {
         if (['png', 'jpg', 'jpeg', 'stl'].indexOf(extension) < 0) {
           reject('Hibás fájlkiterjesztés');
           return;
-        } else if (cFile.length > 1) {
-          // Make sure no more than 1 img is uploaded
-          imgError(res, userID, 'sfupload', 'Egyszerre csak 1 képet tölthetsz fel');
-          return; 
-        }
+        } 
 
         // If user is not logged in file prefix is 12 char random string, otherwise it's the uid
         let prefix = randomstring.generate(12);
@@ -400,6 +416,8 @@ const server = http.createServer((req, res) => {
           var newpath = __dirname + '/printUploads/lithophanes/' + uploadFileName + '.'
             + extension;
         }
+
+        uploadFnames.push(uploadFileName);
 
         let send = newpath.substr(1);
         let move = new Promise((resolve, reject) => {
@@ -421,13 +439,45 @@ const server = http.createServer((req, res) => {
                 ] 	
               }).then(function(thumbnails) {
                 thumbnails[0].toBuffer(function(err, buf) {      
-                  fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFileName +
+                  fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFnames[i] +
                     '.png', buf);
                   resolve('success');
                 });
               });
             } else {
-              resolve('success');
+              // Resize image: max width and height is 1920
+              // Calc the desired width and height while keeping the same aspect ratio
+              let dimensions = sizeOf(newpath);
+              let width = dimensions.width;
+              let height = dimensions.height;
+
+              if (width <= 1920 && height <= 1920) {
+                resolve('success');
+              } else {
+                // Set width and heigth of image; make sure the dimensions are within the range
+                if (width > 1920 && height <= 1920) {
+                  var options = {
+                    width: 1920
+                  }; 
+                } else if (width <= 1920 && height > 1920) {
+                   var options = {
+                    height: 1920
+                  };                  
+                } else {
+                  var options = {
+                    width: 1920,
+                    height: Math.round(1920 * Math.min(width / height, height / width))
+                  };
+                }
+
+                // Resize img and write file
+                (async () => {
+                  const image = await resizeImg(fs.readFileSync(newpath), options);
+
+                  fs.writeFileSync(newpath, image);
+                  resolve('success');
+                })();
+              }
             }
           });
         });
@@ -486,7 +536,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/ADMIN_LOGIN_VALIDATE' && req.method.toLowerCase() === 'post') {
     // Admin page
     let body = '';
     req.on('data', data => {
@@ -504,7 +554,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/updateOrderStatus' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/UPDATE_STATUS' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -645,7 +695,7 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'shop', err);
             });
           // Admin page login authentication
-          } else if (req.url.substr(0, 14) === '/ADMIN_URL') {
+          } else if (req.url.substr(0, 14) === '/lick_weebshit') {
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);

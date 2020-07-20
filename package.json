@@ -27,6 +27,7 @@
     "nodemailer": "^6.4.6",
     "querystring": "^0.2.0",
     "randomstring": "^1.1.5",
+    "resize-img": "^2.0.0",
     "sync-mysql": "^3.0.1"
   },
   "devDependencies": {
