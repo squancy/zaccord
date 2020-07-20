@@ -149,7 +149,9 @@ const buildMainSection = (conn, sValue = null, isEmpty = false, isCat = false) =
               <div class="bgShowcase bgCommon">
                 <div class="darken"></div>
                 <div class="textCenter">
-                  <p class="mainText lh gotham align">3D nyomtatott termékek a Zaccordon</p>
+                  <p class="mainText lh gotham align" style="padding: 10px;">
+                    3D nyomtatott termékek a Zaccordon
+                  </p>
                 </div>
               </div>
             </div>

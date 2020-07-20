@@ -100,17 +100,9 @@ function sortByCat(cat, cid) {
 
   toggleShowcase('hide');
   if (!window.mobileCheck()) {
-    if (_('wideShowcase').style.display === 'block') {
-      _('ms').style.marginTop = '190px';
-    } else {
-      _('ms').style.marginTop = '140px';
-    }
+    _('ms').style.marginTop = '190px';
   } else {
-    if (_('wideShowcase').style.display === 'block') {
-      _('ms').style.marginTop = '160px';
-    } else {
-      _('ms').style.marginTop = '110px';
-    }
+    _('ms').style.marginTop = '160px';
   }
 
   fetch('/category', {

@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // Send email from a specific addr with arbitrary content
-// NOTE: configure the parameters of the email server for yourself
+// NOTE: you may want to change nodemailer credentials to satisfy your needs
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
@@ -26,9 +26,10 @@ function sendEmail(from, content, email, subject) {
         <div style="width: 100%; text-align: center; padding: 10px; box-sizing: border-box;">
           ${content}
         </div>
-        <div style="width: 100%; background-color: #171717; color: white; padding: 10px;
+        <div style="width: 100%; background-color: #f4f4f4; color: #171717; padding: 10px;
           border-radius: 10px; text-align: center; box-sizing: border-box;">
-          <p>	&copy; Zaccord ${curYear} - "Minden ötletet megvalósítani"</p>
+          <p style="margin-bottom: 0; color: #7d7d7d;">Minden ötletet megvalósítani</p>
+          <p style="color: #7d7d7d;">&copy; ${curYear} Zaccord</p>
         </div>
       </div>
     `;
@@ -42,7 +43,6 @@ function sendEmail(from, content, email, subject) {
 
     transporter.sendMail(mailOptions, function(error, info) {
       if (error) {
-          console.log(error);
         reject('Egy nem várt hiba történt, kérlek próbáld űjra');
         return;
       } else {

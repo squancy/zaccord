@@ -6,7 +6,7 @@ if (_('ok')) {
       'pass': _('pass').value
     };
 
-    fetch('/ADMIN_LOGIN_URL', {
+    fetch('/adminLogin', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -50,7 +50,12 @@ if (_('box_0')) {
 
     if ((cuid != nuid || cot != not) && (cuid == puid && cot == pot)) {
       _('totpHolder_' + i).style.display = 'block';
-      _('totp_' + i).innerText = priceSum + Number(_('allp_' + i).innerText) + sprices[i];
+      let extraPrice = 0;
+      if (priceSum + Number(_('allp_' + i).innerText) < 500) {
+        extraPrice = 500 - (priceSum + Number(_('allp_' + i).innerText));
+      }
+      _('totp_' + i).innerText = priceSum + Number(_('allp_' + i).innerText) + sprices[i]
+        + extraPrice;
       priceSum = 0;
     }
 
@@ -78,6 +83,9 @@ if (_('box_0')) {
     i++;
   }
 }
+
+_('box_0').style.borderTopLeftRadius = '30px';
+_('box_0').style.borderTopRightRadius = '30px';
 
 function updateStatus(i, boxID) {
   let val = _('ch_' + boxID).value;

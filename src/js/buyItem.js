@@ -258,7 +258,6 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 }
               
                 price *= discount;
-                console.log(cpFname);
                 let sameBillingAddr = billingType == 'same' ? 1 : 0;
                 let valueArr = [req.user.id, itemID, price, String(rvas), String(suruseg),
                   String(scale), color, String(fvas), sphere, size, file, quantity, isTrans, 
@@ -314,7 +313,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 </p>
               `;
               let subject = 'Megkaptuk a rendelésed!';
-              sendEmail('weebshit@beetster.pearscom.com', emailContent, email, subject);
+              sendEmail('info@zaccord.com', emailContent, email, subject);
               
               resolve('success');
             });

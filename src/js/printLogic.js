@@ -24,7 +24,7 @@ const buildMainSection = (conn) => {
         </form>
       </div>
       <div class="cPrintDivs rightDiv flexDiv previews gotham" id="bigPrew">
-        <div id="prew">
+        <div id="prew" class="lh">
           <p class="gotham font24" style="color: #2d2d2d;">Még nem töltöttél fel fájlokat</p> 
           <p class="gotham font18" style="color: #2d2d2d;">
             Nincsen kinyomtatni való fájlod?<br>

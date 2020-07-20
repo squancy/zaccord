@@ -53,7 +53,8 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
         <p>Forma: ${data.sphere}</p>
       </div>
       <div>
-        <p>Méret: ${data.size.replace(/x/g, 'mm x ') + 'mm'}</p>
+        <p>Méret: ${data.size.split('x').map(v => Number(v).toFixed(2)).join('x')
+          .replace(/x/g, 'mm x ') + 'mm'}</p>
       </div>
     `; 
   }

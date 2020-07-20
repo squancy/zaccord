@@ -38,6 +38,7 @@ const buildItemSection = (conn, itemId, req) => {
       let price = result[0].price;
       let size = result[0].size.replace(/x/g, 'mm x ');
       size += 'mm';
+      size = size.replace(/\smm/g, 'mm');
       let description = result[0].description.replace('<!--DATE-->', new Date().getFullYear());
       let stlPath = result[0].stl_path;
       let showcaseImgs = result[0].img_showcase.split(',');
@@ -65,7 +66,7 @@ const buildItemSection = (conn, itemId, req) => {
               ${showcase}
             </div>
 
-            <p class="prodName hideSeek align" id="pname">${productName}</p>
+            <p class="prodName hideSeek align lh" id="pname">${productName}</p>
             <div class="itemInfo">
               <p class="prodName hideText">${productName}</p>
               <p class="itemPrice">

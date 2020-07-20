@@ -22,7 +22,7 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
       }
 
       let lim = result.length;
-      if (threeLimit) lim = 3;
+      if (threeLimit) lim = result.length > 3 ? 3 : result.length;
 
       // Loop through items and build UI
       for (let i = 0; i < lim; i++) {

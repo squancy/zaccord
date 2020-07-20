@@ -31,14 +31,19 @@ function toggleShowcase(status) {
 
 let startTime = Date.now();
 let to;
+let showedEmpty = false;
 function searchForItem() {
   let currentTime = Date.now();
   let value = _('sfi').value;
 
+  // Prevent empty searches after all content is shown
+  if (!value && showedEmpty) return;
+  
   _('dynamicShowcase').innerHTML = `
     <img src="/images/icons/loader.gif" style="height: 40px; margin-bottom: 10px;">
   `;
 
+  // Only send the text to server in every 3/4 secs
   if (currentTime - startTime < 0.75 * Math.pow(10, 3)) {
     clearTimeout(to);
     to = setTimeout(searchForItem, currentTime - startTime);
@@ -62,9 +67,11 @@ function searchForItem() {
     data.isEmpty = true;
     toggleLower('block');
     toggleShowcase('show');
+    showedEmpty = true;
   } else {
     toggleLower('none');
     toggleShowcase('hide');
+    showedEmpty = false;
   }
 
   // Push data to server side for output

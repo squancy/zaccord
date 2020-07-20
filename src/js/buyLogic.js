@@ -15,6 +15,7 @@ const buildBuySection = (conn, paramObj, req) => {
     // Generate random 8-char order ID
     let orderID = randomstring.generate(8);
     let userID = req.user.id;
+    console.log(userID)
 
     // Build html output
     let output = `
@@ -25,7 +26,7 @@ const buildBuySection = (conn, paramObj, req) => {
           </p>
           <label class="container">
             <div style="padding-bottom: 0;">Utánvétel</div>
-            <div>
+            <div class="lh">
               Ez esetben a csomag kiszállítása után történik meg a fizetés készpénzzel vagy
               bankkártyával.
             </div>
@@ -35,7 +36,7 @@ const buildBuySection = (conn, paramObj, req) => {
 
           <label class="container">
             <div style="padding-bottom: 0;">Előre utalás</div>
-            <div>
+            <div class="lh">
               Ilyenkor az alábbi számlára való utalással fizethetsz: 12001008-00238600-00100004.
               Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
               <span class="blue">${orderID}</span>

@@ -4,14 +4,17 @@ let countries = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria",
     "Horvátország", "Kuba", "Ciprus", "Cseh köztársaság", "Dánia", "Egyiptom", "Észtország",
     "Faroe-szigetek", "Finnország", "Franciaország", "Grúzia", "Németország", "Gibraltár",
     "Görögország", "Hong Kong", "Magyarország", "Izland", "India", "Indonézia", "Irán", "Irak",
-    "Írország", "Izrael", "Olaszország", "Japán", "Kazahsztán", "Dél-Koreai Köztársaság", "Kuwait",
+    "Írország", "Izrael", "Olaszország", "Japán", "Kazahsztán", "Dél-Koreai Köztársaság",
+    "Kuwait",
     "Lettország", "Liechtenstein", "Litvánia", "Luxemburg", "Makedónia", "Malajzia", "Málta",
     "Mexikó", "Monaco", "Marokkó", "Hollandia", "Új-Zéland", "Norvégia", "Paraguay",
     "Fülöp-szigetek", "Lengyelország", "Portugália", "Katar", "Románia", "Oroszország",
     "San Marino", "Szaud-Arábia", "Szlovákia", "Szlovénia", "Dél-afrikai Köztársaság",
-    "Spanyolország", "Svédország", "Svájc", "Thaiföld", "Tunézia", "Törökország", "Türkmenisztán",
+    "Spanyolország", "Svédország", "Svájc", "Thaiföld", "Tunézia", "Törökország",
+    "Türkmenisztán",
     "Ukrajna", "Egyesült Arab Emirátusok", "Egyesült Királyság", "Amerikai Egyesült Államok",
-    "Uruguay", "Üzbégisztán", "Vatikáni városállam", "Venezuela", "Vietnám", "Szerbia", "Koszovó",
+    "Uruguay", "Üzbégisztán", "Vatikáni városállam", "Venezuela", "Vietnám", "Szerbia",
+    "Koszovó",
     "Montenegró"];
 
 // User submits order, process their request
@@ -115,40 +118,40 @@ function submitOrder() {
 
   // Send data to server for further validation
   fetch('/validateOrder', {
-headers: {
-'Content-Type': 'application/json'
-},
-method: 'POST',
-body: JSON.stringify(data)
-}).then(response => response.json()).then(data => {
-  if (data.success) {
-  // On successful order remove items from the cookies (if order was not a single item)
-  window.scrollTo(0, 0);
-  if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
-  _('main').classList = 'flexDiv';
-  _('main').style.flexDirection = 'column';
-  _('main').style.alignItems = 'center';
-  _('main').innerHTML = `
-  <img src="/images/icons/deliver.png" width="100">
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+    }).then(response => response.json()).then(data => {
+      if (data.success) {
+        // On successful order remove items from the cookies (if order was not a single item)
+        window.scrollTo(0, 0);
+        if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
+        _('main').classList = 'flexDiv';
+        _('main').style.flexDirection = 'column';
+        _('main').style.alignItems = 'center';
+        _('main').innerHTML = `
+          <img src="/images/icons/deliver.png" width="100">
 
-  <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
-  <p class="align dgray">
-  A termék(ek) legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
-  szállítva.<br>
-  Köszönjük, hogy a Zaccordot választottad!
-  </p>
-  <button class="btnCommon fillBtn" style="margin: 20px auto;"
-  onclick="window.location.href='/'">
-  Vissza a főoldalra
-  </button>
-  `;
-  } else {
-    _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
-  }
+          <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
+          <p class="align dgray lh">
+            A termék(ek) legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
+            szállítva.<br>
+            Köszönjük, hogy a Zaccordot választottad!
+          </p>
+          <button class="btnCommon fillBtn" style="margin: 20px auto;"
+          onclick="window.location.href='/'">
+            Vissza a főoldalra
+          </button>
+        `;
+    } else {
+      _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
+    }
   }).catch(err => {
     console.log(err);
     _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
-    });
+  });
 }
 
 // Validate parameters if user has a different billing address

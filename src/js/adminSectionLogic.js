@@ -60,6 +60,11 @@ const buildAdminSection = (conn) => {
           var productName = result[i].name ? result[i].name : 'Bérnyomtatott termék';
         }
 
+        if (litSize) {
+          litSize = result[i].lit_size.split('x').map(v => Number(v).toFixed(2))
+          .join('mm x ') + 'mm';
+        }
+
         let transferText = '';
         if (isTransfer === 'előre utalás') {
           transferText = `
@@ -91,8 +96,12 @@ const buildAdminSection = (conn) => {
         let style = status ? 'opacity: 0.3' : 'opacity: 1';
         let checked = status ? 'checked' : '';
         
-        let tFinalPrice = quantity * aPrice;
-        if (quantity * aPrice < 500) tFinalPrice += 500 - tFinalPrice;
+        let tFinalPrice = Math.round(quantity * aPrice);
+        let nextOt = result[i + 1] ? result[i + 1].order_time : '';
+        let prevOt = result[i - 1] ? result[i - 1].order_time : '';
+        if (quantity * aPrice < 500 && orderTime != nextOt && orderTime != prevOt) {
+          tFinalPrice += 500 - tFinalPrice;
+        }
         
         let bInfo = `
           <div class="inBox">

@@ -199,9 +199,10 @@ if (_('buyCP')) {
     let scale = _('scale').value;
     let fvas = _('fvas').value;
     let quantity = _('quantity').value;
+    let paths = arr.map(v => v.split('/')[2].replace('.stl', ''));
 
     window.location.href =
-    `/buy?product=cp&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale}&fvas=${fvas}&q=${quantity}&thName=${thName}&files=${paths}`;
+    `/buy?product=cp&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale}&fvas=${fvas}&q=${quantity}&files=${paths}`;
   });
 }
 
