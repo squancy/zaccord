@@ -1,5 +1,4 @@
 const userExists = require('./includes/userExists.js');
-const genItem = require('./includes/genItem.js');
 const genDelivery = require('./includes/genDelivery.js');
 const genOrder = require('./includes/genOrder.js');
 
@@ -52,6 +51,9 @@ const buildAccountSection = (conn, userID) => {
               </div>
               <div id="allOrders">
               </div>
+              <p class="align note ddgray">
+                A rendelés árak nem tartalmazzák a szállítási és egyéb költségeket!
+              </p>
             `;
           }
         }).then(o => {

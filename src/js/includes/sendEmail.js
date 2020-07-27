@@ -5,12 +5,12 @@ const nodemailer = require('nodemailer');
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
-      host: 'HOST',
+      host: 'EMAIL_HOST',
       port: 465,
       secure: true, 
       auth: {
-        user: 'USER',
-        pass: 'PASS'
+        user: 'EMAIL_USERNAME',
+        pass: 'EMAIL_PASS'
       }
     });
 
@@ -23,7 +23,8 @@ function sendEmail(from, content, email, subject) {
             style="width: 50px; height: 50px; display: block;
             margin: 0 auto;">  
         </div>
-        <div style="width: 100%; text-align: center; padding: 10px; box-sizing: border-box;">
+        <div style="width: 100%; text-align: center; padding: 10px;
+          box-sizing: border-box;">
           ${content}
         </div>
         <div style="width: 100%; background-color: #f4f4f4; color: #171717; padding: 10px;

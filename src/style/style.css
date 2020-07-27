@@ -989,7 +989,7 @@ ul li::before {
   height: 140px;
 }
 
-.searchBox {
+.searchBox, .glsSearchInput {
   display: block;
   width: calc(100% - 60px);
   border: 1px solid #dfdfdf;
@@ -1002,7 +1002,15 @@ ul li::before {
   transition: 0.3s;
 }
 
-.searchBox:focus {
+.glsSearchInput {
+  float: none;
+  width: 100%;
+  padding: 10px;
+  color: #545454;
+  margin-bottom: 10px;
+}
+
+.searchBox:focus, .glsSearchInput:focus {
   border: 1px solid #ccc;
 }
 

@@ -357,7 +357,7 @@ const buildCartSection = (conn, req) => {
           ${ePriceText}
         </p>
         <div class="infoBox" id="infoLogin"></div>
-        <button class="fillBtn btnCommon centerBtn" id="buyCart">Vásárlás</button> 
+        <button class="fillBtn btnCommon centerBtn" id="buyCart">Tovább a fizetéshez</button> 
       `;
       output += '</section>';
       output += `

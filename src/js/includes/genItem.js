@@ -1,6 +1,6 @@
 // Generate an html box for an item
 function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, data,
-  isLit = false) {
+  isLit = false, isUID = false) {
   let output = `
     <div class="cartItemHolder">
       <div class="itemLeftCenter">
@@ -67,7 +67,7 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
 
   if (isStat) {
     let className = data.stat ? 'delivered' : 'inProgress';
-    let text = data.stat ? 'teljesítve' : 'folyamatban';
+    let text = data.stat ? 'átvétel/szállítás' : 'folyamatban';
     output += `
       <div>
         <p>Státusz: <span class="${className}">${text}</span></p>
@@ -88,6 +88,14 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
     output += `
       <div>
         <p>Rendelési idő: ${data.orderTime}</p>
+      </div>
+    `;
+  }
+
+  if (isUID) {
+    output += `
+      <div>
+        <p>Azonosító: <span class="blue">${data.uid}</span></p>
       </div>
     `;
   }

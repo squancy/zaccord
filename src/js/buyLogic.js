@@ -6,8 +6,13 @@ const calcLitPrice = require('./includes/calcLitPrice.js');
 const validateParams = require('./includes/validateParams.js');
 const validateLitParams = require('./includes/validateLitParams.js');
 const parseCookies = require('./includes/parseCookies.js');
+const constants = require('./includes/constants.js');
 const NodeStl = require('node-stl');
 const fs = require('fs');
+
+// Shipping and money handle prices constants are used throughout the page
+const SHIPPING_PRICE = constants.shippingPrice;
+const MONEY_HANDLE = constants.moneyHandle;
 
 // Build page where the customer can buy the products/custom print
 const buildBuySection = (conn, paramObj, req) => {
@@ -15,29 +20,33 @@ const buildBuySection = (conn, paramObj, req) => {
     // Generate random 8-char order ID
     let orderID = randomstring.generate(8);
     let userID = req.user.id;
-    console.log(userID)
 
     // Build html output
     let output = `
+      <script type="text/javascript">
+        const MONEY_HANDLE = ${MONEY_HANDLE};
+      </script>
       <section class="keepBottom">
         <span id="main">
           <p class="blueHead" style="font-size: 24px; margin-top: 0;">
             1. Válassz Fizetési Módot
           </p>
-          <label class="container">
+
+          <label class="container trans" id="uvetCont">
             <div style="padding-bottom: 0;">Utánvétel</div>
             <div class="lh">
               Ez esetben a csomag kiszállítása után történik meg a fizetés készpénzzel vagy
-              bankkártyával.
+              bankkártyával és a futárcég ${MONEY_HANDLE} Ft kezelési költséget számol fel.
             </div>
             <input type="radio" name="radio" id="uvet">
             <span class="checkmark"></span>
           </label>
-
-          <label class="container">
+          
+          <label class="container trans" id="btransfer">
             <div style="padding-bottom: 0;">Előre utalás</div>
             <div class="lh">
-              Ilyenkor az alábbi számlára való utalással fizethetsz: 12001008-00238600-00100004.
+              Ilyenkor az alábbi számlára való utalással fizethetsz:
+              12001008-00238600-00100004.
               Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
               <span class="blue">${orderID}</span>
             </div>
@@ -46,6 +55,7 @@ const buildBuySection = (conn, paramObj, req) => {
           </label>
 
           <p class="blueHead" style="font-size: 24px;">2. Termékek</p>
+          <div id="emlHolder">
     `;
 
     // Calc parameters in connection with final price, discount, shipping...
@@ -54,16 +64,17 @@ const buildBuySection = (conn, paramObj, req) => {
       // If product price is below 15000 Ft there is an extra 1450Ft shipping cost
       let discount = 1;
       let discountText = '';
-      let shippingPrice = 1450;
       let shippingText = `
-        A 15000 Ft alatti rendeléseknél 1450 Ft-os szállítási költséget számolunk fel`;
+        A 15000 Ft alatti rendeléseknél ${SHIPPING_PRICE} Ft-os szállítási költséget számolunk
+        fel`;
       if (price > 15000) {
         discount = 0.97;
-        shippingPrice = 0;
         shippingText = `A 15000 Ft feletti rendeléseknél ingyenes a szállítás`;
         discountText = '(3% kedvezmény)';
       }
-      return [discount, discountText, shippingPrice, shippingText];
+      
+      let actualShippingPrice = (price > 15000) ? 0 : SHIPPING_PRICE;
+      return [discount, discountText, actualShippingPrice, shippingText];
     }
 
     // Reusable promise for generating a single item for output
@@ -261,7 +272,36 @@ const buildBuySection = (conn, paramObj, req) => {
     function buildLastSection(userID, shippingText, finalPrice, discountText) {
       return new Promise((resolve, reject) => {
         let output = `
-          <p class="blueHead" style="font-size: 24px;">3. Szállítási & Számlázási Adatok</p>
+          </div>
+          <p class="blueHead" style="font-size: 24px;">3. Szállítás Módja</p>
+          <label class="container" id="toAddrHolder">
+            <div style="padding-bottom: 0;">GLS háztól házig futár</div>
+            <div class="lh">
+              A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
+              terméket/termékeket.
+            </div>
+            <input type="radio" name="radio2" id="toAddr">
+            <span class="checkmark"></span>
+          </label>
+          
+          <label class="container" id="packetPointHolder">
+            <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
+            <div class="lh">
+              A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
+              csomagot ami ezután lesz átvehető.
+            </div>
+            <div class="lh" id="selectedPP" style="color: #4285f4; display: none;"></div>
+            <input type="radio" name="radio2" id="packetPoint">
+            <span class="checkmark"></span>
+          </label>
+
+          <div id="glsBigBox"></div>
+          <div class="overlay" id="overlay"></div>
+          <img src="/images/exit.png" class="exitBtn trans" id="exitBtn" onclick="exitMap()">
+        `;
+
+        output += `
+          <p class="blueHead" style="font-size: 24px;">4. Szállítási & Számlázási Adatok</p>
         `;
 
         let extraCharge = '';
@@ -271,7 +311,7 @@ const buildBuySection = (conn, paramObj, req) => {
           extraCharge = `<span>(+${charge} Ft felár)</span>`;
         }
 
-        if (finalPrice < 15000) charge += 1450;
+        if (finalPrice < 15000) charge += SHIPPING_PRICE;
 
         genDelivery(conn, userID).then(result => {
           output += result;
@@ -300,17 +340,19 @@ const buildBuySection = (conn, paramObj, req) => {
             </p>
             <p class="note align ddgray" id="whoosh">
               A vásárlás fizetési kötelezettségeket von maga után!
+              Az oldalon feltüntetett árak tartalmazzák az ÁFÁt.
             </p>
             <p class="align bold" id="finalPrice">
               <span style="color: #4285f4;">
                 Végösszeg:
               </span>
-              ${Math.round(finalPrice + charge)} Ft ${discountText} ${extraCharge}
+              <span id="fPrice">${Math.round(finalPrice + charge)}</span>
+              Ft ${discountText} ${extraCharge}
               (szállítással együtt)
             </p>
               <button class="fillBtn btnCommon centerBtn" style="margin-top: 20px;"
                 onclick="submitOrder()" id="submitBtn">
-                Vásárlás
+                Megrendelés
               </button>
             </span>
             <div class="errorBox" id="errStatus"></div>
@@ -328,7 +370,7 @@ const buildBuySection = (conn, paramObj, req) => {
     // Build login & register form for unauthorized users
     function genAuthForm() {
       return `
-        <p class="blueHead" style="font-size: 24px;">4. Hitelesítés</p>
+        <p class="blueHead" style="font-size: 24px;">5. Hitelesítés</p>
         <p class="grayHead">Bejelentkezés</p>
         <div class="flexDiv" style="flex-wrap: wrap;">
           <input type="text" class="bFormField" id="email" placeholder="E-mail">
@@ -485,10 +527,16 @@ const buildBuySection = (conn, paramObj, req) => {
     // Second case is when user buys the whole cart and data is fetched from cookies
     } else {
       // Make sure cookie is not empty
-      if (!Object.keys(JSON.parse(parseCookies(req).cartItems)).length) {
+      let cItems = parseCookies(req).cartItems;
+      if (!cItems) {
+        cItems = '{}';
+      }
+
+      if (!Object.keys(JSON.parse(cItems)).length) {
         reject('Üres a kosarad');
         return;
       }
+
       // Get data from cookies and validate on server side
       let cartItems = JSON.parse(parseCookies(req).cartItems);
 
@@ -549,11 +597,11 @@ const buildBuySection = (conn, paramObj, req) => {
      
         // Get shipping price & build delivery section
         let discount, dText, shopPrice, sText;
-        let shippingPrice = 1450;
         if (finalPrice > 15000) {
           finalPrice *= 0.97;
-          shippingPrice = 0; 
         }
+        
+        let actualShippingPrice = (finalPrice > 15000) ? 0 : SHIPPING_PRICE;
 
         [discount, dText, shopPrice, sText] = calcPrices(finalPrice);
         buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
@@ -566,7 +614,7 @@ const buildBuySection = (conn, paramObj, req) => {
             <script type="text/javascript">
               let data = ${JSON.stringify(pData)};
               data[0].finalPrice = Math.round(${finalPrice});
-              data[0].shippingPrice = ${shippingPrice};
+              data[0].shippingPrice = ${actualShippingPrice};
               let isFromCart = true;
               let isFromCP = false;
               let isLoggedIn = ${userID ? true : false};

@@ -2,13 +2,19 @@ const validateEmail = require('email-validator');
 const userExists = require('./includes/userExists.js');
 const itemExists = require('./includes/itemExists.js');
 const calcPrice = require('./includes/calcPrice.js');
+const makeInline = require('./includes/makeInline.js');
 const validateParams = require('./includes/validateParams.js');
 const validateLitParams = require('./includes/validateLitParams.js');
+const constants = require('./includes/constants.js');
 const parseCookies = require('./includes/parseCookies.js');
 const parseTime = require('./includes/parseTime.js');
 const sendEmail = require('./includes/sendEmail.js');
 const userLogin = require('./loginLogic.js');
 const userRegister = require('./registerLogic.js');
+
+// Shipping and money handle prices constants are used throughout the page
+const SHIPPING_PRICE = constants.shippingPrice;
+const MONEY_HANDLE = constants.moneyHandle;
 
 // Validate order on server side & push to db
 const buyItem = (conn, dDataArr, req, res, userSession) => {
@@ -26,6 +32,28 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let shippingPrice = dDataArr[0].shippingPrice;
     let authType = dDataArr[0].authType;
     let isLit = dDataArr[0].isLit;
+    let emailTotPrice = dDataArr[0].emailTotPrice;
+    let emailOutput = dDataArr[0].emailOutput;
+
+    // Replace classes & ids with inline CSS for emails
+    emailOutput = makeInline(emailOutput);
+    let uniqueID = Math.round(Math.random() * Math.pow(10, 12));
+
+    // Fields about packet points
+    let deliveryType = dDataArr[0].delivery;
+    let packetID = dDataArr[0].ppID;
+    let packetName = dDataArr[0].ppName;
+    let packetZipcode = dDataArr[0].ppZipcode;
+    let packetCity = dDataArr[0].ppCity;
+    let packetAddress = dDataArr[0].ppAddress;
+    let packetContact = dDataArr[0].ppContact;
+    let packetPhone = dDataArr[0].ppPhone;
+    let packetEmail = dDataArr[0].ppEmail;
+    let packetLat = dDataArr[0].ppLat;
+    let packetLon = dDataArr[0].ppLon;
+
+    // Because of async queries a track variable is needed for packet point checking in db
+    let ppUpdated = false;
 
     if (authType) {
       var email = dDataArr[0].email;
@@ -44,6 +72,25 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let billingAddress = dDataArr[0].billingAddress;
     let billingCompname = dDataArr[0].billingCompname;
     let billingCompnum = dDataArr[0].billingCompnum;
+
+    let billingEmail = 'Megegyezik a szállítási címmel';
+    if (billingType !== 'same') {
+      billingEmail = `
+        <div><b>Név: </b>${billingName}</div>
+        <div><b>Ország: </b>${billingCountry}</div>
+        <div><b>Irsz.: </b>${billingPcode}</div>
+        <div><b>Város: </b>${billingCity}</div>
+        <div><b>Cím: </b>${billingAddress}</div>
+      `;    
+
+      if (billingCompname) {
+        billingEmail += `
+          <div><b>Cégnév: </b>${billingCompname}</div>
+          <div><b>Adószám: </b>${billingCompnum}</div>
+        `;
+      }
+    }
+
     if (billingType != 'same') {      
       if (!billingName || !billingCountry || !billingPcode || !billingCity || !billingAddress) {
         reject('Kérlek tölts ki minden számlázási adatot');
@@ -164,12 +211,22 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Hibás irányítószám'); 
           return;
         // Make sure there is a valid shipping price
-        } else if ((finalPrice <= 15000 && shippingPrice != 1450)
+        } else if ((finalPrice <= 15000 && shippingPrice != SHIPPING_PRICE)
           || (finalPrice > 15000 && shippingPrice != 0)) {
           reject('Hibás szállítási ár');
           return;
+        // Make sure delivery type is valid
+        } else if (deliveryType != 'toAddr' && deliveryType != 'packetPoint') {
+          reject('Válassz szállítási módot');
+          return;
+        // Make sure that the necessary packet point fields are set
+        } else if (deliveryType == 'packetPoint' && (!packetID || !packetName || !packetZipcode
+          || !packetCity || !packetAddress)) {
+          reject('Hiányzó csomagpont adatok');
+          return;          
         }
-
+        
+        let cnt = 0;
         for (let formData of dDataArr) {
           let itemID = formData.itemID;
           let price = formData.price;
@@ -179,7 +236,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           let fvas = formData.fvas ? formData.fvas : 1.2;
           let color = formData.color;
           let quantity = formData.quantity;
-          let orderID = formData.orderID;
+          var orderID = formData.orderID;
           let fixProduct = Number(Boolean(formData.fixProduct));
 
           // Lithophane parameters
@@ -238,15 +295,22 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 // Request is valid, push data to db
                 let isTrans = payment == 'transfer' ? 1 : 0;
                 let transID = isTrans ? orderID : '';
+
+                // If cash on delivery add extra price
+                if (payment != 'transfer') {
+                  shippingPrice += MONEY_HANDLE;
+                }
+
                 let iQuery = `
                   INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, fvas,
                     lit_sphere, lit_size, lit_fname,
                     quantity, is_transfer, transfer_id, is_fix_prod, status, shipping_price,
-                    cp_fname, same_billing_addr, billing_name, billing_country, billing_city,
+                    cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
+                    billing_name, billing_country, billing_city,
                     billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
                     order_time)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?)
+                    ?, ?, ?, ?, ?, ?, ?)
                 `;
 
                 // Decide if product is a custom print (attach filename) or fixed product
@@ -259,12 +323,19 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
               
                 price *= discount;
                 let sameBillingAddr = billingType == 'same' ? 1 : 0;
-                let valueArr = [req.user.id, itemID, price, String(rvas), String(suruseg),
+                let isCashOnDel = deliveryType == 'toAddr' ? 1: 0;
+                let packetDbID = deliveryType == 'packetPoint' ? packetID : '';
+
+                let valueArr = [
+                  req.user.id, itemID, price, String(rvas), String(suruseg),
                   String(scale), color, String(fvas), sphere, size, file, quantity, isTrans, 
                   transID, fixProduct, 0,
-                  Number(shippingPrice), cpFname, sameBillingAddr, billingName, billingCountry,
+                  Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
+                  sameBillingAddr, billingName, billingCountry,
                   billingCity, billingPcode, billingAddress, billingCompname, billingCompnum, 
-                  commonDate];
+                  commonDate
+                ];
+
                 conn.query(iQuery, valueArr, (err, result, field) => {
                   if (err) {
                     console.log(err, 'asd');
@@ -272,7 +343,74 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                     return;
                   }
 
-                  resolve('success');
+                  // If delivery type if packet point insert contact info to db
+                  if (deliveryType == 'packetPoint') {
+                    // First check if the packet point is already in the db
+                    // If it is, just update the existing row
+                    // Otherwise insert the packet point as a new row
+
+                    let mQuery = `
+                      SELECT id FROM packet_points WHERE packet_id = ? LIMIT 1
+                    `;
+
+                    conn.query(mQuery, [packetID], (err, result, fields) => {
+                      if (err) {
+                        reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                        return;
+                      } 
+
+                      // Check existance in db
+                      if (result.length > 0) {
+                        // Update data in db
+                        let updateQuery = `
+                          UPDATE packet_points SET name = ?, zipcode = ?,
+                          city = ?, contact = ?, phone = ?, email = ?, lat = ?, lon = ?
+                          WHERE packet_id = ?
+                        `;
+
+                        let updateParams = [
+                          packetName, packetZipcode, packetCity, packetContact, packetPhone,
+                          packetEmail, packetLat, packetLon, packetID
+                        ];
+
+                        conn.query(updateQuery, updateParams, (err, result, fields) => {
+                          if (err) {
+                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                            return;
+                          }                    
+
+                          resolve('success');
+                        });
+
+                      // Only insert to db for the 1st time (because of async)
+                      } else if (!ppUpdated) {
+                        let pQuery = `
+                          INSERT INTO packet_points (
+                            packet_id, name, zipcode, city, contact, phone, email, lat, lon
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        `;
+
+                        // Insert packet point data as a new row
+                        let pValues = [
+                          packetID, packetName, Number(packetZipcode), packetCity,
+                          packetContact,
+                          packetPhone, packetEmail, packetLat, packetLon
+                        ];
+
+                        ppUpdated = true;
+                        conn.query(pQuery, pValues, function packetInsert(err, result, field) {
+                          if (err) {
+                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                            return;
+                          }                    
+                          
+                          resolve('success');
+                        });
+                      }
+                    });
+                  } else {
+                    resolve('success');
+                  }
                 });
               });
             }).catch(err => {
@@ -311,8 +449,54 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   A rendelésedet és annak státuszát megtekintheted a Zaccord fiókodban.<br>
                   Köszönjük, hogy a Zaccordot választottad!
                 </p>
+
+                <hr style="border: 0;
+                  height: 0;
+                  border-top: 1px solid rgba(0, 0, 0, 0.1);
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+                ">
+
+                <div style="text-align: center;">
+                  <p style="font-weight: bold; font-size: 16px;">
+                    Személyes & Szállítási adatok
+                  </p>
+                  <div style="display: table; margin: 0 auto;">
+                    <div><b>Név: </b>${name}</div>
+                    <div><b>Város: </b>${city}</div>
+                    <div><b>Cím: </b>${address}</div>
+                    <div><b>Telefonszám: </b>${mobile}</div>
+                    <div><b>Irsz.: </b>${pcode}</div>
+                    <div><b>Azonosító: </b>${uniqueID}</div>
+                    <div>
+                      <b>Fizetési mód: </b>
+                      ${payment == 'transfer' ? 'Előre utalás' : 'Utánvét'}
+                      ${
+                        payment == 'transfer' ? `(a közelményben tüntetsd fel az alábbi
+                                                 azonosítót:
+                                                 <span style="color: #4285f4;">
+                                                   ${orderID}
+                                                 </span>)
+                                                 `
+                                               : ''
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div style="text-align: center;">
+                  <p style="font-weight: bold; font-size: 16px;">Számlázási adatok</p>
+                  <div style="display: table; margin: 0 auto;">
+                    ${billingEmail}
+                  </div>
+                </div>
+                <br>
+
+                ${emailOutput}
+                <b style="font-size: 16px;">${emailTotPrice}</b>
+                <p style="color: #7d7d7d;">Az oldalon feltüntetett árak tartalmazzák az ÁFÁt!</p>
               `;
-              let subject = 'Megkaptuk a rendelésed!';
+
+              let subject = 'Megkaptuk a rendelésed! - Azonosító: ' + uniqueID;
               sendEmail('info@zaccord.com', emailContent, email, subject);
               
               resolve('success');

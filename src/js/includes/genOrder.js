@@ -46,6 +46,7 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
         let litSphere = result[i].lit_sphere;
         let litSize = result[i].lit_size;
         let litFname = result[i].lit_fname;
+        let uniqueID = result[i].unique_id;
 
         /*
           If an order is a custom print item id is 0 and cp_fname is the name of the .stl
@@ -80,10 +81,11 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
           'paymentOption': paymentOption,
           'sphere': litSphere,
           'size': litSize,
-          'file': litFname
+          'file': litFname,
+          'uid': uniqueID
         };
         
-        output += genItem(true, true, true, data, isLit);
+        output += genItem(true, true, true, data, isLit, true);
       }
       resolve(output);
     });

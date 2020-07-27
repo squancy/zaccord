@@ -26,6 +26,8 @@ function submitOrder() {
   let city = _('city').value;
   let address = _('address').value;
   let mobile = _('mobile').value;
+  let toAddr = _('toAddr').checked;
+  let packetPoint = _('packetPoint').checked;
 
   _('errStatus').innerHTML = '';
   _('succStatus').innerHTML = '';
@@ -77,6 +79,29 @@ function submitOrder() {
     if (!validateComp(isComp)) return;
     else if (!isComp) billingType = 'diffNo';
     else billingType = 'diffYes';
+  } else if (!toAddr && !packetPoint) {
+    statusFill('errStatus', 'Válassz szállítási módot');
+    return;
+  } else if (packetPoint && !infoArr) {
+    statusFill('errStatus', 'Válassz egy csomagpontot');
+    return;
+  }
+
+  // Handle delivery to address & delivery to packet point
+  if (toAddr) {
+    data[0].delivery = 'toAddr';  
+  } else {
+    data[0].delivery = 'packetPoint';
+    data[0].ppID = infoArr.pclshopid;
+    data[0].ppName = infoArr.name;
+    data[0].ppZipcode = infoArr.zipcode;
+    data[0].ppCity = infoArr.city;
+    data[0].ppAddress = infoArr.address;
+    data[0].ppContact = infoArr.contact;
+    data[0].ppPhone = infoArr.phone;
+    data[0].ppEmail = infoArr.email;
+    data[0].ppLat = infoArr.geolat;
+    data[0].ppLon = infoArr.geolng;
   }
 
   /*
@@ -98,6 +123,8 @@ function submitOrder() {
   data[0].billingAddress = _('billingAddress') ? _('billingAddress').value : '';
   data[0].billingCompname = _('billingCompname') ? _('billingCompname').value : '';
   data[0].billingCompnum = _('billingCompname') ? _('billingCompnum').value : '';
+  data[0].emailOutput = _('emlHolder').innerHTML;
+  data[0].emailTotPrice = _('finalPrice').innerHTML;
 
   if (authType) {
     data[0].email = _('email').value;
@@ -136,7 +163,7 @@ function submitOrder() {
 
           <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
           <p class="align dgray lh">
-            A termék(ek) legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
+            A termékek legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
             szállítva.<br>
             Köszönjük, hogy a Zaccordot választottad!
           </p>
@@ -287,3 +314,147 @@ function companyBilling() {
     isShow = false;
   }
 }
+
+let isUvetAdded = false;
+// If payment option is not transfer then count an extra price
+function handleUvet(e, isUvet) {
+  // Avoid click propagation on label
+  if (e.target.tagName === 'DIV') {
+    if (isUvet && !isUvetAdded) {
+      _('fPrice').innerHTML = Number(_('fPrice').innerHTML) + MONEY_HANDLE;
+      isUvetAdded = true;
+    } else if (isUvetAdded) {
+      _('fPrice').innerHTML = Number(_('fPrice').innerHTML) - MONEY_HANDLE;
+      isUvetAdded = false;
+    }
+  }
+}
+
+let isInit = false;
+function showMap(e) {
+  // Avoid click propagation on label
+  if (e.target.tagName === 'DIV') {
+    const width  = window.innerWidth || document.documentElement.clientWidth || 
+      document.body.clientWidth;
+    const height = window.innerHeight || document.documentElement.clientHeight || 
+      document.body.clientHeight;
+
+    _('overlay').style.opacity = '1';
+    _('overlay').style.height = document.body.scrollHeight + "px";
+    _('glsBigBox').style.height = '50vh';
+    _('glsBigBox').style.opacity = '1';
+    if (width > 768) {
+      _('glsBigBox').style.width = Math.round(width * 0.7) + 'px';
+      _('glsBigBox').style.left = Math.round(width * 0.15) + 'px';
+    } else if (width > 500) {
+      _('glsBigBox').style.width = Math.round(width * 0.9) + 'px';
+      _('glsBigBox').style.left = Math.round(width * 0.05) + 'px';
+    } else {
+      _('glsBigBox').style.width = Math.round(width * 0.95) + 'px';
+      _('glsBigBox').style.left = Math.round(width * 0.025) + 'px';
+      _('glsBigBox').style.height = '70vh';
+    }
+    
+    _('exitBtn').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    if (!isInit) {
+      glsMap.init('HU', 'glsBigBox', '1116,Budapest,HU', 1);
+      _('searchinput').classList = 'glsSearchInput';
+      _('searchinput').placeholder = 'Csomagpont keresése...';
+
+      var target = document.querySelector('#psitems-canvas')
+
+      var observer = new MutationObserver(function(mutations) {
+        // Attach an onclick event for every packet point div to get data from GLS
+        let allDivs = document.querySelectorAll("#psitems-canvas > div");
+        for (let i = 0; i < allDivs.length; i++) {
+          if (allDivs[i].id) {
+            allDivs[i].addEventListener('click', (e) => selectPacketPoint(e, allDivs[i]));
+          }
+        }
+      });
+
+      var config = { attributes: true, childList: true, characterData: true };
+
+      observer.observe(target, config);
+    }
+    isInit = true;
+  }
+}
+
+let ajaxURL =
+'//online.gls-hungary.com/psmap/psmap_getdata.php?ctrcode=HU&action=getList&dropoff=true';
+let allPackets;
+$.ajax({
+  url: ajaxURL,
+  cache: false,
+  dataType: 'json',
+  type: 'GET',
+  async: false, 
+  success: function (data, success) {
+    allPackets = data;
+  }
+});
+
+let infoArr;
+function selectPacketPoint(e, pel) {
+  exitMap(); 
+  _('selectedPP').style.display = 'block';
+  _('selectedPP').innerHTML = pel.innerHTML;
+
+  for (let i = 0; i < allPackets.length; i++) {
+    if (allPackets[i].pclshopid == pel.id) {
+      infoArr = allPackets[i];
+      break;
+    }
+  }
+}
+
+function glsPSMap_OnSelected_Handler(data) {
+   console.log(data);
+}
+
+function exitMap() {
+  _('glsBigBox').style.opacity = '0';
+  _('overlay').style.opacity = '0';
+  _('exitBtn').style.display = 'none';
+  setTimeout(function removeOverlay() {
+    _('overlay').style.height = '0';
+    _('glsBigBox').style.height = '0';
+  }, 500);
+  document.body.style.overflow = 'auto';
+}
+
+_('uvetCont').addEventListener('click', (e) => handleUvet(e, true));
+_('btransfer').addEventListener('click', (e) => handleUvet(e, false));
+_('packetPointHolder').addEventListener('click', (e) => showMap(e));
+
+// The following functions are used for selecting a packet point by GLS
+var glsMap;
+function initGLSPSMap() {
+  glsMap = new GLSPSMap();
+  google.maps.event.trigger(glsMap, 'resize');
+}
+
+$(document).ready(initGLSPSMap);
+
+function glsPSMap_OnSelected_Handler(data) {
+  $('#ajaxresult').html(data.pclshopid);
+}
+
+function testclick(obj) {
+  glsMap.initAddress($('#testinput').val());
+}
+
+function highlightLabel(show, hide) {
+  _(show).style.borderColor = '#c1c1c1';
+  _(hide).style.borderColor = '#dfdfdf';
+}
+
+_('uvetCont').addEventListener('click', (e) => highlightLabel('uvetCont', 'btransfer'));
+_('btransfer').addEventListener('click', (e) => highlightLabel('btransfer', 'uvetCont'));
+
+_('packetPointHolder').addEventListener('click',
+  (e) => highlightLabel('packetPointHolder', 'toAddrHolder'));
+_('toAddrHolder').addEventListener('click',
+  (e) => highlightLabel('toAddrHolder', 'packetPointHolder'));

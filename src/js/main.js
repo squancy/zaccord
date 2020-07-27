@@ -71,7 +71,7 @@ function toggleLower(disp) {
 }
 
 // When category btn is clicked display only items with that category
-function sortByCat(cat, cid) {
+function sortByCat(cat, cid, isEye = false) {
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
@@ -100,9 +100,17 @@ function sortByCat(cat, cid) {
 
   toggleShowcase('hide');
   if (!window.mobileCheck()) {
-    _('ms').style.marginTop = '190px';
+    if (!isEye) { 
+      _('ms').style.marginTop = '190px';
+    } else {
+      _('ms').style.marginTop = '140px';
+    }
   } else {
-    _('ms').style.marginTop = '160px';
+    if (!isEye) {
+      _('ms').style.marginTop = '160px';
+    } else {
+      _('ms').style.marginTop = '110px';
+    }
   }
 
   fetch('/category', {

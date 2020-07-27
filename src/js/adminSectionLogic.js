@@ -46,6 +46,9 @@ const buildAdminSection = (conn) => {
         let litSize = result[i].lit_size;
         let litFname = result[i].lit_fname;
 
+        let deliveryType = Number(result[i].is_cash_on_del) ? 'háztól házig' : 'csomagpont';
+        let uniqueID = result[i].unique_id;
+
         let billingName = result[i].billing_name;
         let billingCountry = result[i].billing_country;
         let billingCity = result[i].billing_city;
@@ -53,6 +56,18 @@ const buildAdminSection = (conn) => {
         let billingAddress = result[i].billing_address;
         let billingCompname = result[i].billing_compname;
         let billingCompTaxNum = result[i].billing_comp_tax_num;
+
+        let sendCE = 'Csomag szállítás/átvétel alatt';
+        if (!status) {
+          sendCE = `
+            <span id="seHolder_${uniqueID}">
+              <button class="fillBtn btnCommon" style="margin-right: 0;" id="se_${uniqueID}"
+                onclick="sendConfEmail('${uniqueID}')">
+                Megerősítő email küldése
+              </button>
+            </span>
+          `;
+        }
 
         if (litSphere) {
           var productName = 'Litofánia';
@@ -127,7 +142,8 @@ const buildAdminSection = (conn) => {
 
         // Build html output
         output += `
-          <div style="${style}; text-align: center;" id="box_${i}" class="flexDiv bigBox trans">
+          <div style="${style}; text-align: center; user-select: text;"
+            id="box_${i}" class="flexDiv bigBox trans">
             <div class="flexDiv smallBox">
               <div class="inBox"><b>Terméknév:</b> ${productName}</div>
               <div class="inBox"><b>Ár:</b> ${aPrice} Ft</div>
@@ -163,6 +179,9 @@ const buildAdminSection = (conn) => {
               <div class="inBox"><b>Város:</b> ${city}</div>
               <div class="inBox"><b>Cím:</b> ${address}</div>
               <div class="inBox"><b>Tel.:</b> ${mobile}</div>
+              <div class="inBox"><b>Szállítási mód:</b> ${deliveryType}</div>
+              <div class="inBox"><b>Azonosító:</b> ${uniqueID}</div>
+              ${sendCE}
             </div>
             <div class="flexDiv smallBox">
               <div class="inBox" id="bot_${i}">

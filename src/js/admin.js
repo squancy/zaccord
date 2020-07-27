@@ -18,7 +18,7 @@ if (_('ok')) {
         let p = encodeURIComponent(_('pass').value);
         window.location.href = '/lick_weebshit?user=' + u + '&pass=' + p;
       } else {
-        _('status').innerText = 'hibás bejelentkezési adatok';
+        _('status').innerHTML = '<p>Hibás bejelentkezési adatok</p>';
       }
     });
   });
@@ -66,7 +66,7 @@ if (_('box_0')) {
       
       if (cot != pot && i > 0) {
         _('box_' + i).style.borderRadius = '30px 30px 0 0';
-      } else {
+      } else if (i > 0) {
         hideU(i);
       }
       priceSum += Number(_('allp_' + i).innerText);
@@ -84,8 +84,10 @@ if (_('box_0')) {
   }
 }
 
-_('box_0').style.borderTopLeftRadius = '30px';
-_('box_0').style.borderTopRightRadius = '30px';
+if (_('box_0')) {
+  _('box_0').style.borderTopLeftRadius = '30px';
+  _('box_0').style.borderTopRightRadius = '30px';
+}
 
 function updateStatus(i, boxID) {
   let val = _('ch_' + boxID).value;
@@ -111,4 +113,28 @@ function updateStatus(i, boxID) {
       else _('box_' + boxID).style.opacity = '1';  
     }
   });  
+}
+
+// Send confirmation email to customer when the package is ready
+// NOTE: change the url if you want to use this feature
+function sendConfEmail(uid) {
+  let data = {
+    'uid': uid
+  };
+
+  fetch('/sendConfEmail', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(data => {
+    if (data.success) {
+      _('seHolder_' + uid).innerHTML = 'Email sikeresen elküldve';
+    } else {
+      _('seHolder_' + uid).innerHTML = 'Hiba történt';
+    }
+  }).catch(err => {
+    console.log(err);
+  });
 }

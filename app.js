@@ -12,6 +12,7 @@ const validateEmail = require('email-validator');
 const conn = require('./src/js/connectDb.js');
 const StlThumbnailer = require('node-stl-to-thumbnail');
 const parseCookies = require('./src/js/includes/parseCookies.js');
+const sendConfEmail = require('./src/js/sendConfEmail.js');
 const createSession = require('./src/js/includes/createSession.js');
 const userRegister = require('./src/js/registerLogic.js');
 const buyItem = require('./src/js/buyItem.js');
@@ -32,126 +33,21 @@ const buildAdminPage = require('./src/js/adminLogic.js');
 const buildAdminSection = require('./src/js/adminSectionLogic.js');
 const buildLithophane = require('./src/js/buildLithophane.js');
 
+const helpers = require('./src/js/includes/helperFunctions.js');
+const addCookieAccept = helpers.addCookieAccept;
+const loggedIn = helpers.loggedIn;
+const addHeader = helpers.addHeader;
+const addTemplate = helpers.addTemplate;
+const generateTemplate = helpers.generateTemplate;
+const imgError = helpers.imgError;
+const fileResponse = helpers.fileResponse;
+const getContentType = helpers.getContentType;
+const checkData = helpers.checkData;
+const errorFormResponse = helpers.errorFormResponse;
+const pageCouldNotLoad = helpers.pageCouldNotLoad;
+const commonData = helpers.commonData;
+
 // Note: change ADMIN constants if you want to use that feature
-
-// Add cookie accept file if user has not yet accepted it
-function addCookieAccept(req) {
-  let cookies = parseCookies(req);
-  if (cookies.cookieAccepted === 'false' || !cookies.cookieAccepted) {
-    return fs.readFileSync('src/includes/cookie.html');
-  }
-  return '';
-}
-
-// Checks if user is logged in; if not, redirects to home page
-function loggedIn(req, res) {
-  if (!req.user.id) {
-    res.writeHead(302, {
-      'Location': '/'
-    });
-    res.end();
-  }
-}
-
-// Add header depending on user state (logged in/out)
-function addHeader(userID) {
-  if (!userID) {
-    var content = fs.readFileSync('src/includes/header.html');
-  } else {
-    var content = fs.readFileSync('src/includes/headerLogged.html');
-  }
-  return content;
-}
-
-// Add header and footer to every page
-function addTemplate(userID) {
-  let content = addHeader(userID);
-  content += fs.readFileSync('src/includes/footer.html');
-  return content
-}
-
-function generateTemplate(fname, text) {
-  return `
-    <section class="keepBottom flexDiv" style="align-items: center;">
-      <div>
-        <img src="/images/${fname}.png" class="emptyCart">
-        <p class="align" style="font-size: 32px; color: #ccc;">${text}</p>
-      </div>
-    </section>
-  `;
-}
-
-// Display error page when uploading a file for custom print
-function imgError(res, userID, fname, text = '') {
-  let content = fs.readFileSync('src/printUpload.html');
-  content += generateTemplate(fname, text);
-  content += addTemplate(userID);
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.end(content);
-}
-
-// Server response for .stl and .png files: set proper content type
-function fileResponse(contentType, url, res) {
-  res.writeHead(200, {'Content-Type': contentType});
-  let path = url.substr(1);
-  try {
-    var content = fs.readFileSync(path);
-  } catch (e) {
-    if (typeof userID === 'undefined') var userID;
-    imgError(res, userID, '404error');
-  }
-  res.end(content);
-}
-
-// Get the content type of the file being served
-function getContentType(extension) {
-  switch (extension) {
-    case '.js':
-      return 'text/javascript';
-    case '.css':
-      return 'text/css';
-    case '.json':
-      return 'application/json';
-    case '.png':
-      return 'image/png';
-    case '.jpg':
-      return 'image/jpg';
-    case '.stl':
-      return 'application/netfabb';
-    case '.png':
-      return 'image/png';
-  }
-  return 'text/html';
-}
-
-// Protect request from too large data
-function checkData(body, req) {
-  if (body.length > 1e6) {
-    req.connection.destroy();
-  }
-}
-
-// Respond with an error message to client during form validation
-function errorFormResponse(res, msg) {
-  let responseData = {
-    'error': `<p>${msg}</p>`
-  };
-  res.writeHead(200, {'Content-Type': 'application/json'});
-  res.end(JSON.stringify(responseData));
-}
-
-function pageCouldNotLoad(res, userID) {
-  let content = fs.readFileSync('src/index.html');
-  content += generateTemplate('notLoad', 'Nem sikerült az oldal betöltése')
-  commonData(content, userID, '', res);
-}
-
-function commonData(content, userID, data, res) {
-  content += data;
-  content += addTemplate(userID);
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.end(content, 'utf8');
-}
 
 // Store user id in a session
 let d = new Date();
@@ -536,7 +432,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       })
     });
-  } else if (req.url === '/ADMIN_LOGIN_VALIDATE' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
     // Admin page
     let body = '';
     req.on('data', data => {
@@ -552,9 +448,32 @@ const server = http.createServer((req, res) => {
       }).catch(err => {
         console.log(err);
         errorFormResponse(res, err);
-      })
+      });
     });
-  } else if (req.url === '/UPDATE_STATUS' && req.method.toLowerCase() === 'post') {
+
+  // NOTE: change the following URL if you want to use this feature
+  // It should match with the URL seen in admin.js
+  } else if (req.url === '/CONF_EMAIL_SEND_URL' && req.method.toLowerCase() === 'post') {
+    // Send an confirmation email to the customer if the package is ready
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      let uid = formData.uid;
+      
+      sendConfEmail(conn, uid).then(data => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end('{"success": true}');
+      }).catch(err => {
+        console.log(err);
+        errorFormResponse(res, err);
+      });
+    });
+  } else if (req.url === '/STATUS_UPDATE_URL' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -695,14 +614,14 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'shop', err);
             });
           // Admin page login authentication
-          } else if (req.url.substr(0, 14) === '/lick_weebshit') {
+          } else if (req.url.substr(0, 14) === '/ADMIN_VALIDATE_URL') {
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);
             let pass = decodeURIComponent(qdata.pass);
 
             // Make sure username and password are correct
-            if (user != 'USER' || pass != 'PASS') {
+            if (user != 'ADMIN_UNAME' || pass != 'ADMIN_PASS') {
               res.writeHead(200, {'Content-Type': 'text/html'});
               res.end('hiba', 'utf8');
             }

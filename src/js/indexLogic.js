@@ -252,7 +252,7 @@ const buildMainSection = (conn, sValue = null, isEmpty = false, isCat = false) =
                           ${currentCat}
                         </div>
                         <div class="seeMore trans"
-                          onclick="sortByCat('${currentCat}', ${catToNum[currentCat]})">
+                          onclick="sortByCat('${currentCat}', ${catToNum[currentCat]}, true)">
                           <img src="/images/icons/eye.png">
                         </div>
                       </div>
