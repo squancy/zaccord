@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 13, 2020 at 01:21 AM
+-- Generation Time: Jul 28, 2020 at 12:30 AM
 -- Server version: 10.3.23-MariaDB-log
 -- PHP Version: 7.3.6
 
@@ -38,6 +38,8 @@ CREATE TABLE `delivery_data` (
   `mobile` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `fix_products`
@@ -98,8 +100,8 @@ INSERT INTO `fix_products` (`id`, `url`, `img_url`, `img_showcase`, `price`, `si
 (37, 'item/product=37', 'images/kor_negyszog_ill0.png', 'kor_negyszog_ill2.png,kor_negyszog_ill3.png', 4490, '130x123x50', 'Körből Négyzet Illúzió', 'Egyéb', '6db speciális formából álló alakzat, ami egy tükör előtt bizonyos állásokban valamikor köröket, valamikor pedig négyzeteket ábrázol. Az erről készült\r\n<a class=\"bld\" href=\"https://www.youtube.com/watch?time_continue=30&v=oWfFco7K9v8&feature=emb_logo\">videón</a> ez a fajta különleges viselkedés van bemutatva.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>130mm x 123mm x 50mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:2747478\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/philkloppers/about\" class=\"bld\">PhilKloppers</a> készítette. &#169; <!--DATE--> PhilKloppers. Minden jog fenntartva.\r\n ', 'Sugihara_Cylinder_V4.1_Flat_Bottom', 35, 0, '2020-06-00 00:00:00'),
 (38, 'item/product=38', 'images/akaszto2_furdo2.png', 'akaszto2_furdo1.png', 990, '64x58x10', 'Törölközőszárító Akasztó', 'Fürdőszobai Kiegészítők', 'Kényelmes radiátorra szerelhető törölköző- és ruhaakasztó. Könnyen feltehető és egyszerűen mozgatható.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>64mm x 58mm x 10mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/publicdomain/zero/1.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:2509573\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/mcusher/about\" class=\"bld\">McUsher</a> készítette. &#169; <!--DATE--> McUsher. Minden jog fenntartva.\r\n ', 'TowelHolderBathroom_B_224mm_96mm', 36, 0, '2020-06-00 00:00:00'),
 (39, 'item/product=39', 'images/akaszto_furdo2.png', 'akaszto_furdo3.png', 790, '50x50x50', 'Törölközőszárító Radiátor Akasztó', 'Fürdőszobai Kiegészítők', 'Radiátorcsőre felpattintható törölköző- és ruhaakasztó. Egy egyszerű mozdulattal a radiátorra feltehető és már használható is.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>50mm x 50mm x 50mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:1484558\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/m_koziol/about\" class=\"bld\">m_koziol</a> készítette. &#169; <!--DATE--> m_koziol. Minden jog fenntartva.', 'hanger1_fi23_13', 37, 0, '2020-06-00 00:00:00'),
-(40, 'item/product=40', 'images/kinyomo_furdo2.png', 'kinyomo_furdo1.png', 690, '73x35x8', 'Fogkrém Kinyomó', 'Fürdőszobai Kiegészítők', 'Segítségével könnyen kinyomhatóvá válik a különböző tubusokban és tárolókban lévő maradék fogkrém, festék vagy kenőanyag. A terméken található hosszanti résbe kell befogatni a tubus végét, majd a kulcs-szerű részénél elkezdeni tekerni. A tetején található lyukak segítségével könnyen és kényelmese tárolható vagy akasztható.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>73mm x 35mm x 8mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:21410\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/alany/about\" class=\"bld\">alany</a> készítette. &#169; <!--DATE--> alany. Minden jog fenntartva.', 'toothpaste-key', 38, 0, '2020-06-00 00:00:00'),
-(41, 'item/product=41', 'images/kinyomo2_furdo1.png', 'kinyomo2_furdo1.png', 590, '66x10x10', 'Fogkrém Kinyomó', 'Fürdőszobai Kiegészítők', 'Egyszerű és könnyen használható fogkrém kinyomó. Segítségével a tubusban lévő összes fogkrémet kényelmesen ki lehet nyomni, ezáltal hosszabb távon időt és pénzt spórolva meg.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>66mm x 10mm x 10mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:2459455\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/tk3dprinting/about\" class=\"bld\">TK3DPrinting</a> készítette. &#169; <!--DATE--> TK3DPrinting. Minden jog fenntartva.', 'Exquisite_Wolt-Habbi_2', 39, 0, '2020-06-00 00:00:00'),
+(40, 'item/product=40', 'images/kinyomo_furdo2.png', 'kinyomo_furdo1.png', 690, '73x35x8', 'Fogkrém Kinyomó v. 1', 'Fürdőszobai Kiegészítők', 'Segítségével könnyen kinyomhatóvá válik a különböző tubusokban és tárolókban lévő maradék fogkrém, festék vagy kenőanyag. A terméken található hosszanti résbe kell befogatni a tubus végét, majd a kulcs-szerű részénél elkezdeni tekerni. A tetején található lyukak segítségével könnyen és kényelmesen tárolható vagy akasztható.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>73mm x 35mm x 8mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:21410\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/alany/about\" class=\"bld\">alany</a> készítette. &#169; <!--DATE--> alany. Minden jog fenntartva.', 'toothpaste-key', 38, 0, '2020-06-00 00:00:00'),
+(41, 'item/product=41', 'images/kinyomo2_furdo1.png', 'kinyomo2_furdo1.png', 590, '66x10x10', 'Fogkrém Kinyomó v. 2', 'Fürdőszobai Kiegészítők', 'Egyszerű és könnyen használható fogkrém kinyomó. Segítségével a tubusban lévő összes fogkrémet kényelmesen ki lehet nyomni, ezáltal hosszabb távon időt és pénzt spórolva meg.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>66mm x 10mm x 10mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:2459455\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/tk3dprinting/about\" class=\"bld\">TK3DPrinting</a> készítette. &#169; <!--DATE--> TK3DPrinting. Minden jog fenntartva.', 'Exquisite_Wolt-Habbi_2', 39, 0, '2020-06-00 00:00:00'),
 (42, 'item/product=42', 'images/vaza_ill1.png', 'vaza_ill2.png', 5490, '85x85x100', 'Arc-Váza Illúzió', 'Egyéb', 'Korhű viktoriánus serleg arc illúzióval. Amellett, hogy egy használható serleg, vízszintesen, egyszínű háttér előtt szemből nézve a termék két oldalán két arc rajzolódik ki szimmetrikusan.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>85mm x 85mm x 100mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:1541337\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/alzibiff/about\" class=\"bld\">Alzibiff</a> készítette. &#169; <!--DATE--> Alzibiff. Minden jog fenntartva.', 'Vase', 40, 0, '2020-06-00 00:00:00'),
 (43, 'item/product=43', 'images/gorbe_tarto.png', 'lebego_telefontarto2.png,lebego_telefontarto3.png,lebego_telefontarto.png', 3990, '87x56x106', 'Görbe Telefontartó', 'Telefontartók', 'Elegáns, minimalista kinézetű telefontartó. Stabilan tartja a telefont állítva és fektetve, emelett kialakításának köszönhetően szinte minden típusú telefonnal kompatibilis.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>87mm x 56mm x 106mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by-sa/3.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:1385206\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/ysoft_be3d/about\" class=\"bld\">YSoft_be3D</a> készítette. &#169; <!--DATE--> YSoft_be3D. Minden jog fenntartva.\r\n ', 'telefontarto_lebego', 41, 0, '2020-06-00 00:00:00'),
 (44, 'item/product=44', 'images/konyvtarto.png', 'konyv_tarto2.png,konyv_tarto3.png,konyv_tarto.png', 3690, '120x85x135', 'Könyv, Füzet Állvány', 'Tartók, Rendszerezők', 'Nagyon hasznos és praktikus állvány füzetnek, festővászonnak, könyvnek és rengeteg más dolognak is. Stabilan tartja a kívánt tárgyat, ezzel könnyítve meg az esetleges olvasást, festést vagy bármilyen más munkát. Bármilyen téglalap alakú tárgyat meg tud tartani 4cm vastagság alatt.<br><br>\r\n\r\nTulajdonságok:\r\n<ul class=\"dul\">\r\n<li>3DJAKE ecoPLA filament (környezetbarát, biológiai úton lebomló anyag)</li>\r\n<li>Környezetbarát csomagolás</li>\r\n<li>120mm x 85mm x 135mm</li>\r\n</ul>\r\n\r\nA termék szabad <a href=\"https://creativecommons.org/licenses/by/4.0/\" class=\"bld\">licensszel</a>\r\nvan forgalomban, így te is <a href=\"https://www.thingiverse.com/thing:2777595\" class=\"bld\">megtekintheted</a>\r\nés kedved szerint módosíthatod.\r\nAbban az esetben, ha a szeretnéd a saját modelledet kinyomtatni használd a\r\n<a href=\"/print\" class=\"bld\">bérnyomtatás</a> funkciót.<br><br>\r\n\r\nA terméket <a href=\"https://www.thingiverse.com/blazincampfire/about\" class=\"bld\">BlazinCampfire</a> készítette. &#169; <!--DATE--> BlazinCampfire. Minden jog fenntartva.', 'konyv_tarto', 42, 0, '2020-06-00 00:00:00'),
@@ -129,7 +131,7 @@ CREATE TABLE `orders` (
   `id` int(11) NOT NULL,
   `uid` int(11) NOT NULL,
   `item_id` int(11) NOT NULL,
-  `price` int(11) NOT NULL,
+  `price` float NOT NULL,
   `rvas` enum('0.12','0.20','0.28','0.2') COLLATE utf8mb4_bin NOT NULL,
   `suruseg` enum('10','20','40','60','80') COLLATE utf8mb4_bin NOT NULL,
   `scale` enum('0.7','1','1.3','1.0') COLLATE utf8mb4_bin NOT NULL,
@@ -145,6 +147,9 @@ CREATE TABLE `orders` (
   `status` tinyint(1) NOT NULL DEFAULT 0,
   `shipping_price` int(11) NOT NULL,
   `cp_fname` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `is_cash_on_del` tinyint(1) NOT NULL DEFAULT 1,
+  `packet_id` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `unique_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
   `same_billing_addr` tinyint(1) NOT NULL DEFAULT 1,
   `billing_name` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `billing_country` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
@@ -155,6 +160,31 @@ CREATE TABLE `orders` (
   `billing_comp_tax_num` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `order_time` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `packet_points`
+--
+
+CREATE TABLE `packet_points` (
+  `id` int(11) NOT NULL,
+  `packet_id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `zipcode` int(11) NOT NULL,
+  `city` varchar(255) NOT NULL,
+  `contact` varchar(255) DEFAULT NULL,
+  `phone` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `lat` varchar(255) DEFAULT NULL,
+  `lon` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `packet_points`
+--
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `users`
@@ -193,6 +223,12 @@ ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `packet_points`
+--
+ALTER TABLE `packet_points`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -218,7 +254,13 @@ ALTER TABLE `fix_products`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+
+--
+-- AUTO_INCREMENT for table `packet_points`
+--
+ALTER TABLE `packet_points`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
