@@ -11,10 +11,12 @@ const parseTime = require('./includes/parseTime.js');
 const sendEmail = require('./includes/sendEmail.js');
 const userLogin = require('./loginLogic.js');
 const userRegister = require('./registerLogic.js');
+const formatOrderId = require('./includes/formatOrderId.js');
 
 // Shipping and money handle prices constants are used throughout the page
 const SHIPPING_PRICE = constants.shippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
+const COUNTRIES = constants.countries;
 
 // Validate order on server side & push to db
 const buyItem = (conn, dDataArr, req, res, userSession) => {
@@ -78,9 +80,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
       billingEmail = `
         <div><b>Név: </b>${billingName}</div>
         <div><b>Ország: </b>${billingCountry}</div>
-        <div><b>Irsz.: </b>${billingPcode}</div>
-        <div><b>Város: </b>${billingCity}</div>
-        <div><b>Cím: </b>${billingAddress}</div>
+        <div><b>Cím: </b>${billingPcode} ${billingCity}, ${billingAddress}</div>
       `;    
 
       if (billingCompname) {
@@ -94,6 +94,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     if (billingType != 'same') {      
       if (!billingName || !billingCountry || !billingPcode || !billingCity || !billingAddress) {
         reject('Kérlek tölts ki minden számlázási adatot');
+        return;
+      } else if (COUNTRIES.indexOf(billingCountry) < 0) {
+        // Make sure the country is in the list of supported countries
+        reject('Kérlek válassz egy érvényes országot');
         return;
       } else if (!Number.isInteger(billingPcode) || billingPcode < 1000 || 
         billingPcode > 9985) {
@@ -187,6 +191,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           localFinalPrice += d.price * d.quantity;
         }
 
+        console.log(dDataArr)
+
         // Give discount for 15000 Ft < purchases and also an extra price for 500 Ft > purchases
         let discount = 0.97;
         if (localFinalPrice < 15000) discount = 1;
@@ -239,6 +245,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           var orderID = formData.orderID;
           let fixProduct = Number(Boolean(formData.fixProduct));
 
+          // Order id formatting is currently not used: See js/buyLogic.js why
+          // formatOrderId(orderID)
+          var orderIDDisplay = orderID;
+
           // Lithophane parameters
           let sphere = formData.sphere ? formData.sphere : '';
           let size = formData.size ? formData.size : '';
@@ -253,7 +263,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
             reject('Hibás fizetési mód');
             return;
           // Check validity of order ID
-          } else if (orderID.length !== 8) {
+          } else if (orderID.length !== 4) {
             reject('Hibás utalási azonosító');
             return;
           // Validate lithophane parameters
@@ -444,8 +454,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
               // On successful ordering, send customer a notification email
               let email = result[0].email;
               let emailContent = `
-                <p style="font-size: 22px;">Megkaptuk a rendelésed!</p>
-                <p>
+                <p style="font-size: 24px;">Megkaptuk a rendelésed!</p>
+                <p style="font-size: 16px;">
                   A rendelésedet és annak státuszát megtekintheted a Zaccord fiókodban.<br>
                   Köszönjük, hogy a Zaccordot választottad!
                 </p>
@@ -456,44 +466,57 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
                 ">
 
-                <div style="text-align: center;">
+                <div style="text-align: center; line-height: 1.7; width: 50%; float: left;">
                   <p style="font-weight: bold; font-size: 16px;">
-                    Személyes & Szállítási adatok
+                    Személyes & Szállítási Adatok
                   </p>
-                  <div style="display: table; margin: 0 auto;">
+                  <div style="font-size: 14px;">
                     <div><b>Név: </b>${name}</div>
-                    <div><b>Város: </b>${city}</div>
-                    <div><b>Cím: </b>${address}</div>
+                    <div><b>Cím: </b>${pcode} ${city}, ${address}</div>
                     <div><b>Telefonszám: </b>${mobile}</div>
-                    <div><b>Irsz.: </b>${pcode}</div>
-                    <div><b>Azonosító: </b>${uniqueID}</div>
                     <div>
                       <b>Fizetési mód: </b>
-                      ${payment == 'transfer' ? 'Előre utalás' : 'Utánvét'}
+                      ${payment == 'transfer' ? 'előre utalás' : 'utánvét'}
                       ${
                         payment == 'transfer' ? `(a közelményben tüntetsd fel az alábbi
-                                                 azonosítót:
-                                                 <span style="color: #4285f4;">
-                                                   ${orderID}
-                                                 </span>)
+                                                 utalási azonosítót:
+                                                 <span style="color:
+                                                 #4285f4;">${orderIDDisplay}</span>)
                                                  `
                                                : ''
                       }
                     </div>
+                    <div>
+                      <b>Átvétel: </b> ${deliveryType == 'toAddr'
+                        ? 'Házhozszállítás' : 'Csomagpont átvétel'}
+                    </div>
                   </div>
                 </div>
 
-                <div style="text-align: center;">
-                  <p style="font-weight: bold; font-size: 16px;">Számlázási adatok</p>
-                  <div style="display: table; margin: 0 auto;">
+                <div style="text-align: center; width: 50%; float: left; line-height: 1.7;">
+                  <p style="font-weight: bold; font-size: 16px;">Számlázási Adatok</p>
+                  <div style="font-size: 14px;">
                     ${billingEmail}
                   </div>
                 </div>
+                <div style="clear: both;"></div>
                 <br>
+                <p style="font-size: 14px; text-align: center;">
+                  Az alábbi termék azonosítóval tudod nyomonkövetni a
+                  rendelésed a Zaccord fiókodban:
+                  <span style="color: #4285f4;">${uniqueID}</span>
+                </p>
 
-                ${emailOutput}
+                <div style="font-size: 14px;">
+                  ${emailOutput}
+                </div>
                 <b style="font-size: 16px;">${emailTotPrice}</b>
-                <p style="color: #7d7d7d;">Az oldalon feltüntetett árak tartalmazzák az ÁFÁt!</p>
+                <p style="color: #7d7d7d; font-size: 14px;">
+                  Az oldalon feltüntetett árak tartalmazzák az áfát!
+                </p>
+                <p style="color: #7d7d7d; font-size: 14px;">
+                  
+                </p>
               `;
 
               let subject = 'Megkaptuk a rendelésed! - Azonosító: ' + uniqueID;

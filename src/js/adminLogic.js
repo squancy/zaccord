@@ -5,8 +5,8 @@ const buildAdminPage = (conn, formData) => {
     let user = formData.user;
     let pass = formData.pass;
 
-    if (user != 'ADMIN_UNAME' || pass != 'ADMIN_PASS') {
-      reject('Hibás felhasználónév vagy jelszó');
+    if (user != 'ADMIN_URL' || pass != 'ADMIN_PWD') {
+      reject('hibás user vagy jelszó');
       return;
     } else {
       resolve('success')

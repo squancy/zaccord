@@ -35,6 +35,8 @@ function submitOrder() {
   // Make sure payment option is selected & delivery data is filled in
   let authType = null;
   let billingType = 'same';
+  let isAgree = _('agree').checked;
+  let isAgree2 = _('agree2').checked;
   if (!uvet && !transfer) {
     statusFill('errStatus', 'Kérlek válassz egy fizetési módot');
     return;
@@ -59,6 +61,10 @@ function submitOrder() {
       return;
     }
     authType = 'login';
+  } else if (!isAgree || !isAgree2) {
+    // Did not accept the terms & policy
+    statusFill('errStatus', 'Fogadd el az ÁSZF-et és az Adatvédelmi Nyilatkozatot');
+    return;
   } else if (!isLoggedIn && (_('emailReg').value || _('passReg').value || 
         _('repassReg').value)) {
     // Validate registration on client side

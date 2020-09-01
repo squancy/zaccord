@@ -42,11 +42,24 @@ const buildItemSection = (conn, itemId, req) => {
       let description = result[0].description.replace('<!--DATE-->', new Date().getFullYear());
       let stlPath = result[0].stl_path;
       let showcaseImgs = result[0].img_showcase.split(',');
-      let showcase = `<img src="/${imgUrl}">`;
+      let showcase = '';
       let isBest = result[0].is_best;
       for (let img of showcaseImgs) {
-        showcase += `<img src="/images/${img}">`;
+        showcase += `<img src="/images/${img}" style="height: 0;">`;
       }
+      
+      let stlPaths = [];
+      let pathList = stlPath.replace(/\s/g, '').split(',');
+      for (let i = 0; i < pathList.length; i++) {
+        stlPaths.push({
+          'id': i,
+          'filename': '/fixedStl/' + pathList[i] + '.stl',
+          'color': '#999999',
+          'x': i * 150
+        });
+      }
+
+      let pathArg = JSON.stringify(stlPaths);
 
       let popularTxt = '';
       if (isBest) {
@@ -95,8 +108,7 @@ const buildItemSection = (conn, itemId, req) => {
                 <button class="fillBtn btnCommon bros" onclick="addToCart(${id})">
                   Kosárba
                 </button>
-                <Button class="fillBtn btnCommon bros" id="view3D"
-                  onclick="viewIn3D('/fixedStl/${stlPath}.stl')">
+                <button class="fillBtn btnCommon bros" id="view3D">
                   3D
                 </button>
               </div>
@@ -127,6 +139,10 @@ const buildItemSection = (conn, itemId, req) => {
           <div id="descHS" class="descHS trans">
             <p>
               ${description}
+            </p>
+            <p class="ddgray">
+              Az élő fényképek kivételével a termékfotók csak illusztrációk!
+              A termék 3D nyomtatóval készül!
             </p>
           </div>
           <div id="specsHS" class="specsHS trans">
@@ -170,7 +186,9 @@ const buildItemSection = (conn, itemId, req) => {
           // Provide suggestions
           output += `
             <hr class="hrStyle">
-              <p id="spec" class="align" style="font-weight: 500;">Ezek is érdekelhetnek</p>
+              <p id="spec" class="align gotham" style="font-weight: 500;">
+                Ezek is érdekelhetnek
+              </p>
               <div class="flexDiv" style="flex-wrap: wrap;">   
           `;
 
@@ -179,11 +197,10 @@ const buildItemSection = (conn, itemId, req) => {
             let imgUrl = result[i].img_url;
 
             output += `
-              <a href="/${url}">
-                <div class="cartImgHolder bgCommon suggItem" 
-                  style="background-image: url('/${imgUrl}')">
-                </div>
-              </a>
+              <div class="cartImgHolder bgCommon suggItem" 
+                style="background-image: url('/${imgUrl}')"
+                onclick="window.location.href='/${url}'">
+              </div>
             `;           
           }
 
@@ -200,6 +217,10 @@ const buildItemSection = (conn, itemId, req) => {
             window.onresize = function resizeShowcase() {
               _('galleria').style.height = _('galleria').clientWidth + 'px';
             }
+
+            _('view3D').addEventListener('click', function showModels(e) {
+              viewIn3D(${pathArg});
+            });
           </script>
         `;
         let descToTag = description.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, '')

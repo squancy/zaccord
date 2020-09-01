@@ -4,7 +4,7 @@ const genSpecs = require('./includes/genSpecs.js');
 const isVisited = require('./includes/isVisited.js');
 
 // Build page for uploaded images --> create a lithophane
-const buildLithophane = (conn, userID, filePaths) => {
+const buildLithophane = (conn, userID, filePaths, width, height) => {
   return new Promise((resolve, reject) => {
     // Process uploaded images
     let output = `
@@ -16,13 +16,15 @@ const buildLithophane = (conn, userID, filePaths) => {
     for (let i = 0; i < filePaths.length; i++) {
       let index = filePaths[i].search('/printUploads/');
       let url = filePaths[i].substr(index);
+      let paddingTop = height / width * 100;
       output += `
-        <div class="bgCommon litImg productItem" style="background-image: url('${url}')"
+        <div class="bgCommon litImg productItem"
+          style="background-image: url('${url}'); padding-top: ${paddingTop}%"
           onmouseover="toggleLit(1, '${url}', 'can_${i}', 'img_${i}')"
           onmouseleave="toggleLit(0, '${url}', 'can_${i}', 'img_${i}')" id="img_${i}"
           data-src="${url}">
-        <canvas id="can_${i}" style="display: none;">
-        </canvas>
+          <canvas id="can_${i}" style="display: none;">
+          </canvas>
         </div>
       `; 
     } 
@@ -67,9 +69,15 @@ const buildLithophane = (conn, userID, filePaths) => {
       </p>
 
       <div class="specBox">
-        <button class="fillBtn btnCommon" id="buyLit" style="margin-right: 0;">
+        <button class="fillBtn btnCommon threeBros" id="buyLit">
           Vásárlás
         </button> 
+        <button class="fillBtn btnCommon threeBros" id="toCart">
+          Tovább a kosárhoz
+        </button>
+        <button class="fillBtn btnCommon threeBros" id="newFile">
+          Új fájl feltöltése 
+        </button>
       </div>
     `;
 

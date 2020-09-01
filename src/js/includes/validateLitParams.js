@@ -3,7 +3,7 @@ const fs = require('fs');
 
 function validateLitParams(paramObj) {
   // Validate color
-  if (['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Sárga'].indexOf(paramObj.color) < 0) {
+  if (['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany'].indexOf(paramObj.color) < 0) {
     return false;
 
   // Validate sphere

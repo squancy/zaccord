@@ -32,6 +32,8 @@ const buildBuySection = require('./src/js/buyLogic.js');
 const buildAdminPage = require('./src/js/adminLogic.js');
 const buildAdminSection = require('./src/js/adminSectionLogic.js');
 const buildLithophane = require('./src/js/buildLithophane.js');
+const buildCategory = require('./src/js/buildCategory.js');
+const buildSearch = require('./src/js/buildSearch.js');
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -47,7 +49,11 @@ const errorFormResponse = helpers.errorFormResponse;
 const pageCouldNotLoad = helpers.pageCouldNotLoad;
 const commonData = helpers.commonData;
 
-// Note: change ADMIN constants if you want to use that feature
+// NOTE: change ADMIN constants if you want to use that feature
+// Admin URLs (marked with capital letters), password & username
+// TODO: clean up the server file, separate code to more helper functions
+// Maybe integrate the app with a framework like Express but vanilla Node.js
+// Seems to be more fun
 
 // Store user id in a session
 let d = new Date();
@@ -72,10 +78,8 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
         let searchData = JSON.parse(body);
         let sValue = searchData.value;
-        let empty = false;
-        if (searchData.hasOwnProperty('isEmpty') && searchData.isEmpty) empty = true;
         let content = addTemplate(userID);
-        buildMainSection(conn, sValue, empty).then(data => {
+        buildSearch(conn, sValue).then(data => {
           content += data;
           res.writeHead(200, {'Content-Type': 'text/html'});
           res.end(data);
@@ -235,8 +239,7 @@ const server = http.createServer((req, res) => {
       let formData = JSON.parse(body);
       let responseData = {};
 
-      // User changes their password; validate on server side
-      buildMainSection(conn, formData.cat, false, true).then(data => {
+      buildCategory(conn, formData.cat).then(data => {
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.end(data);
       }).catch(err => {
@@ -326,7 +329,7 @@ const server = http.createServer((req, res) => {
             // Create thumbnail from .stl file: used instead of a product image
             if (extension === 'stl') {
               let thumbnailer = new StlThumbnailer({
-                filePath: newpath,
+                filePath: __dirname + '/printUploads/' + uploadFnames[i] + '.stl', 
                 requestThumbnails: [
                   {
                     width: 500,
@@ -399,15 +402,17 @@ const server = http.createServer((req, res) => {
         });
       } else {
         Promise.all(promises).then(data => {
-          buildLithophane(conn, userID, filePaths).then(data => {
-            console.log('hello')
+          let dimensions = sizeOf(newpath);
+          let width = dimensions.width;
+          let height = dimensions.height;
+
+          buildLithophane(conn, userID, filePaths, width, height).then(data => {
             let content = fs.readFileSync('src/lithophane.html');
             content += data;
             content += addTemplate(userID);
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.end(content);
           }).catch(err => {
-            // TODO
             console.log(err);
             imgError(res, userID, 'sizeError', err);
           });
@@ -453,7 +458,7 @@ const server = http.createServer((req, res) => {
 
   // NOTE: change the following URL if you want to use this feature
   // It should match with the URL seen in admin.js
-  } else if (req.url === '/CONF_EMAIL_SEND_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/CONF_EMAIL_SEND' && req.method.toLowerCase() === 'post') {
     // Send an confirmation email to the customer if the package is ready
     let body = '';
     req.on('data', data => {
@@ -464,8 +469,9 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       let formData = JSON.parse(body);
       let uid = formData.uid;
+      let delType = formData.delType;
       
-      sendConfEmail(conn, uid).then(data => {
+      sendConfEmail(conn, uid, delType).then(data => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end('{"success": true}');
       }).catch(err => {
@@ -473,7 +479,7 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, err);
       });
     });
-  } else if (req.url === '/STATUS_UPDATE_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/STATUS_ORDER_UPDATE_URL' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -561,10 +567,13 @@ const server = http.createServer((req, res) => {
       fileResponse('text/javascript', req.url, res);
     } else if (extension === '.xml') {
       fileResponse('application/xml', req.url, res);
-    }
+    } else if (extension === '.pdf') {
+      fileResponse('application/pdf', req.url, res);
+    } 
 
     // Make sure user is not logged in when visiting /login and /register pages
-    if (['/register', '/login'].indexOf(req.url) > -1 && req.user.id) {
+    if ((['/register', '/login'].indexOf(req.url) > -1 && req.user.id)
+      || req.url.substr(0, 8) === '/?fbclid') {
       res.writeHead(302, {
         'Location': '/'
       });
@@ -614,14 +623,14 @@ const server = http.createServer((req, res) => {
               imgError(res, userID, 'shop', err);
             });
           // Admin page login authentication
-          } else if (req.url.substr(0, 14) === '/ADMIN_VALIDATE_URL') {
+          } else if (req.url.substr(0, 14) === '/ADMIN_URL_ACCESS') {
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);
             let pass = decodeURIComponent(qdata.pass);
 
             // Make sure username and password are correct
-            if (user != 'ADMIN_UNAME' || pass != 'ADMIN_PASS') {
+            if (user != 'ADMIN_UNAME' || pass != 'ADMIN_PWD') {
               res.writeHead(200, {'Content-Type': 'text/html'});
               res.end('hiba', 'utf8');
             }

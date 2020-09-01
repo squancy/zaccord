@@ -72,11 +72,6 @@ function toggleLower(disp) {
 
 // When category btn is clicked display only items with that category
 function sortByCat(cat, cid, isEye = false) {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-
   let data = {
     'cat': cat
   };
@@ -86,8 +81,10 @@ function sortByCat(cat, cid, isEye = false) {
   for (let i = 0; i < categories.length; i++) {
     if (i === cid) {
       categories[i].style.backgroundColor = '#ececec';
+      categories[i].style.color = '#4285f4';
     } else {
       categories[i].style.backgroundColor = 'white';
+      categories[i].style.color = '#545454';
     }
   }
 
@@ -124,6 +121,10 @@ function sortByCat(cat, cid, isEye = false) {
   }).then(data => {
     _('dynamicShowcase').innerHTML = data;
     ll.update();
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }).catch(err => {
     _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a rendezés során</p>';
   });

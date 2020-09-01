@@ -32,12 +32,12 @@ let colorMaps = {
   'Fekete': '#000000',
   'Kék': '#4285f4',
   'Piros': '#dc143c',
-  'Sárga': '#ffff33',
+  'Arany': '#ffff33',
   'Zöld': '#32cd32'
 };
 
 // When clicking on the color selector circles change the color of the model as well
-if (_('color') && _('stlCont')) {
+if (_('color') && _('stlCont_0')) {
   _('color').addEventListener('change', function changeColor(e) {
     let v = _('color').value;
     chooseColor(colorMaps[v]);
@@ -211,4 +211,13 @@ if (_('submitBtn')) {
   _('submitBtn').addEventListener('click', function displayLoader(e) {
     _('status').innerHTML = '<img src="/images/icons/loader.gif" style="margin-bottom: 0;">';
   });
+}
+
+function goToURL(url) {
+  window.location.href = url;
+}
+
+if (_('toCart') && _('newFile')) {
+  _('toCart').addEventListener('click', (e) => goToURL('/cart'));
+  _('newFile').addEventListener('click', (e) => goToURL('/print'));
 }

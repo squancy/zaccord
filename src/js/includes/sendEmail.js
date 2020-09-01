@@ -5,12 +5,12 @@ const nodemailer = require('nodemailer');
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
-      host: 'EMAIL_HOST',
+      host: 'zaccord.com',
       port: 465,
       secure: true, 
       auth: {
-        user: 'EMAIL_USERNAME',
-        pass: 'EMAIL_PASS'
+        user: 'info@zaccord.com',
+        pass: 'Render11Render11'
       }
     });
 
@@ -28,9 +28,12 @@ function sendEmail(from, content, email, subject) {
           ${content}
         </div>
         <div style="width: 100%; background-color: #f4f4f4; color: #171717; padding: 10px;
-          border-radius: 10px; text-align: center; box-sizing: border-box;">
-          <p style="margin-bottom: 0; color: #7d7d7d;">Minden ötletet megvalósítani</p>
-          <p style="color: #7d7d7d;">&copy; ${curYear} Zaccord</p>
+          border-radius: 10px; text-align: center; box-sizing: border-box; font-size: 14px;">
+          <p style="margin-bottom: 0; color: #7d7d7d;">Megvalósítunk minden elképzelést</p>
+          <p style="color: #7d7d7d;">
+            ${curYear} Zaccord -
+            <a href="https://www.zaccord.com/aszf" style="color: #7d7d7d;">ÁSZF</a>
+          </p>
         </div>
       </div>
     `;

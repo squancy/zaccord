@@ -1,4 +1,5 @@
 // Change the admin url if you want
+// NOTE: change the URL constants here and in app.js if you want to use these features
 if (_('ok')) {
   _('ok').addEventListener('click', function submitLogin(e) {
     let data = {
@@ -6,7 +7,7 @@ if (_('ok')) {
       'pass': _('pass').value
     };
 
-    fetch('/adminLogin', {
+    fetch('/ADMIN_LOGIN_URL', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -96,7 +97,7 @@ function updateStatus(i, boxID) {
     'val': val
   }
 
-  fetch('/updateOrderStatus', {
+  fetch('/ORDER_STATUS_UPDATE_URL', {
     headers: {
       'Content-Type': 'application/json'
     },
@@ -117,12 +118,13 @@ function updateStatus(i, boxID) {
 
 // Send confirmation email to customer when the package is ready
 // NOTE: change the url if you want to use this feature
-function sendConfEmail(uid) {
+function sendConfEmail(uid, delType) {
   let data = {
-    'uid': uid
+    'uid': uid,
+    'delType': delType
   };
 
-  fetch('/sendConfEmail', {
+  fetch('/CONF_EMAIL_URL', {
     headers: {
       'Content-Type': 'application/json'
     },
@@ -137,4 +139,13 @@ function sendConfEmail(uid) {
   }).catch(err => {
     console.log(err);
   });
+}
+
+let CURRENT_URL = window.location.href.split('#')[0];
+let isFirst = true;
+function jumpToOrder() {
+  let searchValue = _('searchOrder').value;
+  let hashtag = '#';
+  if (CURRENT_URL.includes('#')) hashtag = '';
+  window.location.href = CURRENT_URL + hashtag + searchValue;
 }

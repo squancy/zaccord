@@ -36,7 +36,7 @@ function genSpecs(price, size, isLit = false) {
               <select class="specSelect" id="color">
     `;
     
-    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Sárga']) {
+    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
       let selected = c == 'Fehér' ? 'selected' : '';
       output += `
         <option value="${c}" ${selected}>${c}</option>
@@ -108,7 +108,7 @@ function genSpecs(price, size, isLit = false) {
               <select class="specSelect" id="color">
     `;
 
-    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Sárga']) {
+    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
       let selected = c == 'Fehér' ? 'selected' : '';
       output += `
         <option value="${c}" ${selected}>${c}</option>

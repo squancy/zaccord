@@ -16,7 +16,12 @@ const buildAdminSection = (conn) => {
       }
 
       // There are orders in db so display them
-      let output = '<section class="keepBottom" style="margin-top: 40px;">';
+      let output = `
+        <section class="keepBottom" style="margin-top: 40px;">
+          <input type="text" autocomplete="off" class="searchBox" id="searchOrder"
+            placeholder="Keresés az adatbázisban (utalási azonosító alapján)"
+            style="width: 100%; margin-bottom: 20px;" onkeyup="jumpToOrder()">
+      `;
       let sprices = {};
       for (let i = 0; i < result.length; i++) {
         let oid = result[i].oid;
@@ -62,7 +67,7 @@ const buildAdminSection = (conn) => {
           sendCE = `
             <span id="seHolder_${uniqueID}">
               <button class="fillBtn btnCommon" style="margin-right: 0;" id="se_${uniqueID}"
-                onclick="sendConfEmail('${uniqueID}')">
+                onclick="sendConfEmail('${uniqueID}', '${deliveryType}')">
                 Megerősítő email küldése
               </button>
             </span>
@@ -142,6 +147,7 @@ const buildAdminSection = (conn) => {
 
         // Build html output
         output += `
+          <span id="${transferID}"></span>
           <div style="${style}; text-align: center; user-select: text;"
             id="box_${i}" class="flexDiv bigBox trans">
             <div class="flexDiv smallBox">

@@ -6,6 +6,7 @@ const calcLitPrice = require('./includes/calcLitPrice.js');
 const validateParams = require('./includes/validateParams.js');
 const validateLitParams = require('./includes/validateLitParams.js');
 const parseCookies = require('./includes/parseCookies.js');
+const formatOrderId = require('./includes/formatOrderId.js');
 const constants = require('./includes/constants.js');
 const NodeStl = require('node-stl');
 const fs = require('fs');
@@ -18,8 +19,16 @@ const MONEY_HANDLE = constants.moneyHandle;
 const buildBuySection = (conn, paramObj, req) => {
   return new Promise((resolve, reject) => {
     // Generate random 8-char order ID
-    let orderID = randomstring.generate(8);
+    let orderID = randomstring.generate({
+      length: 4,
+      charset: 'numeric'
+    });
+
     let userID = req.user.id;
+
+    // Order ID in a more readable form: formatOrderId(orderID)
+    // Currently not used, if more orders come in we may need to format a longer sequence
+    let orderIDDisplay = orderID;
 
     // Build html output
     let output = `
@@ -34,7 +43,7 @@ const buildBuySection = (conn, paramObj, req) => {
 
           <label class="container trans" id="uvetCont">
             <div style="padding-bottom: 0;">Utánvétel</div>
-            <div class="lh">
+            <div class="lh sel">
               Ez esetben a csomag kiszállítása után történik meg a fizetés készpénzzel vagy
               bankkártyával és a futárcég ${MONEY_HANDLE} Ft kezelési költséget számol fel.
             </div>
@@ -43,12 +52,13 @@ const buildBuySection = (conn, paramObj, req) => {
           </label>
           
           <label class="container trans" id="btransfer">
-            <div style="padding-bottom: 0;">Előre utalás</div>
-            <div class="lh">
+            <div style="padding-bottom: 0;">Banki előre utalás</div>
+            <div class="lh sel">
               Ilyenkor az alábbi számlára való utalással fizethetsz:
-              12001008-00238600-00100004.
+              <span class="blue">11773449-02809630</span><br>
+              Kedvezményezett neve: <span class="blue">Turcsán Edit</span><br>
               Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
-              <span class="blue">${orderID}</span>
+              <span class="blue">${orderIDDisplay}</span>
             </div>
             <input type="radio" name="radio" id="transfer">
             <span class="checkmark"></span>
@@ -64,6 +74,9 @@ const buildBuySection = (conn, paramObj, req) => {
       // If product price is below 15000 Ft there is an extra 1450Ft shipping cost
       let discount = 1;
       let discountText = '';
+
+      // Shipping text was used in a previous prototype, currently not in use
+      // May reset it later
       let shippingText = `
         A 15000 Ft alatti rendeléseknél ${SHIPPING_PRICE} Ft-os szállítási költséget számolunk
         fel`;
@@ -275,10 +288,11 @@ const buildBuySection = (conn, paramObj, req) => {
           </div>
           <p class="blueHead" style="font-size: 24px;">3. Szállítás Módja</p>
           <label class="container" id="toAddrHolder">
-            <div style="padding-bottom: 0;">GLS háztól házig futár</div>
-            <div class="lh">
+            <div style="padding-bottom: 0;">GLS házhozszállítás</div>
+            <div class="lh sel">
               A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
-              terméket/termékeket.
+              terméket/termékeket.<br>
+              Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
             <input type="radio" name="radio2" id="toAddr">
             <span class="checkmark"></span>
@@ -286,11 +300,12 @@ const buildBuySection = (conn, paramObj, req) => {
           
           <label class="container" id="packetPointHolder">
             <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
-            <div class="lh">
+            <div class="lh sel">
               A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
-              csomagot ami ezután lesz átvehető.
+              csomagot ami ezután lesz átvehető.<br>
+              Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
-            <div class="lh" id="selectedPP" style="color: #4285f4; display: none;"></div>
+            <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
             <input type="radio" name="radio2" id="packetPoint">
             <span class="checkmark"></span>
           </label>
@@ -334,22 +349,42 @@ const buildBuySection = (conn, paramObj, req) => {
             output += genAuthForm();
           } 
 
+          // Shipping text is currently not used
+          /*
+            output += `
+              <p class="note align ddgray" id="whoosh">
+                ${shippingText}!
+              </p>
+            `;
+          */
+
           output += `
-            <p class="note align ddgray" id="whoosh">
-              ${shippingText}!
-            </p>
-            <p class="note align ddgray" id="whoosh">
-              A vásárlás fizetési kötelezettségeket von maga után!
-              Az oldalon feltüntetett árak tartalmazzák az ÁFÁt.
-            </p>
-            <p class="align bold" id="finalPrice">
-              <span style="color: #4285f4;">
-                Végösszeg:
-              </span>
-              <span id="fPrice">${Math.round(finalPrice + charge)}</span>
-              Ft ${discountText} ${extraCharge}
-              (szállítással együtt)
-            </p>
+              <p class="align">
+                <label class="chCont note ddgray"
+                  style="font-family: 'Roboto', sans-serif; font-size: 14px;">
+                  Elolvastam és elfogadom az
+                  <a href="/aszf" class="blueLink font14">Általános Szerződési Feltételeket</a>
+                  <input type="checkbox" id="agree">
+                  <span class="cbMark"></span>
+                </label>
+              </p>
+              <p class="align">
+                <label class="chCont note ddgray"
+                  style="font-family: 'Roboto', sans-serif; font-size: 14px;">
+                  Elolvastam és elfogadom az
+                  <a href="/nyilatkozat" class="blueLink font14">Adatvédelmi Nyilatkozatot</a>
+                  <input type="checkbox" id="agree2">
+                  <span class="cbMark"></span>
+                </label>
+              </p>
+              <p class="align bold" id="finalPrice">
+                <span style="color: #4285f4;">
+                  Végösszeg:
+                </span>
+                <span id="fPrice">${Math.round(finalPrice + charge)}</span>
+                Ft ${discountText} ${extraCharge}
+                (szállítással együtt)
+              </p>
               <button class="fillBtn btnCommon centerBtn" style="margin-top: 20px;"
                 onclick="submitOrder()" id="submitBtn">
                 Megrendelés

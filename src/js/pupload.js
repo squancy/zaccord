@@ -14,7 +14,7 @@ function formatBytes(bytes, decimals = 2) {
 // Display error msg in rightmost box
 function errorMsg(msg) {
   _('bigPrew').innerHTML += `
-    <p class="gotham font16" style="color: #ff4a4a;">${msg}</p>
+    <p class="gotham font16 errorMessage" style="color: #ff4a4a;">${msg}</p>
   `;
 }
 
@@ -22,7 +22,45 @@ _('fdzB').addEventListener('click', function(e) {
   _('fileInput').click(); 
 });
 
+// Given n, create a new FileList with the first n Files
+function subFirstN(n, files) {
+  let list = new DataTransfer();
+  for (let i = 0; i < n; i++) {
+    list.items.add(files[i]);
+  }
+  return list.files;
+}
+
+// Reset ids of files when removing & adding
+function resetIds() {
+  let ddFiles = document.getElementsByClassName('ddFile');
+  let inds = document.getElementsByClassName('delFile');
+  let cms = document.getElementsByClassName('cms');
+  for (let j = 0; j < ddFiles.length; j++) {
+    console.log(ddFiles[j], j)
+    ddFiles[j].setAttribute('id', 'fh_' + j);
+    inds[j].setAttribute('onclick', `removeFile(${j}, _('fileInput').files)`);
+    cms[j].setAttribute('id', 'cm_' + j);
+  }
+}
+
+// Given n, remove the nth element from FileList
+function removeFile(n, files) {
+  let list = new DataTransfer();
+  for (let i = 0; i < files.length; i++) {
+    if (i != n) list.items.add(files[i]);
+  }
+  _('fileInput').files = list.files;
+  _('fh_' + n).remove();
+  if (!list.files.length) {
+    _('bigPrew').innerHTML = DEFAULT_CONTENT;
+    sBtnAdded = false;
+  }
+  resetIds();
+}
+
 let isSubmitted = false;
+const DEFAULT_CONTENT  = _('bigPrew').innerHTML;
 
 // Display files in the rightmost box
 function displayFiles() {
@@ -30,11 +68,20 @@ function displayFiles() {
   let hasStl = false;
   let hasImg = false;
   let files = _('fileInput').files;
+  let prewContent = _('prew').innerHTML;
   _('prew').innerHTML = '';
+
+  // Remove previous error messages
+  let errors = document.getElementsByClassName('errorMessage');
+  for (let el of Array.from(errors)) {
+    el.remove();
+  }
 
   // Handle selected files & display them in the right div
   // Make sure the maximum number of files to be uploaded is 5
   if (fileCount >= 5 || files.length > 5) {
+    _('fileInput').files = subFirstN(5, _('fileInput').files);
+    _('prew').innerHTML = prewContent;
     errorMsg('Egyszerre maximum 5db fájl tölthető fel');
     return;
   }
@@ -67,12 +114,6 @@ function displayFiles() {
       wrongFileType = true;
     }
 
-    // Do not allow the user to upload more than 1 img, only STLs
-    if (hasImg && files.length > 1) {
-      errorMsg('Egyszerre csak 1 képet tölthetsz fel');
-      return;
-    }
-
     // Make sure images for lithophane and STLs for custom print are not mixed
     if (hasStl && hasImg) {
       errorMsg('Egyszerre vagy csak képeket vagy csak STL fájlokat tölthtesz fel');
@@ -83,24 +124,37 @@ function displayFiles() {
       return;
     }
 
-    let indicator = '<img src="/images/icons/checkmark.png" width="24">';
+    // Do not allow the user to upload more than 1 img, only STLs
+    if (hasImg && files.length > 1) {
+      _('fileInput').files = subFirstN(1, _('fileInput').files);
+      _('prew').innerHTML = prewContent;
+      errorMsg('Egyszerre csak 1 képet tölthetsz fel');
+      return;
+    }
+
+    let indicator = `
+      <img src="/images/icons/fileExit.png" width="16" class="trans delFile"
+        onclick="removeFile(${i}, _('fileInput').files)">
+    `;
 
     // Build output
     _('prew').innerHTML += `
       <div class="flexDiv ddFile animate__animated animate__fadeIn"
-        style="align-items: center; justify-content: space-evenly;">
+        style="align-items: center; justify-content: space-evenly;" id="fh_${i}">
         <div class="flexDiv" style="align-items: center;">
           <div>${imgPrew}</div>
           <div class="oflow">
             ${file.name}<br>
             <span class="dgray gothamNormal font14">${size}</span>
           </div>
-          <div id="cm_${i}">
+          <div id="cm_${i}" class="cms">
             ${indicator}
           </div>
         </div>
       </div>
     `;
+
+    resetIds();
 
     // Add submit button if not yet added
     if (!sBtnAdded) {
@@ -168,8 +222,26 @@ _('dropDiv').addEventListener('dragleave', function(e) {
 
 function dropFile(e) {
   e.preventDefault();
-  _('fileInput').files = e.dataTransfer.files;
+  let savedContent = new DataTransfer();
+  for (let i = 0; i < _('fileInput').files.length; i++) {
+    savedContent.items.add(_('fileInput').files[i]);
+  }
 
+  for (let i = 0; i < e.dataTransfer.files.length; i++) {
+    savedContent.items.add(e.dataTransfer.files[i]);
+  }
+
+  // Make sure no more than 15 items are in the cart
+  let numOfItemsSoFar = Object.keys(JSON.parse(getCookie('cartItems'))).length;
+  let uploadedFiles = savedContent.files.length;
+  if (getCookie('cartItems') && (numOfItemsSoFar + uploadedFiles) > 15) {
+    _('bigPrew').innerHTML = '';     
+    errorMsg('A fájlok feltöltésével több mint 15 termék lenne a kosaradban')
+    return;
+  }
+
+  _('fileInput').files = savedContent.files;
+  
   displayFiles();
   
   _('dropDiv').style.border = '2px solid #f4f4f4';

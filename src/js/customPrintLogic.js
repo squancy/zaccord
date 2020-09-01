@@ -16,6 +16,15 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     let sizeMM = 0;
     let subPrices = [];
     let totWeight = 0;
+    let stlContainers = '';
+    
+    let stlWidth = '';
+    if (filePaths.length === 1) {
+      stlWidth = 'style="min-width: 100%"';
+    } else if (filePaths.length === 2) {
+      stlWidth = 'style="min-width: calc(50% - 6px)"';
+    }
+
     for (let i = 0; i < filePaths.length; i++) {
       let path = filePaths[i];
       let stl = new NodeStl(path);
@@ -26,8 +35,15 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       if (boxVolume > sizeMM) {
         sizeMM = stl.boundingBox.map(a => a.toFixed(2) + 'mm x ').join(' ');
       }
+
+      stlContainers += `
+        <div class="stlCont" ${stlWidth}>
+          <div id="stlCont_${i}" style="height: 300px;"></div>
+        </div>
+      `;
       
       // Make sure size is between the printer's boundaries: 5mm - 200mm
+      console.log(stl.boundingBox);
       if (!checkStlSize(stl.boundingBox)) {
         reject('Hibás méretezés');
         return;
@@ -69,7 +85,9 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     // Build html output
     let content = `
       <section class="keepBottom">
-        <div id="stlCont" style="margin: 0 0 20px 0;"></div>
+        <div class="flexDiv" style="margin-bottom: 20px; flex-wrap: wrap;">
+          ${stlContainers}
+        </div>
         <div class="loadImg" id="status">
           <img src="/images/icons/loader.gif" style="margin-bottom: 0;">
         </div>
@@ -121,9 +139,15 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
     content += `
         <div class="specBox">
-          <button class="fillBtn btnCommon" id="buyCP" style="margin-right: 0;">
+          <button class="fillBtn btnCommon threeBros" id="buyCP">
             Vásárlás
           </button> 
+          <button class="fillBtn btnCommon threeBros" id="toCart">
+            Tovább a kosárhoz
+          </button>
+          <button class="fillBtn btnCommon threeBros" id="newFile">
+            Új fájl feltöltése 
+          </button>
         </div>
         <div id="infoStat" class="infoBox"></div>
 
@@ -176,6 +200,8 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           canGo = false;
         }
 
+        let models = [];
+
         // Go through the files and push them to cookies for later display in the cart
         for (let i = 0; i < arr.length; i++) {
           let path = arr[i];
@@ -208,21 +234,22 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
           // Also build .stl file name array used for displaying them interactively
           let obj = {
-            id: i,
+            id: 0,
             filename: path,
-            color: "#ffffff",
-            x: i * 220
+            color: "#ffffff"
           };
+
+          // Use a 3rd party library for viewing .stl files
+          let stlView = new StlViewer(document.getElementById("stlCont_" + i), {
+            all_loaded_callback: stlFinished,
+            models: [obj]
+          });
+
           data.push(obj);
+          models.push(stlView);
         }
 
         document.getElementsByClassName('hrStyle')[0].style.margin = 0;
-
-        // Use a 3rd party library for viewing .stl files
-        var stlView = new StlViewer(document.getElementById("stlCont"), {
-          all_loaded_callback: stlFinished,
-          models: data
-        });
 
         function stlFinished() {
           document.getElementById('status').innerHTML = '';
@@ -235,16 +262,16 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           chooseColor(colorMaps[colorVal]);
         }
 
-        function chooseDisplay (display, id) {
-          for (let i = 0; i < ${filePaths.length}; i++) {
-            stlView.set_display(i, display);
+        function chooseDisplay(display, id) {
+          for (let i = 0; i < models.length; i++) {
+            models[i].set_display(0, display);
           }          
           highlightBtn(id);
         }
 
         function chooseColor(color, id, isRev = false) {
-          for (let i = 0; i < ${filePaths.length}; i++) {
-            stlView.set_color(i, color);
+          for (let i = 0; i < models.length; i++) {
+            models[i].set_color(0, color);
           }
 
           let hexToName = {

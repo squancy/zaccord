@@ -33,7 +33,7 @@ function addToCart(id) {
   // Make sure all parameters have a valid value
   let surusegValues = [10];
   let quantityValues = [];
-  let colorValues = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Sárga', 'Piros'];
+  let colorValues = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Arany', 'Piros'];
   for (let i = 20; i <= 80; i += 20) {
     surusegValues.push(i);
   }
@@ -273,7 +273,7 @@ if (typeof stlView === 'undefined') var stlView = null;
 if (typeof isMobile === 'undefined') var isMobile = mobileCheck();
 
 // Handle the displaying & hiding of pop-up 3D stl viewer
-function viewIn3D(stlPath) {
+function viewIn3D(listOfPath) {
   // Get window width & height
   const width  = window.innerWidth || document.documentElement.clientWidth || 
     document.body.clientWidth;
@@ -323,13 +323,7 @@ function viewIn3D(stlPath) {
           _('stlLoader').style.display = 'none';
           stlView.set_scale(0, 0.6);
         },
-        models: [
-          {
-            'id': 0,
-            'filename': stlPath,
-            'color': '#999999',
-          }
-        ]
+        models: listOfPath
       });
     }
   }

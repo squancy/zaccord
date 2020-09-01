@@ -269,7 +269,7 @@ const buildCartSection = (conn, req) => {
                       onchange="chColor(this, '${tid}')">
           `;
 
-          for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Sárga']) {
+          for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
             let selected = decodeURIComponent(color) == c ? 'selected' : '';
             output += `
               <option value="${c}" ${selected}>${c}</option>
