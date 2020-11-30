@@ -1,10 +1,10 @@
 // Convert file sizes to nice formats (actually kibibytes not kilobytes...)
 function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 Byte';
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const sizes = ['Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -89,9 +89,9 @@ function displayFiles() {
   for (let i = 0; i < files.length; i++) {
     let file = files[i];
     let size = formatBytes(file.size);
-    if (file.size > 10 * 1048576) {
-      // Make sure none of the files are above 10MB
-      errorMsg('A maximum fájlméret 10MB');
+    if (file.size > 100 * 1048576) {
+      // Make sure none of the files are above 100MB
+      errorMsg('A maximum fájlméret 100MB');
       return;
     }
 
@@ -133,7 +133,7 @@ function displayFiles() {
     }
 
     let indicator = `
-      <img src="/images/icons/fileExit.png" width="16" class="trans delFile"
+      <img src="/images/icons/moreClose.svg" width="16" height="16" class="trans delFile"
         onclick="removeFile(${i}, _('fileInput').files)">
     `;
 
@@ -174,6 +174,7 @@ function displayFiles() {
           _('bigPrew').innerHTML += `
             <img src="/images/icons/loader.gif" width="24" style="margin: 0 auto"
               class="animate__animated animate__fadeIn">
+            <p class="blue">Ez akár pár percig is eltarthat...</p>
           `;
           _('continue').style.cursor = "not-allowed";
           _('continue').style.opacity = "0.8";

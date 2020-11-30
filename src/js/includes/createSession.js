@@ -4,7 +4,7 @@ const sessions = require("client-sessions");
 function createSession(name) { 
   let session = sessions({
     cookieName: name,
-    secret: 'niN64LAKu21828jas/!%+()~f?:"!%/dh231JSSlaoos77/%9921Ju21jh',
+    secret: 'YOUR_SECURE_CODE',
     duration: 1000 * 60 * 60 * 24 * 365,
     activeDuration: 1000 * 60 * 60 * 24 * 365,
     cookie: {

@@ -17,8 +17,25 @@ let countries = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria",
     "Koszovó",
     "Montenegró"];
 
+function getBillingFields() {
+  let billingName = _('billingName').value;
+  let billingPcode = _('billingPcode').value;
+  let billingCity = _('billingCity').value;
+  let billingAddress = _('billingAddress').value;
+  let billingCountry = _('billingCountry').value;
+  let billingCompname, billingCompnum;
+  billingCompname = billingCompnum = null;
+  if (_('buyAsComp').checked) {
+    billingCompname = _('billingCompname').value;
+    billingCompnum = _('billingCompnum').value;
+  }
+  return [billingName, Number(billingPcode), billingCountry, billingCity, billingAddress,
+    billingCompname, billingCompnum];
+}
+
 // User submits order, process their request
 function submitOrder() {
+  // Gather form values
   let uvet = _('uvet').checked; 
   let transfer = _('transfer').checked;
   let name = _('name').value;
@@ -28,12 +45,27 @@ function submitOrder() {
   let mobile = _('mobile').value;
   let toAddr = _('toAddr').checked;
   let packetPoint = _('packetPoint').checked;
+  let isCompNormal = _('compNormal').checked;
+
+  let buyAsComp = _('buyAsComp') ? _('buyAsComp').checked : null;
+  if (_('billingName')) {
+    var [billingName, billingPcode, billingCountry, billingCity, billingAddress,
+      billingCompname, billingCompnum] = getBillingFields();
+  }
+  
+  let isLoggedIn = _('nlEmail') ? false : true;
+  let nlEmail = _('nlEmail') ? _('nlEmail').value : null;
+
+  // Company data if customer buys product as a company
+  if (isCompNormal) {
+    var normalCompnum = _('normalCompnum').value;
+    var normalCompname = _('normalCompname').value;
+  }
 
   _('errStatus').innerHTML = '';
   _('succStatus').innerHTML = '';
 
   // Make sure payment option is selected & delivery data is filled in
-  let authType = null;
   let billingType = 'same';
   let isAgree = _('agree').checked;
   let isAgree2 = _('agree2').checked;
@@ -46,40 +78,21 @@ function submitOrder() {
   } else if (!Number.isInteger(pcode) || pcode < 1000 || pcode > 9985) {
     statusFill('errStatus', 'Kérlek valós irányítószámot adj meg');
     return;
-  } else if (!isLoggedIn && !_('email').value && !_('pass').value && !_('emailReg').value
-      && !_('passReg').value && !_('repassReg').value) {
-    statusFill('errStatus', 'Regisztrálj vagy jelentkezz be');
-    return;
-  } else if (!isLoggedIn && (_('email').value || _('pass').value)
-      && (_('emailReg').value || _('passReg').value || _('repassReg').value)) {
-    statusFill('errStatus', 'Egyszerre próbálsz bejelentkezni és regisztrálni');
-    return;
-  } else if (!isLoggedIn && (_('email').value || _('pass').value)) {
-    // Validate login on client side
-    if (!_('email').value || !_('pass').value) {
-      statusFill('errStatus', 'Tölts ki minden bejelentkezéshez szükséges adatot');
-      return;
-    }
-    authType = 'login';
   } else if (!isAgree || !isAgree2) {
     // Did not accept the terms & policy
     statusFill('errStatus', 'Fogadd el az ÁSZF-et és az Adatvédelmi Nyilatkozatot');
     return;
-  } else if (!isLoggedIn && (_('emailReg').value || _('passReg').value || 
-        _('repassReg').value)) {
-    // Validate registration on client side
-    let email = _('emailReg').value;
-    let pass = _('passReg').value;
-    let passConf = _('repassReg').value;
-    if (!regVal(email, pass, passConf, 'errStatus', 'submitBtn')) return;
-    authType = 'register';
-  } else if (_('billingName') && (_('billingName').value || _('billingPcode').value ||
-        _('billingCity').value || _('billingAddress').value || _('billingCompname') &&
-        (_('billingCompname').value || _('billingCompnum').value))) {
+  } else if (_('billingName') && (billingName || billingPcode.value || billingCity ||
+    billingAddress || _('billingCompname') && (billingCompname || billingCompnum))) {
     let isComp = false;
-    if (_('billingCompname') && (_('billingCompname').value || _('billingCompnum').value 
-          || _('buyAsComp').checked)) {
+    let isCompNormal = false;
+    if (_('billingCompname') && (billingCompname || billingCompnum || buyAsComp)) {
       isComp = true;
+    } else if (isCompNormal && (!normalCompnum || !normalCompname)) {
+      statusFill('errStatus', 'Kérlek adj meg minden céggel kapcsolatos adatot');
+      return;
+    } else if (normalCompnum && normalCompname && isCompNormal) {
+      isCompNormal = true;
     }
 
     if (!validateComp(isComp)) return;
@@ -111,34 +124,30 @@ function submitOrder() {
   }
 
   /*
-     Add payment & delivery data + login/registration credentials to the 1st element of the
-     array
-   */
+   Add payment & delivery data + login/registration credentials to the 1st element of the
+   array
+ */
   data[0].payment = 'transfer';
+  data[0].isLoggedIn = isLoggedIn;
   data[0].name = name;
   data[0].pcode = pcode;
   data[0].city = city;
   data[0].address = address;
   data[0].mobile = mobile;
-  data[0].authType = authType;
   data[0].billingType = billingType;
-  data[0].billingName = _('billingName') ? _('billingName').value : '';
-  data[0].billingCountry = _('billingCountry') ? _('billingCountry').value : '';
-  data[0].billingPcode = _('billingPcode') ? _('billingPcode').value : '';
-  data[0].billingCity = _('billingCity') ? _('billingCity').value : '';
-  data[0].billingAddress = _('billingAddress') ? _('billingAddress').value : '';
-  data[0].billingCompname = _('billingCompname') ? _('billingCompname').value : '';
-  data[0].billingCompnum = _('billingCompname') ? _('billingCompnum').value : '';
+  data[0].billingName = _('billingName') ? billingName : '';
+  data[0].billingCountry = _('billingCountry') ? billingCountry : '';
+  data[0].billingPcode = _('billingPcode') ? billingPcode : '';
+  data[0].billingCity = _('billingCity') ? billingCity : '';
+  data[0].billingAddress = _('billingAddress') ? billingAddress : '';
+  data[0].billingCompname = _('billingCompname') ? billingCompname : '';
+  data[0].billingCompnum = _('billingCompname') ? billingCompnum : '';
   data[0].emailOutput = _('emlHolder').innerHTML;
   data[0].emailTotPrice = _('finalPrice').innerHTML;
+  data[0].nlEmail = nlEmail;
 
-  if (authType) {
-    data[0].email = _('email').value;
-    data[0].pass = _('pass').value;
-    data[0].emailReg = _('emailReg').value;
-    data[0].passReg = _('passReg').value;
-    data[0].repassReg = _('repassReg').value;
-  }
+  data[0].normalCompname = normalCompname;
+  data[0].normalCompnum = normalCompnum;
 
   if (typeof isLit !== 'undefined') {
     data[0].isLit = true;
@@ -161,6 +170,20 @@ function submitOrder() {
         // On successful order remove items from the cookies (if order was not a single item)
         window.scrollTo(0, 0);
         if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
+
+        // Remove custom printed product / lithophane from cart (cookies)
+        let kvPairs = window.location.href.split('?')[1].split('&');
+        if (kvPairs[0].split('=')[1] == 'lit') {
+          var cpLitId = kvPairs[kvPairs.length - 2].split('=')[1]
+        } else {
+          var cpLitId = kvPairs[kvPairs.length - 1].split('=')[1]
+        }
+
+        cpLitId = cpLitId.replace(/\.(jpg|jpeg|png)/g, '');
+        let cookieItems = JSON.parse(getCookie('cartItems') || '{}');
+        delete cookieItems['content_' + cpLitId];
+        setCookie('cartItems', JSON.stringify(cookieItems));
+
         _('main').classList = 'flexDiv';
         _('main').style.flexDirection = 'column';
         _('main').style.alignItems = 'center';
@@ -178,7 +201,15 @@ function submitOrder() {
             Vissza a főoldalra
           </button>
         `;
+        updateCartNum();
+        fbq('track', 'AddPaymentInfo');
+        /*
+        fbq('track', 'Purchase', {
+          value: (data[0].finalPrice + data[0].shippingPrice), currency: 'HUF'
+        });
+        */
     } else {
+      console.log('adadsd');
       _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
     }
   }).catch(err => {
@@ -189,11 +220,8 @@ function submitOrder() {
 
 // Validate parameters if user has a different billing address
 function validateComp(isComp) {
-  let billingName = _('billingName').value;
-  let billingCountry = _('billingCountry').value;
-  let billingPcode = Number(_('billingPcode').value);
-  let billingCity = _('billingCity').value;
-  let billingAddress = _('billingAddress').value;
+  let [billingName, billingPcode, billingCountry, billingCity, billingAddress,
+    billingCompname] = getBillingFields();
   if (!billingName || !billingCountry || !billingPcode || !billingCity || !billingAddress) {
     statusFill('errStatus', 'Kérlek tölts ki minden számlázási adatot'); 
     return false;
@@ -205,9 +233,7 @@ function validateComp(isComp) {
   if (!isComp) {
     return true;
   } else {
-    let compName = _('billingCompname').value;
-    let compNum = _('billingCompnum').value;
-    if (!compName || !compNum) {
+    if (!billingCompname || !billingCompnum) {
       statusFill('errStatus', 'Kérlek tölts ki minden céges számlázási adatot'); 
       return false; 
     }
@@ -219,7 +245,7 @@ let compAdded = false;
 
 // Toggle 'different billing address' form
 _('diffBilling').addEventListener('click', function toggleForm(e) { 
-    if (this.getAttribute('data-status') != 'close') {
+  if (this.getAttribute('data-status') != 'close') {
     _('diffBilling').innerText = 'Megegyező számlázási cím';
     _('billingForm').style.display = 'flex';
     if (_('bac')) _('bac').style.display = 'block';
@@ -252,7 +278,9 @@ _('diffBilling').addEventListener('click', function toggleForm(e) {
       _('billingHolder').innerHTML += `
         <div class="align" style="margin: 10px 0 20px 0;" id="bac">
           <label class="chCont">Cégként vásárolok
-            <input type="checkbox" id="buyAsComp" onchange="companyBilling()">
+            <input type="checkbox" id="buyAsComp"
+              onchange="companyBilling('billingCompname', 'billingCompnum', 'billing',
+                'billingForm')">
             <span class="cbMark"></span>
           </label>
         </div>
@@ -277,7 +305,7 @@ _('diffBilling').addEventListener('click', function toggleForm(e) {
         if (_('bac')) {
           _('bac').style.display = 'none';
           _('buyAsComp').checked = false;
-          isShow = !isShow;
+          toggleStates['billing'] = !toggleStates['billing'];
         }
       }
     });
@@ -306,18 +334,22 @@ function createInput(id, ph) {
 }
 
 // Toggle display company billing info
-let isShow = false;
-function companyBilling() {
-  if (!isShow) {
-    let compName = createInput('billingCompname', 'Cégnév');
-    let compNum = createInput('billingCompnum', 'Adószám');
-    _('billingForm').appendChild(compName); 
-    _('billingForm').appendChild(compNum); 
-    isShow = true;
+let toggleStates = {
+  'billing': false,
+  'normals': false
+};
+
+function companyBilling(nameID, numID, id, container) {
+  if (!toggleStates[id]) {
+    let compName = createInput(nameID, 'Cégnév');
+    let compNum = createInput(numID, 'Adószám');
+    _(container).appendChild(compName); 
+    _(container).appendChild(compNum); 
+    toggleStates[id] = true;
   } else {
-    removeElement('billingCompname'); 
-    removeElement('billingCompnum'); 
-    isShow = false;
+    removeElement(nameID); 
+    removeElement(numID); 
+    toggleStates[id] = false;
   }
 }
 
@@ -338,54 +370,51 @@ function handleUvet(e, isUvet) {
 
 let isInit = false;
 function showMap(e) {
-  // Avoid click propagation on label
-  if (e.target.tagName === 'DIV') {
-    const width  = window.innerWidth || document.documentElement.clientWidth || 
-      document.body.clientWidth;
-    const height = window.innerHeight || document.documentElement.clientHeight || 
-      document.body.clientHeight;
+  const width  = window.innerWidth || document.documentElement.clientWidth || 
+    document.body.clientWidth;
+  const height = window.innerHeight || document.documentElement.clientHeight || 
+    document.body.clientHeight;
 
-    _('overlay').style.opacity = '1';
-    _('overlay').style.height = document.body.scrollHeight + "px";
-    _('glsBigBox').style.height = '50vh';
-    _('glsBigBox').style.opacity = '1';
-    if (width > 768) {
-      _('glsBigBox').style.width = Math.round(width * 0.7) + 'px';
-      _('glsBigBox').style.left = Math.round(width * 0.15) + 'px';
-    } else if (width > 500) {
-      _('glsBigBox').style.width = Math.round(width * 0.9) + 'px';
-      _('glsBigBox').style.left = Math.round(width * 0.05) + 'px';
-    } else {
-      _('glsBigBox').style.width = Math.round(width * 0.95) + 'px';
-      _('glsBigBox').style.left = Math.round(width * 0.025) + 'px';
-      _('glsBigBox').style.height = '70vh';
-    }
-    
-    _('exitBtn').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    if (!isInit) {
-      glsMap.init('HU', 'glsBigBox', '1116,Budapest,HU', 1);
-      _('searchinput').classList = 'glsSearchInput';
-      _('searchinput').placeholder = 'Csomagpont keresése...';
-
-      var target = document.querySelector('#psitems-canvas')
-
-      var observer = new MutationObserver(function(mutations) {
-        // Attach an onclick event for every packet point div to get data from GLS
-        let allDivs = document.querySelectorAll("#psitems-canvas > div");
-        for (let i = 0; i < allDivs.length; i++) {
-          if (allDivs[i].id) {
-            allDivs[i].addEventListener('click', (e) => selectPacketPoint(e, allDivs[i]));
-          }
-        }
-      });
-
-      var config = { attributes: true, childList: true, characterData: true };
-
-      observer.observe(target, config);
-    }
-    isInit = true;
+  _('overlay').style.opacity = '1';
+  _('overlay').style.height = document.body.scrollHeight + "px";
+  _('glsBigBox').style.height = '50vh';
+  _('glsBigBox').style.opacity = '1';
+  if (width > 768) {
+    _('glsBigBox').style.width = Math.round(width * 0.7) + 'px';
+    _('glsBigBox').style.left = Math.round(width * 0.15) + 'px';
+  } else if (width > 500) {
+    _('glsBigBox').style.width = Math.round(width * 0.9) + 'px';
+    _('glsBigBox').style.left = Math.round(width * 0.05) + 'px';
+  } else {
+    _('glsBigBox').style.width = Math.round(width * 0.95) + 'px';
+    _('glsBigBox').style.left = Math.round(width * 0.025) + 'px';
+    _('glsBigBox').style.height = '85vh';
   }
+  
+  _('exitBtn').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  if (!isInit) {
+    glsMap.init('HU', 'glsBigBox', '1116,Budapest,HU', 1);
+    _('searchinput').classList = 'glsSearchInput';
+    _('searchinput').placeholder = 'Csomagpont keresése...';
+
+    var target = document.querySelector('#psitems-canvas')
+
+    var observer = new MutationObserver(function(mutations) {
+      // Attach an onclick event for every packet point div to get data from GLS
+      let allDivs = document.querySelectorAll("#psitems-canvas > div");
+      for (let i = 0; i < allDivs.length; i++) {
+        if (allDivs[i].id) {
+          allDivs[i].addEventListener('click', (e) => selectPacketPoint(e, allDivs[i]));
+        }
+      }
+    });
+
+    var config = { attributes: true, childList: true, characterData: true };
+
+    observer.observe(target, config);
+  }
+  isInit = true;
 }
 
 let ajaxURL =

@@ -7,7 +7,17 @@ const buildSearch = (conn, searchValue) => {
     searchValue = escapeVars(searchValue);
     let output = '';
     let isDefault = false;
-    let sQuery = `SELECT * FROM fix_products WHERE name LIKE '${searchValue}%'`;
+
+    // If search input is empty show most popular products instead
+    if (!searchValue) {
+      var sQuery = `
+        SELECT * FROM fix_products WHERE is_best = 1 ORDER BY priority
+      `;
+    } else {
+      var sQuery = `
+        SELECT * FROM fix_products WHERE name LIKE '${searchValue}%' ORDER BY priority
+      `;
+    }
     conn.query(sQuery, (err, result, field) => {
       if (err) {
         reject('Keresési hiba');
@@ -60,7 +70,7 @@ const buildSearch = (conn, searchValue) => {
               // If still no result display error msg
               if (!output) {
                 output = `
-                  <div>
+                  <div style="margin: 0 auto;">
                     <img src="/images/icons/nofound.png" class="emptyCart">
                     <p class="dgray font18">Sajnos nincs ilyen termékünk...</p>
                   </div>

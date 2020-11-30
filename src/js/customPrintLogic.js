@@ -6,6 +6,14 @@ const cookieFuncs = require('./includes/cookieFuncs.js');
 const isVisited = require('./includes/isVisited.js');
 const genQuan = require('./includes/genQuan.js');
 const randomstring = require('randomstring');
+const getPrice = require('./includes/modelPriceCalc/getPrice.js');
+const constants = require('./includes/constants.js');
+const calcCPPrice = constants.calcCPPrice;
+const getPrintTime = constants.getPrintTime;
+const getCoords = constants.getCoords;
+
+// In this version of the code there is no extra price for products below 800 Ft
+// Since the minimum price of a model is 1K Ft
 
 // Build custom print page; add interactive .stl file viewer + customization
 const buildCustomPrint = (conn, userID, filePaths) => {
@@ -15,45 +23,78 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     let sizes = [];
     let sizeMM = 0;
     let subPrices = [];
-    let totWeight = 0;
+    let totVolume = 0;
     let stlContainers = '';
-    
+    let totPrintTime = 0;
+
     let stlWidth = '';
     if (filePaths.length === 1) {
       stlWidth = 'style="min-width: 100%"';
     } else if (filePaths.length === 2) {
       stlWidth = 'style="min-width: calc(50% - 6px)"';
     }
+    
+    /*
+    function formatPrintTime(timeInSec) {
+      if (timeInSec / 3600 < 1) {
+        return Math.round(timeInSec / 60) + ' perc';
+      } else {
+        return Math.round(timeInSec / 3600) + ' óra';
+      }
+    }
+    */
+    
+    let isMoreFiles = filePaths.length > 1;
+    let extraMarginDown = '20px';
+    if (isMoreFiles) {
+      extraMarginDown = '0px';
+    }
 
     for (let i = 0; i < filePaths.length; i++) {
       let path = filePaths[i];
-      let stl = new NodeStl(path);
+      let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/mm^3 density
       let volume = (stl.volume).toFixed(2); // cm^3
       let weight = (stl.weight).toFixed(2); // gramm
-      totWeight += Number(weight);
+      totVolume += Number(volume);
+      let [W, H, D] = getCoords(path);
       let boxVolume = stl.boundingBox.reduce((a, c) => a * c);
       if (boxVolume > sizeMM) {
         sizeMM = stl.boundingBox.map(a => a.toFixed(2) + 'mm x ').join(' ');
       }
 
+      let basePrice = calcCPPrice(W, H, D);
+      let subpriceText = '';
+      if (isMoreFiles) {
+        subpriceText = `
+          <p class="gotham align">
+            <span class="blue gotham">Ár:</span>
+            ${basePrice} Ft
+          </p>
+        `;
+      }
+
       stlContainers += `
-        <div class="stlCont" ${stlWidth}>
-          <div id="stlCont_${i}" style="height: 300px;"></div>
+        <div ${stlWidth}>
+          <div class="stlCont">
+            <div id="stlCont_${i}" style="height: 300px;"></div>
+          </div>
+          ${subpriceText}
         </div>
       `;
       
-      // Make sure size is between the printer's boundaries: 5mm - 200mm
+      // Make sure size max 220mm
       console.log(stl.boundingBox);
       if (!checkStlSize(stl.boundingBox)) {
-        reject('Hibás méretezés');
+        reject('A maximális méret 220mm x 220mm x 220mm lehet');
         return;
       }
 
       let centerOfMass = stl.centerOfMass.map(x => x.toFixed(2) + 'mm'); // mm
       let fname = path.split('/');
       fname = fname[fname.length - 1].replace('.stl', '');
-      totalPrice += calcPrice(Math.round(weight * 100 + weight * 1300 / 60), 0.2, 20, 1, 1.2);
-      subPrices.push(Math.round(weight * 100 + weight * 1300 / 60));
+      totPrintTime += getPrintTime(W, H, D);
+      totalPrice += basePrice;
+      subPrices.push(basePrice);
       sizes.push(boxVolume);
     }
 
@@ -65,27 +106,27 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     }
     sizeMM = sizeMM.substr(0, sizeMM.length - 3);
 
-    // 1500 Ft extra charge when ordering a [price] < 1500 Ft product
+    // 800 Ft extra charge when ordering a [price] < 800 Ft product (currently not used)
     let chargeText = '<span id="charge"></span>';
     let dp = 'display: none';
     let extraPrice = 0;
-    if (totalPrice < 500) {
-      extraPrice = 500 - totalPrice;
+    if (totalPrice < 800) {
+      extraPrice = 800 - totalPrice;
       chargeText = `<span id="charge">(+${extraPrice} Ft felár)</span>`;
       dp = 'display: block';
     }
 
     let chargeNote = `
       <p class="align note ddgray" id="chargeNote" style='${dp}'>
-        500 Ft alatti termékeknél 500Ft - termékár
-        felárat számolunk fel!
+        Ha az egész rendelés ára kevesebb mint 800 Ft, akkor annyi felárat számolunk fel, hogy
+        az minimum 800 Ft legyen.
       </p>
     `;
 
     // Build html output
     let content = `
       <section class="keepBottom">
-        <div class="flexDiv" style="margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="flexDiv" style="margin-bottom: ${extraMarginDown}; flex-wrap: wrap;">
           ${stlContainers}
         </div>
         <div class="loadImg" id="status">
@@ -115,14 +156,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         <div class="flexDiv" id="customProps" style="flex-wrap: wrap; margin-top: 10px;">
           <div>
             <p>
-              <span class="blue gotham">Ár:</span>
+              <span class="blue gotham">Végösszeg:</span>
               <span id="priceHolder">${totalPrice}</span> Ft ${chargeText}
             </p>
           </div>
           <div>
             <p>
-              <span class="blue gotham">Becsült Tömeg:</span>
-              <span id="weightHolder">${totWeight.toFixed(2)}g</span>
+              <span class="blue gotham">Becsült Térfogat:</span>
+              <span id="weightHolder">${totVolume.toFixed(2)}cm<sup>3</sup></span>
             </p>
           </div>
           <div>
@@ -133,8 +174,23 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           </div>
         </div>
     `;
+
+    /*
+      <div>
+        <p>
+          <span class="blue gotham">Nyomtatási Idő:</span>
+          <span id="weightHolder">${formatPrintTime(totPrintTime)}</span>
+        </p>
+      </div>
+    */
+
+    let afterWorkNote = `
+      <p class="align note ddgray">
+        Minden termékre ingyenes az utómunka!
+      </p>
+    `;
     
-    content += genQuan(chargeNote);
+    content += genQuan(afterWorkNote);
     content += genSpecs(totalPrice, sizeMM);
 
     content += `
@@ -152,7 +208,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         <div id="infoStat" class="infoBox"></div>
 
         <p class="align">
-          <a href="/mitjelent" target="_blank" class="blueLink">Mit jelentenek ezek?</a>
+          <a href="/mitjelent" target="_blank" class="blueLink">Segítség a specifikációkhoz</a>
         </p>
 
         <p class="align note ddgray">
@@ -170,6 +226,8 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     content += `
       <script type="text/javascript">
     `;
+
+    // TODO: set isFirstVisit on cart page as well
 
     content += cookieFuncs();
     content += isVisited();
@@ -249,6 +307,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           models.push(stlView);
         }
 
+        function getID() {
+          if (window.location.href.includes('?file=')) {
+            return window.location.href.split('?file=')[1];
+          } else {
+            return localStorage.getItem('refresh');
+          }
+        }
+
         document.getElementsByClassName('hrStyle')[0].style.margin = 0;
 
         function stlFinished() {
@@ -257,9 +323,10 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
           // Set color of model
           let soFar = JSON.parse(getCookie('cartItems'));
-          let id = localStorage.getItem('refresh');
+          let id = getID();
           let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
           chooseColor(colorMaps[colorVal]);
+          if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
         }
 
         function chooseDisplay(display, id) {
@@ -283,6 +350,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           if (isRev) {
             _('color').value = hexToName[color];
             highlightBtn(id);
+            updateCookie('color');
           } else {
             let hexToNum = {
               '#4285f4': 0,

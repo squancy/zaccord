@@ -3,11 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 const mv = require('mv');
+
 const HTMLParser = require('node-html-parser');
 const randomstring = require("randomstring");
 const resizeImg = require('resize-img');
 const formidable = require('formidable');
-const sizeOf = require('image-size');
 const validateEmail = require('email-validator');
 const conn = require('./src/js/connectDb.js');
 const StlThumbnailer = require('node-stl-to-thumbnail');
@@ -34,6 +34,10 @@ const buildAdminSection = require('./src/js/adminSectionLogic.js');
 const buildLithophane = require('./src/js/buildLithophane.js');
 const buildCategory = require('./src/js/buildCategory.js');
 const buildSearch = require('./src/js/buildSearch.js');
+const sendOpinion = require('./src/js/sendOpinion.js');
+const delCartFile = require('./src/js/delCartFile.js');
+const buildReferencePage = require('./src/js/referenceLogic.js');
+const buildRefImage = require('./src/js/buildRefImage.js');
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -48,6 +52,18 @@ const checkData = helpers.checkData;
 const errorFormResponse = helpers.errorFormResponse;
 const pageCouldNotLoad = helpers.pageCouldNotLoad;
 const commonData = helpers.commonData;
+const returnToClient = helpers.returnToClient;
+const fileServerResponse = helpers.fileServerResponse;
+const loadStaticPage = helpers.loadStaticPage;
+const responseCache = helpers.responseCache;
+const returnPageWithData = helpers.returnPageWithData;
+const litDimensions = helpers.litDimensions;
+const sendCompressedFile = helpers.sendCompressedFile;
+
+const constants = require('./src/js/includes/constants.js');
+const successReturn = constants.successReturn;
+const FILES_TO_CACHE = constants.filesToCache;
+console.log(FILES_TO_CACHE)
 
 // NOTE: change ADMIN constants if you want to use that feature
 // Admin URLs (marked with capital letters), password & username
@@ -64,6 +80,11 @@ const server = http.createServer((req, res) => {
   userSession(req, res, () => {});
   var userID = req.user.id;
 
+  // Facebook appends its own tracking part to the URL -> remove it
+  if (req.url.includes('?fbclid=')) {
+    req.url = req.url.replace(/\?fbclid=.+/, '');
+  }
+
   /*
     Implement searching on the main page; every time the user types in something -> fetch to
     server and build new output
@@ -76,16 +97,34 @@ const server = http.createServer((req, res) => {
     });
 
     req.on('end', () => {
-        let searchData = JSON.parse(body);
-        let sValue = searchData.value;
-        let content = addTemplate(userID);
-        buildSearch(conn, sValue).then(data => {
-          content += data;
-          res.writeHead(200, {'Content-Type': 'text/html'});
-          res.end(data);
+      let searchData = JSON.parse(body);
+      let sValue = searchData.value;
+      let content = addTemplate(userID);
+      buildSearch(conn, sValue).then(data => {
+        content += data;
+        responseCache('text/html', res, true);
+        res.end(data);
       }).catch(err => {
         console.log(err);
         errorFormResponse(res, 'Hoppá... hiba történt a keresés közben');
+      });
+    });
+  } else if (req.url === '/delCartFile' && req.method === 'POST') {
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let data = JSON.parse(body);
+      let ext = data.ext; 
+      let fname = data.fname;
+     
+      let prefixPath = __dirname;
+      delCartFile(conn, fname, ext, prefixPath).then(result => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({'status': 'success'}));
       });
     });
   } else if (req.url === '/validateRegister' && req.method === 'POST') {
@@ -174,6 +213,21 @@ const server = http.createServer((req, res) => {
       'Location': '/'
     });
     res.end();
+  } else if (req.url === '/sendOpinion' && req.method === 'POST') {
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      let responseData = {};
+
+      let opinion = formData.opinion;
+      returnToClient(sendOpinion, [conn, opinion], null, res, successReturn);
+    });
+    
   } else if (req.url === '/delValidation' && req.method === 'POST') {
     // Make sure user is logged in
     if (!req.user.id) {
@@ -195,12 +249,8 @@ const server = http.createServer((req, res) => {
         errorFormResponse(res, 'Kérlek valós irányítószámot adj meg');
         return;
       } else {
-        changeDeliveryInfo(conn, userID, formData).then(data => {
-          res.writeHead(200, {'Content-Type': 'application/json'});
-          res.end('{"success": true}');
-        }).catch(err => {
-          errorFormResponse(res, err);
-        });
+        console.log(successReturn)
+        returnToClient(changeDeliveryInfo, [conn, userID, formData], null, res, successReturn);
       }
     });
   } else if (req.url === '/passValidate' && req.method === 'POST') {
@@ -220,12 +270,7 @@ const server = http.createServer((req, res) => {
       let responseData = {};
 
       // User changes their password; validate on server side
-      changePassword(conn, userID, formData).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        errorFormResponse(res, err);
-      });
+      returnToClient(changePassword, [conn, userID, formData], null, res, successReturn);
     });
   } else if (req.url === '/category' && req.method === 'POST') {
     // Sort fixed items on the main page by their category in db
@@ -239,20 +284,15 @@ const server = http.createServer((req, res) => {
       let formData = JSON.parse(body);
       let responseData = {};
 
-      buildCategory(conn, formData.cat).then(data => {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }).catch(err => {
-        console.log(err)
-        errorFormResponse(res, 'Hoppá... hiba történt a rendezés során');
-      });
+      let errorMsg = 'Hoppá... hiba történt a rendezés során';
+      returnToClient(buildCategory, [conn, formData.cat], errorMsg, res);
     });
   } else if (req.url === '/uploadPrint' && req.method.toLowerCase() === 'post') {
-    // Allow multiple files to be uploaded, max file size is 20MB
-    const form = formidable({multiples: true, maxFileSize: 20 * 1024 * 1024});
+    // Allow multiple files to be uploaded, max file size is 100MB
+    const form = formidable({multiples: true, maxFileSize: 100 * 1024 * 1024});
 
     form.parse(req, (err, fields, files) => {
-      // If user submits nothing or more than 10 files display error msg
+      // If user submits nothing or more than 5 files display error msg
       let cFile = files['file[]'];
       if (!Array.isArray(cFile) && !cFile.size) {
         imgError(res, userID, 'cFile', 'Válassz egy fájlt');
@@ -261,6 +301,7 @@ const server = http.createServer((req, res) => {
         imgError(res, userID, 'sfupload', 'Maximum 5db fájlt tölthetsz fel');
         return;
       } else if (err) {
+        console.log(err);
         imgError(res, userID, 'sfupload', 'Hiba történt');
         return;
       }
@@ -294,6 +335,7 @@ const server = http.createServer((req, res) => {
         let oldpath = cFile[i].path;
         let splitted = cFile[i].name.split('.');
         let extension = splitted[splitted.length - 1].toLowerCase();
+        let uploadFileSize = cFile[i].size;
 
         if (['png', 'jpg', 'jpeg', 'stl'].indexOf(extension) < 0) {
           reject('Hibás fájlkiterjesztés');
@@ -327,28 +369,44 @@ const server = http.createServer((req, res) => {
             }
 
             // Create thumbnail from .stl file: used instead of a product image
+            /*
+              NOTE: since the stl thumbnailer cannot handle files bigger than 10-15MB large stl
+              files are not thumbnailed but get a default img instead
+            */
             if (extension === 'stl') {
-              let thumbnailer = new StlThumbnailer({
-                filePath: __dirname + '/printUploads/' + uploadFnames[i] + '.stl', 
-                requestThumbnails: [
-                  {
-                    width: 500,
-                    height: 500
+              if (uploadFileSize > 10 * 1024 * 1024) {
+                let source = __dirname + '/src/images/defaultStl.png';
+                let destination = __dirname + '/printUploads/thumbnails/' + uploadFnames[i] +
+                  '.png'
+                fs.copyFile(source, destination, (err) => {
+                  if (err) {
+                    reject('Hiba az alapértelmezett thumbnail készítése közben')
                   }
-                ] 	
-              }).then(function(thumbnails) {
-                thumbnails[0].toBuffer(function(err, buf) {      
-                  fs.writeFileSync(__dirname + '/printUploads/thumbnails/' + uploadFnames[i] +
-                    '.png', buf);
-                  resolve('success');
+                  resolve('success')
                 });
-              });
+              } else {
+                let thumbnailer = new StlThumbnailer({
+                  filePath: __dirname + '/printUploads/' + uploadFnames[i] + '.stl', 
+                  requestThumbnails: [
+                    {
+                      width: 500,
+                      height: 500
+                    }
+                  ] 	
+                }).then(function(thumbnails) {
+                  thumbnails[0].toBuffer(function(err, buf) {      
+                    fs.writeFile(__dirname + '/printUploads/thumbnails/' + uploadFnames[i] +
+                      '.png', buf, function (err) {
+                      if (err) reject('Hiba a thumbnail készítése közben');
+                      resolve('success');
+                    });
+                  });
+                });
+              }
             } else {
               // Resize image: max width and height is 1920
               // Calc the desired width and height while keeping the same aspect ratio
-              let dimensions = sizeOf(newpath);
-              let width = dimensions.width;
-              let height = dimensions.height;
+              let [width, height] = litDimensions(newpath);
 
               if (width <= 1920 && height <= 1920) {
                 resolve('success');
@@ -389,29 +447,19 @@ const server = http.createServer((req, res) => {
       if (!isLit) {
         Promise.all(promises).then(data => {
           buildCustomPrint(conn, userID, filePaths).then(data => {
-            let content = fs.readFileSync('src/printUpload.html');
-            content += data;
-            content += addTemplate(userID);
-            res.writeHead(200, {'Content-Type': 'text/html'});
-            res.end(content);
+            returnPageWithData('src/printUpload.html', data, userID, res);
           }).catch(err => {
-            // Wrong size
+            // Wrong size (any dimension is bigger than 220mm)
             console.log(err);
             imgError(res, userID, 'sizeError', err);
           });
         });
       } else {
         Promise.all(promises).then(data => {
-          let dimensions = sizeOf(newpath);
-          let width = dimensions.width;
-          let height = dimensions.height;
+          let [width, height] = litDimensions(newpath);
 
           buildLithophane(conn, userID, filePaths, width, height).then(data => {
-            let content = fs.readFileSync('src/lithophane.html');
-            content += data;
-            content += addTemplate(userID);
-            res.writeHead(200, {'Content-Type': 'text/html'});
-            res.end(content);
+            returnPageWithData('src/lithophane.html', data, userID, res);
           }).catch(err => {
             console.log(err);
             imgError(res, userID, 'sizeError', err);
@@ -429,13 +477,8 @@ const server = http.createServer((req, res) => {
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
       let formData = JSON.parse(body);
-      buyItem(conn, formData, req, res, userSession).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      })
+      let paramArr = [conn, formData, req, res, userSession];
+      returnToClient(buyItem, paramArr, null, res, successReturn);
     });
   } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
     // Admin page
@@ -447,13 +490,7 @@ const server = http.createServer((req, res) => {
 
     req.on('end', () => {
       let formData = JSON.parse(body);
-      buildAdminPage(conn, formData).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      });
+      returnToClient(buildAdminPage, [conn, formData], null, res, successReturn);
     });
 
   // NOTE: change the following URL if you want to use this feature
@@ -470,16 +507,11 @@ const server = http.createServer((req, res) => {
       let formData = JSON.parse(body);
       let uid = formData.uid;
       let delType = formData.delType;
+      let glsCode = formData.glsCode;
       
-      sendConfEmail(conn, uid, delType).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      });
+      returnToClient(sendConfEmail, [conn, uid, delType, glsCode], null, res, successReturn);
     });
-  } else if (req.url === '/STATUS_ORDER_UPDATE_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/ORDER_STATUS_UPDATE' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -490,13 +522,7 @@ const server = http.createServer((req, res) => {
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
       let formData = JSON.parse(body);
-      updateStatus(conn, formData).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      });
+      returnToClient(updateStatus, [conn, formData], null, res, successReturn);
     });
   } else if (req.url === '/validateForgotPass' && req.method.toLowerCase() === 'post') {
     // If user submits a temporary password request validate email addr & send tmp password
@@ -509,13 +535,7 @@ const server = http.createServer((req, res) => {
     // Send JSON response
     req.on('end', () => {
       let formData = JSON.parse(body);
-      forgotPassword(conn, formData.email).then(data => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end('{"success": true}');
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      });
+      returnToClient(forgotPassword, [conn, formData.email], null, res, successReturn);
     });
   } else if (req.url === '/moreOrders' && req.method.toLowerCase() === 'post') {
     // Make sure user is logged in
@@ -531,13 +551,7 @@ const server = http.createServer((req, res) => {
 
     // Send JSON response with more orders
     req.on('end', () => {
-      genOrder(conn, req.user.id).then(data => {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }).catch(err => {
-        console.log(err);
-        errorFormResponse(res, err);
-      });
+      returnToClient(genOrder, [conn, req.user.id], null, res);
     });
   } else {
     /*
@@ -556,20 +570,7 @@ const server = http.createServer((req, res) => {
     }
 
     // Set the proper content-type for server response
-    if (extension === '.stl') {
-      fileResponse('application/netfabb', req.url, res);
-    } else if (['.png', '.jpg', '.jpeg'].indexOf(extension) > - 1 
-      && (req.url.includes('printUploads') || req.url.includes('icon-'))) {
-      fileResponse('image/png', req.url, res);
-    } else if (extension === '.json' && req.url.includes('manifest')) {
-      fileResponse('application/json', req.url, res);
-    } else if (extension === '.js' && req.url.includes('sworker')) {
-      fileResponse('text/javascript', req.url, res);
-    } else if (extension === '.xml') {
-      fileResponse('application/xml', req.url, res);
-    } else if (extension === '.pdf') {
-      fileResponse('application/pdf', req.url, res);
-    } 
+    fileServerResponse(extension, req, res, fileResponse); 
 
     // Make sure user is not logged in when visiting /login and /register pages
     if ((['/register', '/login'].indexOf(req.url) > -1 && req.user.id)
@@ -610,6 +611,16 @@ const server = http.createServer((req, res) => {
               console.log(error);
               imgError(res, userID, 'parcel');
             });
+          } else if (req.url.substr(0, 13) === '/refImage?id=') {
+            let content = fs.readFileSync('src/refImage.html');
+            let id = Number(req.url.substr(13));
+            content += addCookieAccept(req);
+            buildRefImage(conn, id).then(data => {
+              commonData(content, userID, data, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
+            });
           } else if (req.url.substr(0, 13) === '/buy?product=') {
             // User buys a product
             let q = url.parse(req.url, true).query;
@@ -622,16 +633,65 @@ const server = http.createServer((req, res) => {
               console.log(err);
               imgError(res, userID, 'shop', err);
             });
-          // Admin page login authentication
-          } else if (req.url.substr(0, 14) === '/ADMIN_URL_ACCESS') {
+          } else if (req.url.substr(0, 6) === '/?cat=') {
+            let cat = decodeURIComponent(req.url.substr(6));
+            let content = fs.readFileSync('src/index.html');
+            content += addCookieAccept(req);
+            content += addHeader(userID);
+            buildMainSection(conn, cat).then(data => {
+              content += data;
+              content += fs.readFileSync('src/includes/footer.html');
+              res.writeHead(200, {'Content-Type': contentType});
+              res.end(content, 'utf8');
+            }).catch(err => {
+              console.log(err)
+              pageCouldNotLoad(res, userID);
+            });
+          } else if (req.url.substr(0, 18) === '/uploadPrint?file=') {
+            let fname = __dirname + '/printUploads/' + req.url.substr(18) + '.stl';
+            buildCustomPrint(conn, userID, [fname]).then(data => {
+              returnPageWithData('src/printUpload.html', data, userID, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
+            });
+          } else if (req.url.substr(0, 19) === '/uploadPrint?image=') {
+            // Check if file exists with a .jpg, .jpeg or .png extension
+            // Use sync queries for managable code and it does not block that much
+            let fname = __dirname + '/printUploads/lithophanes/' + req.url.substr(19);
+            if (fs.existsSync(fname + '.jpg')) {
+              fname += '.jpg';
+            } else if (fs.existsSync(fname + '.jpeg')) {
+              fname += '.jpeg';
+            } else {
+              fname += '.png';
+            }
+
+            let [width, height] = litDimensions(fname);
+
+            buildLithophane(conn, userID, [fname], width, height).then(data => {
+              returnPageWithData('src/lithophane.html', data, userID, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
+            });
+          } else if (req.url.toLowerCase() === '/references') {
+            buildReferencePage(conn).then(data => {
+              returnPageWithData('src/reference.html', data, userID, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
+            });
+          } else if (req.url.substr(0, 14) === '/ADMIN_URL') {
+            // Admin page login authentication
             let q = url.parse(req.url, true); 
             let qdata = q.query;
             let user = decodeURIComponent(qdata.user);
             let pass = decodeURIComponent(qdata.pass);
 
             // Make sure username and password are correct
-            if (user != 'ADMIN_UNAME' || pass != 'ADMIN_PWD') {
-              res.writeHead(200, {'Content-Type': 'text/html'});
+            if (user != 'ADMIN_USERNAME' || pass != 'ADMIN_PASS') {
+              responseCache('text/html', res, true);
               res.end('hiba', 'utf8');
             }
 
@@ -639,10 +699,11 @@ const server = http.createServer((req, res) => {
             let content = fs.readFileSync('src/adminOrders.html');
             buildAdminSection(conn).then(data => {
               content += data;
-              res.writeHead(200, {'Content-Type': 'text/html'});
+              responseCache('text/html', res, true);
               res.end(content, 'utf8');
             });
           } else {
+            console.log('nf')
             imgError(res, userID, '404error');
             return;
           }
@@ -678,23 +739,14 @@ const server = http.createServer((req, res) => {
           // Build user cart page
           let content = fs.readFileSync('src/cart.html');
           content += addCookieAccept(req);
-          buildCartSection(conn, req).then(data => {
-            commonData(content, userID, data, res);
-          }).catch(err => {
-            console.log(err)
-            pageCouldNotLoad(res, userID);
-          });
+          loadStaticPage(buildCartSection, [conn, req], content, userID, res);
         } else if (req.url === '/account') {
           // Make sure user is logged in when visiting account page
           loggedIn(req, res);
 
           let content = fs.readFileSync('src/account.html');
           content += addCookieAccept(req);
-          buildAccountSection(conn, userID).then(data => {
-            commonData(content, userID, data, res);
-          }).catch(err => {
-            pageCouldNotLoad(res, userID);
-          });
+          loadStaticPage(buildAccountSection, [conn, userID], content, userID, res);
         } else if (req.url === '/print') {
           /*
             User does not need to be logged in for experimenting with custom print only for
@@ -702,18 +754,28 @@ const server = http.createServer((req, res) => {
           */
           let content = fs.readFileSync('src/print.html');
           content += addCookieAccept(req);
-
-          buildPrintSection(conn).then(data => {
-            commonData(content, userID, data, res);
-          }).catch(err => {
-            pageCouldNotLoad(res, userID);
-          });
+          loadStaticPage(buildPrintSection, [conn], content, userID, res);
         } else {
-          res.writeHead(200, {
-            'Content-Type': contentType,
-            'Cache-Control': 'max-age=31536000'
-          });
-          res.end(content, 'utf8');
+          // Cache page for faster load
+          // Also compress text-based resources
+          let cacheType;
+          if (['text/javascript', 'text/css', 'text/html'].indexOf(contentType) > -1) {
+            console.log(filePath)
+            let appendAsset = contentType == 'text/html';
+            let cc = 'no-cache';
+            if (FILES_TO_CACHE.indexOf(filePath) > -1) cc = 'public';
+            sendCompressedFile(filePath, res, req, contentType, appendAsset, userID, cc);
+          } else { 
+            if (FILES_TO_CACHE.indexOf(filePath) > -1) {
+              // Cache constant files and resources
+              cacheType = 'public';
+            } else {
+              // Otherwise, check resource in cache and if it's unchanged load if from there
+              cacheType = 'no-cache';
+            }
+            responseCache(contentType, res, true, cacheType);
+            res.end(content, 'utf8');
+          }
         }
       }
     });

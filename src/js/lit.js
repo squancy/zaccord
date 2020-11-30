@@ -16,11 +16,13 @@ function toggleLitImg(img, src) {
   });
 }
 
-function toggleLit(state, url, can, img) {
+let state = true;
+function toggleLit(url, can, img) {
   let canvas = _(can);
   // If img is already rendered just display that one
   if (litImg && state) {
     toggleLitImg(img, litImg);
+    state = false;
   } else if (state) {
     let image = new MarvinImage();
     
@@ -41,10 +43,12 @@ function toggleLit(state, url, can, img) {
       // Also do a smooth fade in/fade out with Animate.js
       litImg = base64;
       toggleLitImg(img, base64);
+      state = false;
     }
   } else {
     _(img).classList = 'animate__animated animate__fadeIn bgCommon litImg productItem'
     _(img).style.backgroundImage = `url('${url}')`
+    state = true;
   }
 }
 

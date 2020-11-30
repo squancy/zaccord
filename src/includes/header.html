@@ -3,7 +3,7 @@
     <div>
       <p id="removeMargin">
         <a href="/">
-          <img class="logo" src="/images/logo.png" />
+          <img class="logo" src="/images/icons/logo.svg" />
         </a>
       </p> 
     </div>
@@ -11,10 +11,12 @@
     <div>
       <p class="hideText">
         <a href="/cart" id="cart">Kosár</a>
+        <sup id="cartItemNum" class="cartNumItems"></sup>
       </p> 
       <p class="hideSeek">
         <a href="/cart">
-          <img src="/images/icons/cart.png">
+          <img src="/images/icons/cart.svg" width="25" height="25">
+          <sup id="cartItemNumMob" class="cartNumItems"></sup>
         </a>
       </p>
       <div class="hoverNavbar animate__animated" id="cart_anim"></div>
@@ -26,7 +28,7 @@
       </p> 
       <p class="hideSeek">
         <a href="/print">
-          <img src="/images/icons/printer.png">
+          <img src="/images/icons/printer.svg" width="25" height="25">
         </a>
       </p>
       <div class="hoverNavbar animate__animated" id="bny_anim"></div>
@@ -38,41 +40,89 @@
       </p> 
       <p class="hideSeek">
         <a href="/register">
-          <img src="/images/icons/signup.png">
+          <img src="/images/icons/account.svg" width="25" height="25">
         </a>
       </p>  
       <div class="hoverNavbar animate__animated" id="register_anim"></div>
     </div>
 
-    <div>
+    <div id="loginMenuBtn">
       <p class="hideText">
         <a href="/login" id="login">Bejelentkezés</a>
       </p> 
       <p class="hideSeek">
         <a href="/login">
-          <img src="/images/icons/login.png">
+          <img src="/images/icons/login.svg" width="25" height="25">
         </a>
       </p>
       <div class="hoverNavbar animate__animated" id="login_anim"></div>
     </div>
+
+    <div id="mmHolder">
+      <img src="/images/icons/moreMenu.svg" class="mMenu trans" id="moreMenu"
+        data-status="open" width="25" height="25">
+    </div>
   </div>
 </header>
+
+<div class="mmContainer" id="mmContainer" data-status="closed">
+  <div class="mmInnerTop">
+    <p class="gotham">További Oldalak</p> 
+    <div>
+      <img src="/images/icons/moreClose.svg" class="mmClose trans" id="mmClose"> 
+    </div>
+  </div>
+
+  <div class="mainMenuCont">
+    <div id="dynamicBtn" class="trans" style="display: none;"></div>
+    <div class="trans" onclick="redirect('/printHelp')">
+      <p class="gothamNormal">Segítség Bérnyomtatáshoz</p>
+    </div>
+    <div class="trans" onclick="redirect('/lithophaneHelp')">
+      <p class="gothamNormal">Segítség Litofániához</p>
+    </div>
+    <div class="trans" onclick="redirect('/mitjelent')">
+      <p class="gothamNormal">Fogalmak &amp; Jelentésük</p>
+    </div>
+    <div class="trans" onclick="redirect('/forgotPassword')">
+      <p class="gothamNormal">Elfelejtett Jelszó</p>
+    </div>
+    <div class="trans" onclick="redirect('/references')">
+      <p class="gothamNormal">Referenciák</p>
+    </div>
+  </div>
+
+  <div class="relDiv">
+    <div class="mmFooter">
+      <p class="align ddgray gothamNormal font14">2020 Zaccord</p>
+    </div>
+  </div>
+</div>
+
+<div class="mmOverlay" id="mmOverlay"></div>
 <div class="installPrompt" id="installPrompt">
   <button class="btnCommon fillBtn" id="pwaBtn" style="margin-right: 0;">
     Telepítsd a Zaccordot
   </button>
   <img src="/images/exit.png" width="16" height="16" class="exitPwa trans" id="exitPwa">
 </div>
-<script src="/js/includes/pwainstall.js"></script>
+<!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172408841-1"></script>
+--!>
+<script src="/js/includes/pwainstall.js" async></script>
+<script src="/js/includes/cartItemNum.js" defer></script>
 <script src="/js/includes/safari.js"></script>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-172408841-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<script src="/js/includes/thirdParty.js" async></script>
+<script src="/js/includes/jq.js"></script>
+<script src="/js/includes/clickedOutside.js" async></script>
+<link rel="preload" href="/fonts/gothamMedium.woff2" as="font" type="font/woff2"
+  crossorigin>
+<link rel="preload" href="/fonts/gotham.woff2" as="font" type="font/woff2"
+  crossorigin>
+<link rel="preload" href="/fonts/gothamNormal.woff2" as="font" type="font/woff2"
+  crossorigin>
 
-  gtag('config', 'UA-172408841-1');
-  gtag('config', 'UA-169198596-1');
-</script>
-
+<noscript>
+  <img height="1" width="1"
+    src="https://www.facebook.com/tr?id=378598896627941&ev=PageView&noscript=1" />
+</noscript>

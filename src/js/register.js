@@ -58,6 +58,14 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
         _('register').href = '/account';
         _('login').innerText = 'Kijelentkezés';
         _('login').href = '/logout';
+
+        // Update highlighted icon color
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          document.querySelectorAll('.hideSeek > a > img')[2].src = '/images/icons/signup.png';
+        } else {
+          _('register').style.color = '#000';
+        }
+        fbq('track', 'CompleteRegistration');
       }
     }).catch(err => {
       // Something unexpected happened, report error
@@ -66,4 +74,4 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
       _('submitBtn').disabled = false;
     });
   }
- });
+});

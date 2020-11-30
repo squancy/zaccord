@@ -40,7 +40,8 @@ function searchForItem() {
   if (!value && showedEmpty) return;
   
   _('dynamicShowcase').innerHTML = `
-    <img src="/images/icons/loader.gif" style="height: 40px; margin-bottom: 10px;">
+    <img src="/images/icons/loader.gif" style="height: 40px; margin: 0 auto;
+      margin-bottom: 10px;">
   `;
 
   // Only send the text to server in every 3/4 secs
@@ -90,6 +91,7 @@ function searchForItem() {
     }
     _('dynamicShowcase').innerHTML = data;
     ll.update();
+    fbq('track', 'Search');
   }).catch(err => {
     _('dynamicShowcase').innerHTML = `
       <div>

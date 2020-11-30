@@ -67,7 +67,7 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
 
   if (isStat) {
     let className = data.stat ? 'delivered' : 'inProgress';
-    let text = data.stat ? 'átvétel/szállítás' : 'folyamatban';
+    let text = data.stat ? 'kinyomtatva' : 'folyamatban';
     output += `
       <div>
         <p>Státusz: <span class="${className}">${text}</span></p>

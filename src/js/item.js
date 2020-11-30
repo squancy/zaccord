@@ -118,6 +118,7 @@ function addToCart(id) {
             setCookie('cartItems', JSON.stringify(itemsSoFar), 365);
             statusFill('succBox', 'A terméket sikeresen a kosárba helyezted');
             _('broHolder').style.marginBottom = "20px";
+            updateCartNum();
             return;
           }
         } else {
@@ -131,8 +132,14 @@ function addToCart(id) {
     setCookie('cartItems', JSON.stringify(value), 365);
   }
 
+  // Update the number of items in cart on UI
+  updateCartNum();
+
   statusFill('succBox', 'A terméket sikeresen a kosárba helyezted');
   _('broHolder').style.marginBottom = "20px";
+
+  // Add fb tracking for ads
+  fbq('track', 'AddToCart');
 }
 
 // Update price in the DOM, in real-time
@@ -158,8 +165,8 @@ function updateTotPrice(cartId, newPrice, oldPrice, isLit) {
 
   if (sumOfSums > 15000) {
     sumOfSums *= 0.97;
-  } else if (sumOfSums < 500) {
-    let extraPrice = 500 - sumOfSums;
+  } else if (sumOfSums < 800) {
+    let extraPrice = 800 - sumOfSums;
     sumOfSums += extraPrice;
     _('extraPrice').innerHTML = `(+${extraPrice} Ft felár)`;
   } else {
@@ -236,6 +243,9 @@ function updateSpecs(e, price, isInCart = false, isLit = false) {
   
   var newPrice = updatePrice(isInCart, price, domElement, isLit);
   updateTotPrice(isInCart, newPrice, price, isLit);
+
+  updateCartNum();
+  fbq('track', 'CustomizeProduct');
 }
 
 // When changing the scale of the item the size also gets updated
@@ -255,6 +265,7 @@ function updateScale(e, price, scale, isInCart) {
   s3 *= value;
   _('sizeHolder').innerHTML = `${s1.toFixed(2)}mm x ${s2.toFixed(2)}mm x ${s3.toFixed(2)}mm`;  
   updateTotPrice(isInCart, newPrice, price);
+  fbq('track', 'CustomizeProduct');
 }
 
 // User buys a single item: save specs and redirect to buy page
@@ -267,6 +278,7 @@ function buyItem(id) {
   let q = _('quantity').value;
 
   window.location.href = `/buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale}&fvas=${fvas}&q=${q}`;
+  fbq('track', 'InitiateCheckout');
 }
 
 if (typeof stlView === 'undefined') var stlView = null;
@@ -306,12 +318,12 @@ function viewIn3D(listOfPath) {
       _('exitBtn').style.top = height * (3 / 26) + 24 + 'px';
     } else {
       _('viewBox').style.width = width / 1.1 + 'px';
-      _('viewBox').style.height = height / 2 + 'px';
-      _('viewBox').style.top = height / 4 + 'px';
+      _('viewBox').style.height = height / 1.4 + 'px';
+      _('viewBox').style.top = height * (1 / 7) + 'px';
       _('viewBox').style.left = width / 22 + 'px';
       _('exitBtn').style.display = 'block';
       _('exitBtn').style.left = width * (21 / 22) - 44 + 'px';
-      _('exitBtn').style.top = height / 4 + 24 + 'px';
+      _('exitBtn').style.top = height * (1 / 7) + 24 + 'px';
     }
     
 

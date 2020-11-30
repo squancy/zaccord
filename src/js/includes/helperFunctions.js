@@ -1,9 +1,25 @@
-const fs = require('fs');
+const fs = require('graceful-fs');
 const parseCookies = require('./parseCookies.js');
+const sizeOf = require('image-size');
+const compress = require('compression')
+const CombinedStream = require('combined-stream');
 
 /*
   Common helper functions used in app.js
 */
+
+// Response with optional caching options
+function responseCache(contentType, res, isCache, cacheType = 'no-cache') {
+  if (!isCache) {
+    res.writeHead(200, {'Content-Type': contentType});
+  } else {
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'max-age=31536000, ' + cacheType,
+      'Vary': 'ETag, Content-Encoding'
+    });
+  }
+}
 
 // Add cookie accept file if user has not yet accepted it
 function addCookieAccept(req) {
@@ -27,11 +43,10 @@ function loggedIn(req, res) {
 // Add header depending on user state (logged in/out)
 function addHeader(userID) {
   if (!userID) {
-    var content = fs.readFileSync('src/includes/header.html');
+    return fs.readFileSync('src/includes/header.html');
   } else {
-    var content = fs.readFileSync('src/includes/headerLogged.html');
+    return fs.readFileSync('src/includes/headerLogged.html');
   }
-  return content;
 }
 
 // Add header and footer to every page
@@ -57,17 +72,18 @@ function imgError(res, userID, fname, text = '') {
   let content = fs.readFileSync('src/printUpload.html');
   content += generateTemplate(fname, text);
   content += addTemplate(userID);
-  res.writeHead(200, {'Content-Type': 'text/html'});
+  responseCache('text/html', res, true);
   res.end(content);
 }
 
 // Server response for .stl and .png files: set proper content type
 function fileResponse(contentType, url, res) {
-  res.writeHead(200, {'Content-Type': contentType});
+  responseCache(contentType, res, true);
   let path = url.substr(1);
   try {
     var content = fs.readFileSync(path);
   } catch (e) {
+    console.log(e)
     if (typeof userID === 'undefined') var userID;
     imgError(res, userID, '404error');
   }
@@ -91,6 +107,16 @@ function getContentType(extension) {
       return 'application/netfabb';
     case '.png':
       return 'image/png';
+    case '.woff2':
+      return 'font/woff2';
+    case '.woff':
+      return 'font/woff';
+    case '.ttf':
+      return 'font/ttf';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.txt':
+      return 'text/plain';
   }
   return 'text/html';
 }
@@ -107,7 +133,7 @@ function errorFormResponse(res, msg) {
   let responseData = {
     'error': `<p>${msg}</p>`
   };
-  res.writeHead(200, {'Content-Type': 'application/json'});
+  responseCache('application/json', res, false);
   res.end(JSON.stringify(responseData));
 }
 
@@ -120,8 +146,92 @@ function pageCouldNotLoad(res, userID) {
 function commonData(content, userID, data, res) {
   content += data;
   content += addTemplate(userID);
-  res.writeHead(200, {'Content-Type': 'text/html'});
+  responseCache('text/html', res, true);
   res.end(content, 'utf8');
+}
+
+// Parse data from server side and push to client side
+function returnToClient(callback, paramArr, errorMsg = null, res, returnData = null) {
+  callback(...paramArr).then(data => {
+    responseCache('text/html', res, true);
+    if (!returnData) {
+      res.end(data);
+    } else {
+      res.end(returnData);
+    }
+  }).catch(err => {
+    console.log(err);
+    if (!errorMsg) {
+      errorFormResponse(res, err);
+    } else {
+      errorFormResponse(res, errorMsg);
+    }
+  });
+}
+
+function fileServerResponse(extension, req, res, fileResponse) {
+  if (extension === '.stl') {
+    fileResponse('application/netfabb', req.url, res);
+  } else if (['.png', '.jpg', '.jpeg'].indexOf(extension) > - 1 
+    && (req.url.includes('printUploads') || req.url.includes('icon-'))) {
+    fileResponse('image/png', req.url, res);
+  } else if (extension === '.json' && req.url.includes('manifest')) {
+    fileResponse('application/json', req.url, res);
+  } else if (extension === '.js' && req.url.includes('sworker')) {
+    fileResponse('text/javascript', req.url, res);
+  } else if (extension === '.xml') {
+    fileResponse('application/xml', req.url, res);
+  } else if (extension === '.pdf') {
+    fileResponse('application/pdf', req.url, res);
+  }
+}
+
+function loadStaticPage(callback, paramArr, content, userID, res, conn) {
+  callback(...paramArr).then(data => {
+    commonData(content, userID, data, res);
+  }).catch(err => {
+    console.log(err)
+    pageCouldNotLoad(res, userID);
+  }); 
+}
+
+function returnPageWithData(src, data, userID, res) {
+  let content = fs.readFileSync(src);
+  content += data;
+  content += addTemplate(userID);
+  responseCache('text/html', res, true);
+  res.end(content);
+}
+
+function litDimensions(path) {
+  let dimensions = sizeOf(path);
+  let width = dimensions.width;
+  let height = dimensions.height;
+  return [width, height];
+}
+
+function sendCompressedFile(fname, response, request, contentType, append, userID, cacheType) {
+  function next() {}
+  compress({})(request, response, next);
+
+  let headerPath = __dirname.replace('js/includes', '') + 'includes/header.html';
+  let footerPath = __dirname.replace('js/includes', '') + 'includes/footer.html';
+  if (userID) {
+    headerPath = __dirname.replace('js/includes', '') + 'includes/headerLogged.html';
+  }
+
+  response.writeHead(200, {'Content-Type': contentType,
+                           'Cache-control': 'max-age=31536000, ' + cacheType});
+  if (append) {
+    let combinedStream = CombinedStream.create();
+    combinedStream.append(fs.createReadStream(fname));
+    combinedStream.append(fs.createReadStream(headerPath));
+    combinedStream.append(fs.createReadStream(footerPath));
+
+    combinedStream.pipe(response);
+  } else {
+    fs.createReadStream(fname).pipe(response);
+  }
 }
 
 module.exports = {
@@ -136,5 +246,12 @@ module.exports = {
   'checkData': checkData,
   'errorFormResponse': errorFormResponse,
   'pageCouldNotLoad': pageCouldNotLoad,
-  'commonData': commonData
+  'commonData': commonData,
+  'returnToClient': returnToClient,
+  'fileServerResponse': fileServerResponse,
+  'loadStaticPage': loadStaticPage,
+  'responseCache': responseCache,
+  'returnPageWithData': returnPageWithData,
+  'litDimensions': litDimensions,
+  'sendCompressedFile': sendCompressedFile
 };

@@ -39,14 +39,14 @@ function animateElement(element, start, end, dur, begin) {
 function toggleCategory() {
   if (window.mobileCheck()) {
     var def = '110px';  
-    var open = '160px';
-    var wideTop = '160px';
+    var open = '185px';
+    var wideTop = '185px';
     var wideTopDef = '110px';
   } else {
     var def = '140px';
-    var open = '190px';
-    var wideTop = '200px';
-    var wideTopDef = '150px';
+    var open = '200px';
+    var wideTop = '225px';
+    var wideTopDef = '140px';
   }
 
   if (_('cbCont').style.opacity === '1') {
@@ -80,11 +80,13 @@ function sortByCat(cat, cid, isEye = false) {
   let categories = document.getElementsByClassName('scat');
   for (let i = 0; i < categories.length; i++) {
     if (i === cid) {
-      categories[i].style.backgroundColor = '#ececec';
+      categories[i].style.borderColor = '#4285f4';
       categories[i].style.color = '#4285f4';
+      categories[i].style.backgroundColor = 'rgb(236, 236, 236)';
     } else {
-      categories[i].style.backgroundColor = 'white';
-      categories[i].style.color = '#545454';
+      categories[i].style.borderColor = '#f1f1f1';
+      categories[i].style.backgroundColor = '#fff';
+      categories[i].style.color = '#000';
     }
   }
 
@@ -98,17 +100,20 @@ function sortByCat(cat, cid, isEye = false) {
   toggleShowcase('hide');
   if (!window.mobileCheck()) {
     if (!isEye) { 
-      _('ms').style.marginTop = '190px';
+      _('ms').style.marginTop = '200px';
     } else {
       _('ms').style.marginTop = '140px';
     }
   } else {
     if (!isEye) {
-      _('ms').style.marginTop = '160px';
+      _('ms').style.marginTop = '185px';
     } else {
       _('ms').style.marginTop = '110px';
     }
   }
+
+  // Change page url without reloading the page
+  window.history.replaceState("category", "Zaccord - " + cat, "/?cat=" + cat);
 
   fetch('/category', {
     headers: {
@@ -121,10 +126,9 @@ function sortByCat(cat, cid, isEye = false) {
   }).then(data => {
     _('dynamicShowcase').innerHTML = data;
     ll.update();
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    $('html, body').animate({
+      scrollTop: 0
+    }, 800);
   }).catch(err => {
     _('dynamicShowcase').innerHTML = '<p>Hoppá... hiba történt a rendezés során</p>';
   });
@@ -133,25 +137,158 @@ function sortByCat(cat, cid, isEye = false) {
 // Implement hortizontal scrolling when arrows are clicked
 let scrollAmount = 0;
 function scrollHor(dir) {
-  let step = _('catBox').scrollWidth / 9;
+  let step = _('catBox').scrollWidth / 8;
   if (dir === 'left') {
     if (scrollAmount >= step) scrollAmount -= step;
     else scrollAmount = 0;
-    _('catBox').scrollTo({
-      top: 0,
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
+    $('#catBox').animate({
+      scrollLeft: scrollAmount
+    }, 300);
   } else {
     if (_('catBox').scrollWidth - _('catBox').offsetWidth - scrollAmount > step) {
       scrollAmount += step;
     } else {
       scrollAmount = _('catBox').scrollWidth - _('catBox').offsetWidth;
     }
-    _('catBox').scrollTo({
-      top: 0,
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
+    $('#catBox').animate({
+      scrollLeft: scrollAmount
+    }, 300);
   }
+}
+
+// Change the color of the text in navbar
+function changeNavTextColor() {
+  let url = window.location.href.split('/');
+  let ending = url[url.length - 1];
+  if (ending == 'cart') {
+    _('cart').style.color = '#4285f4';
+  } else if (ending == 'print') {
+    _('bny').style.color = '#4285f4';
+  } else if (ending == 'register' || ending == 'account') {
+    _('register').style.color = '#4285f4';
+  } else if (ending == 'login') {
+    _('login').style.color = '#4285f4';
+  }
+}
+
+// If user is on mobile change icon src
+function changeNavIcons() {
+  let icons = document.querySelectorAll('.hideSeek > a > img');
+  let newIcons = ['cartBlue.svg', 'printerBlue.svg', 'accountBlue.svg', 'loginBlue.svg'];
+  let prefix = '/images/icons/';
+  let url = window.location.href.split('/');
+  let ending = url[url.length - 1];
+  if (ending == 'cart') {
+    icons[0].src = prefix + newIcons[0];
+  } else if (ending == 'print') {
+    icons[1].src = prefix + newIcons[1];
+  } else if (ending == 'register' || ending == 'account') {
+    icons[2].src = prefix + newIcons[2];
+  } else if (ending == 'login') {
+    icons[3].src = prefix + newIcons[3];
+  }
+}
+
+if (window.matchMedia("(max-width: 768px)").matches) {
+  changeNavIcons();
+} else {
+  changeNavTextColor();
+}
+
+// Change the color of category items randomly in a certain color range
+// NOTE: Currently not used, may return to this version later.
+function changeToRandColors() {
+  // Generate random number in a given range
+  function randNum(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Invert hex
+  function invertColor(hex, bw) {
+    if (hex.indexOf('#') === 0) {
+      hex = hex.slice(1);
+    }
+
+    if (hex.length === 3) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+
+    if (hex.length !== 6) {
+      throw new Error('Invalid HEX color.');
+    }
+    var r = parseInt(hex.slice(0, 2), 16),
+        g = parseInt(hex.slice(2, 4), 16),
+        b = parseInt(hex.slice(4, 6), 16);
+
+    if (bw) {
+      return (r * 0.299 + g * 0.587 + b * 0.114) > 186
+        ? '#000000'
+        : '#FFFFFF';
+    }
+
+    r = (255 - r).toString(16);
+    g = (255 - g).toString(16);
+    b = (255 - b).toString(16);
+
+    return "#" + padZero(r) + padZero(g) + padZero(b);
+  }
+
+  let categories = document.getElementsByClassName('scat');
+  for (let i = 0; i < categories.length; i++) {
+    let colorArr = catColors[randNum(0, catColors.length - 1)];
+    let color = colorArr[randNum(0, colorArr.length - 1)];
+    categories[i].style.backgroundColor = color;
+    categories[i].style.color = invertColor(color.substr(1), true);
+    console.log(color, invertColor(color.substr(1), true))
+  }
+}
+
+// changeToRandColors();
+
+// Toggle more items menu btn
+function toggleMoreMenu() {
+  let cont = _('mmContainer');
+  if (cont.dataset.status == 'closed') {
+    $("#mmOverlay").fadeIn(200);
+    document.body.style.overflow = 'hidden'; 
+    cont.dataset.status = 'opened';
+  } else {
+    $("#mmOverlay").fadeOut(200);
+    document.body.style.overflow = 'auto';
+    cont.dataset.status = 'closed';
+  }
+  $("#mmContainer").animate({ width:'toggle' }, 200);
+}
+
+_('mmOverlay').addEventListener('click', (e) => {
+  if (_('mmContainer').dataset.status == 'opened') {
+    hideOnClickOutside(_('mmContainer'), toggleMoreMenu);
+  }
+});
+
+_('mmClose').addEventListener('click', function closeMenu(e) {
+  _('mmContainer').dataset.status = 'opened';
+  toggleMoreMenu();
+});
+
+function redirect(url) {
+  window.location.href = url;
+}
+
+_('moreMenu').addEventListener('click', toggleMoreMenu);
+
+if (window.matchMedia("(max-width: 923px)").matches) {
+  _('dynamicBtn').style.display = 'block';
+  if (_('register').innerText == 'Regisztráció') {
+    _('dynamicBtn').innerHTML = '<p class="gothamNormal">Bejelentkezés</p>';
+    _('dynamicBtn').addEventListener('click', (e) => redirect('/login'));
+  } else {
+    _('dynamicBtn').innerHTML = '<p class="gothamNormal">Kijelentkezés</p>';
+    _('dynamicBtn').addEventListener('click', (e) => redirect('/logout'));
+  }
+}
+
+let clinks = document.getElementsByClassName('contactLinks');
+for (let clink of clinks) {
+  clink.addEventListener('click', (e) => fbq('track', 'Contact'));
 }

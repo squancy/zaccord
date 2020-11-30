@@ -1,7 +1,8 @@
 // Save base price (initial price) and base (initial weight) for further calculations
 if (_('weightHolder')) {
-  var baseWeight = Number(_('weightHolder').innerText.replace('g', ''));
+  var baseWeight = Number(_('weightHolder').innerText.replace('cm3', ''));
   var bwSave = baseWeight;
+  console.log(baseWeight)
 }
 
 // Calculate the price of the custom print based on its parameters and initial price
@@ -41,17 +42,18 @@ if (_('color') && _('stlCont_0')) {
   _('color').addEventListener('change', function changeColor(e) {
     let v = _('color').value;
     chooseColor(colorMaps[v]);
+    fbq('track', 'CustomizeProduct');
   });
 }
 
 // Update the price of the stl model if parameters are changed
 function priceChange() {
   let v = _('quantity').value;
-  if (basePrice * v >= 500) {
+  if (basePrice * v >= 800) {
     _('charge').style.display = 'none';
     _('chargeNote').style.display = 'none';
   } else {
-    _('charge').innerText = `(+${500 - basePrice} Ft felár)`;
+    _('charge').innerText = `(+${800 - basePrice} Ft felár)`;
     _('charge').style.display = 'inline-block';
     _('chargeNote').style.display = 'block';
   }
@@ -81,7 +83,7 @@ if (_('quantity') && _('fvas') && _('scale') && _('suruseg') && _('rvas')) {
 // Update the estimated weight of the model (only incorporates the scaling)
 function updateWeight() {
   let scale = Number(_('scale').value);
-  _('weightHolder').innerText = (scale * baseWeight).toFixed(2) + 'g';
+  _('weightHolder').innerHTML = (scale * baseWeight).toFixed(2) + 'cm<sup>3</sup>';
 }
 
 // Update quantity UI
@@ -96,6 +98,7 @@ function updateQtyUI() {
     _('minus').style.opacity = '0.4';
     _('minus').style.cursor = 'not-allowed';
   }
+  fbq('track', 'CustomizeProduct');
 }
 
 /*
@@ -114,8 +117,8 @@ if (typeof arr !== 'undefined' && _('rvas')) {
         cookies
       */
       // First extract the values stored in cookies
+      let id = getID();
       let soFar = JSON.parse(getCookie('cartItems'));
-      let id = localStorage.getItem('refresh');
       let rvasVal = decodeURIComponent(soFar['content_' + id]['rvas_' + id]);
       let surusegVal = decodeURIComponent(soFar['content_' + id]['suruseg_' + id]);
       let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
@@ -137,18 +140,20 @@ if (typeof arr !== 'undefined' && _('rvas')) {
       _('priceHolder').innerText = nPrice * quantityVal;
 
       // Add extra price if needed
-      if (nPrice * quantityVal < 500) {
-        _('charge').innerText = `(+${500 - nPrice} Ft felár)`;
+      if (nPrice * quantityVal < 800) {
+        _('charge').innerText = `(+${800 - nPrice} Ft felár)`;
       } else {
         _('charge').innerText = '';
       }
-
+      
+      /*
       // Toggle extra price text
-      if (nPrice * quantityVal < 500) {
+      if (nPrice * quantityVal < 800) {
         _('chargeNote').style.display = 'block';
       } else {
         _('chargeNote').style.display = 'none';
       }
+      */
 
       // Update quantity & weight
       updateQtyUI();
@@ -187,6 +192,8 @@ function updateCookie(param, qty = null) {
     }
   } 
   setCookie('cartItems', JSON.stringify(soFar), 365);
+  updateCartNum();
+  fbq('track', 'CustomizeProduct');
 }
 
 // If user buys the model redirect them to the buy page
@@ -203,6 +210,7 @@ if (_('buyCP')) {
 
     window.location.href =
     `/buy?product=cp&rvas=${rvas}&suruseg=${suruseg}&color=${color}&scale=${scale}&fvas=${fvas}&q=${quantity}&files=${paths}`;
+    fbq('track', 'InitiateCheckout');
   });
 }
 

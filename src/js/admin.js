@@ -1,5 +1,4 @@
 // Change the admin url if you want
-// NOTE: change the URL constants here and in app.js if you want to use these features
 if (_('ok')) {
   _('ok').addEventListener('click', function submitLogin(e) {
     let data = {
@@ -7,7 +6,7 @@ if (_('ok')) {
       'pass': _('pass').value
     };
 
-    fetch('/ADMIN_LOGIN_URL', {
+    fetch('/ADMIN_LOGIN', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -17,7 +16,7 @@ if (_('ok')) {
       if (data.success) {
         let u = encodeURIComponent(_('user').value);
         let p = encodeURIComponent(_('pass').value);
-        window.location.href = '/lick_weebshit?user=' + u + '&pass=' + p;
+        window.location.href = '/ADMIN_URL?user=' + u + '&pass=' + p;
       } else {
         _('status').innerHTML = '<p>Hibás bejelentkezési adatok</p>';
       }
@@ -52,11 +51,13 @@ if (_('box_0')) {
     if ((cuid != nuid || cot != not) && (cuid == puid && cot == pot)) {
       _('totpHolder_' + i).style.display = 'block';
       let extraPrice = 0;
-      if (priceSum + Number(_('allp_' + i).innerText) < 500) {
-        extraPrice = 500 - (priceSum + Number(_('allp_' + i).innerText));
+      if (priceSum + Number(_('allp_' + i).innerText) < 800) {
+        extraPrice = 800 - (priceSum + Number(_('allp_' + i).innerText));
       }
+      let moneyHandle = 0;
+      if (priceSum + Number(_('allp_' + i).innerText) > 15000) moneyHandle = -390;
       _('totp_' + i).innerText = priceSum + Number(_('allp_' + i).innerText) + sprices[i]
-        + extraPrice;
+        + extraPrice + moneyHandle;
       priceSum = 0;
     }
 
@@ -67,7 +68,10 @@ if (_('box_0')) {
       
       if (cot != pot && i > 0) {
         _('box_' + i).style.borderRadius = '30px 30px 0 0';
-      } else if (i > 0) {
+      } else if (i > 0 || (_('box_0') && _('box_1') && !_('box_2'))) {
+        if ((_('box_0') && _('box_1') && !_('box_2'))) {
+          _('box_' + (i + 1)).style.borderRadius = '0 0 30px 30px';
+        }
         hideU(i);
       }
       priceSum += Number(_('allp_' + i).innerText);
@@ -124,7 +128,16 @@ function sendConfEmail(uid, delType) {
     'delType': delType
   };
 
-  fetch('/CONF_EMAIL_URL', {
+  // Make sure GLS packet tracker code is not empty 
+  let glsCode = _('glsCode_' + uid).value;
+  if (!glsCode) {
+    alert('Add meg a csomagkövetési kódot!');
+    return false;
+  } else {
+    data.glsCode = glsCode;
+  }
+
+  fetch('/CONF_EMAIL_SEND', {
     headers: {
       'Content-Type': 'application/json'
     },
@@ -138,6 +151,7 @@ function sendConfEmail(uid, delType) {
     }
   }).catch(err => {
     console.log(err);
+    alert(err);
   });
 }
 

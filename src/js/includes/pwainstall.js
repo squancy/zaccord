@@ -3,15 +3,22 @@ function _(el) {
 }
 
 let deferredPrompt;
+let st = new Date();
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
+  function showAfterTime(e, secs) {
+    // Make sure that pwa install suggestion only pops up after 'secs' seconds
+    if (Math.round((new Date() - st) / 1000) < secs) return;
 
-  if (getCookie('cookieAccepted') === 'true' && getCookie('pwaClosed') !== 'false' &&
-    !getCookie('pwaClosed') && !getCookie('pwaInstalled')) {
-    _('installPrompt').style.display = 'block';
+    e.preventDefault();
+    deferredPrompt = e;
+
+    if (getCookie('cookieAccepted') === 'true' && getCookie('pwaClosed') !== 'false' &&
+      !getCookie('pwaClosed') && !getCookie('pwaInstalled')) {
+      _('installPrompt').style.display = 'block';
+    }
   }
+  setInterval(() => showAfterTime(e, 180), 2000);
 });
 
 _('exitPwa').addEventListener('click', (e) => {

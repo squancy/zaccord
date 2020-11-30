@@ -1,6 +1,6 @@
 // Validate customization parameters
 function validateParams(obj) {
-  let colorArr = ['fekete', 'fehér', 'kék', 'sárga', 'zöld', 'piros'];
+  let colorArr = ['fekete', 'fehér', 'kék', 'arany', 'zöld', 'piros'];
   for (let k of Object.keys(obj)) {
     if (k === 'rvas' && [0.12, 0.2, 0.28].indexOf(Number(obj[k])) < 0) {
       return false;

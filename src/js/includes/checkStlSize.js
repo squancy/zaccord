@@ -1,10 +1,8 @@
-// Maximum printable size is 200mm x 200mm x 200mm, minimum is 5mm x 5mm x 5mm
+// Maximum printable size is 220mm (width, height, depth)
 function checkStlSize(actualSize) {
-  if (actualSize[0] < 5 || actualSize[1] < 5 || actualSize[2] < 5) {
+  if (actualSize[0] > 220 || actualSize[1] > 220 || actualSize[2] > 220) {
     return false;
-  } else if (actualSize[0] > 200 || actualSize[1] > 200 || actualSize[2] > 200) {
-    return false;
-  }
+  } 
   return true;
 }
 

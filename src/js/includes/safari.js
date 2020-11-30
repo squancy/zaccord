@@ -1,6 +1,8 @@
 // Resolve bug in Safari: user-select: none causes inputs to be uneditable
-if (navigator.userAgent.indexOf('Safari') != -1 && 
-  navigator.userAgent.indexOf('Chrome') == -1) {
+function isSafari() {
+  return /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+}
+if (isSafari()) {
   let safariStyle = document.createElement('style');
   let css = `
     input {
@@ -9,6 +11,19 @@ if (navigator.userAgent.indexOf('Safari') != -1 &&
 
     _::-webkit-full-page-media, _:future, :root .galleria-image {
       border-radius: 30px;
+    }
+
+    .galleria-image img {
+      border-radius: 0px !important;
+    }
+
+    .galleria-stage {
+      border-radius: 30px !important;
+      z-index: 999999 !important;
+    }
+
+    .logo {
+      margin-top: 1.5px;
     }
 
     @media only screen and (max-width: 900px) {

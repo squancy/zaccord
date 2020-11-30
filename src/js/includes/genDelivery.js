@@ -1,5 +1,5 @@
 // Generate a form for delivery information from db
-function genDelivery(conn, userID) {
+function genDelivery(conn, userID, isLoggedIn = true) {
   return new Promise((resolve, reject) => {
     let dQuery = `
       SELECT * FROM delivery_data WHERE uid = ? LIMIT 1
@@ -23,7 +23,7 @@ function genDelivery(conn, userID) {
       }
 
       let output = `
-        <div class="flexDiv" style="flex-wrap: wrap;">
+        <div class="flexDiv" style="flex-wrap: wrap;" id="normalDiv">
           <input type="text" class="dFormField" id="name" placeholder="Név"
             value="${name}">
           <input type="text" class="dFormField" id="pcode" placeholder="Irányítószám"
@@ -34,6 +34,8 @@ function genDelivery(conn, userID) {
             placeholder="Cím (hsz., em., ajtó)" value="${address}">
           <input type="text" class="dFormField" id="mobile" placeholder="Telefonszám"
             value="${mobile}">
+          ${!isLoggedIn ? `<input type="text" class="dFormField" id="nlEmail"
+            placeholder="Email">` : ''}
         </div>
       `
       resolve(output);

@@ -1,7 +1,7 @@
 // User can change the color of an item in the cart
 function chColor(e, id) {
   let value = encodeURIComponent(e.value);
-  console.log(value);
+
   // Change the value in the cookie
   let cartSoFar = JSON.parse(getCookie('cartItems'));
   cartSoFar['content_' + id]['color_' + id] = value;
@@ -15,9 +15,53 @@ function removeItem(tid) {
   let cookieContent = JSON.parse(getCookie('cartItems'));
   delete cookieContent['id_' + tid];
   delete cookieContent['content_' + tid];
+  
+  // Also delete file from server if the item is a custom print or a lithophane
+  // First, determine extension for lithophanes
+  let extension = '';
+  if (tid.indexOf('_lit_') > -1) {
+    let box = document.querySelector('#cartItem_' + tid + ' > .itemLeftCenter > a > div');
+    let url = box.style.backgroundImage;
+    if (url.indexOf('.png') > -1) {
+      extension = 'png';
+    } else if (url.indexOf('.jpg') > -1) {
+      extension = 'jpg';
+    } else if (url.indexOf('.jpeg') > -1) {
+      extension = 'jpeg';
+    }
+  }
+
+  // Extension for stl files
+  /*
+    This checks if the extension so far is empty (meaning it's not a lithophane) and the
+    filename is not in the form of a fixed product (meaning it's a custom print stl file)
+  */
+  if (!extension && (tid.match(/_/g) || []).length > 1) {
+    extension = 'stl';
+  }
+
+  // Do not delete fix product files 
+  console.log(tid)
+  if (extension) {
+    let fileObj = {
+      'fname': tid,
+      'ext': extension
+    };
+
+    fetch('/delCartFile', {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(fileObj)
+    }).then(response => {
+      return true;
+    });
+  }
 
   // If it was the last item in cart display 'your cart is empty' page
   setCookie('cartItems', JSON.stringify(cookieContent), 365);
+  updateCartNum();
   if (Object.keys(cookieContent).length === 0) {
     _('mcs').innerHTML = `
       <section class="keepBottom">
@@ -41,11 +85,10 @@ function removeItem(tid) {
     _('fPrice').innerHTML = fPrice - cPrice;
   }
 
-  // Check if item needs an extra price (below 500 Ft)
-  console.log(cPrice, fPrice);
-  if (fPrice - cPrice < 500) {
-    _('fPrice').innerHTML = 500;
-    _('extraPrice').innerHTML = '(+' + (500 - (fPrice - cPrice)) + ' Ft felár)'; 
+  // Check if item needs an extra price (below 800 Ft)
+  if (fPrice - cPrice < 800) {
+    _('fPrice').innerHTML = 800;
+    _('extraPrice').innerHTML = '(+' + (800 - (fPrice - cPrice)) + ' Ft felár)'; 
   }
 }
 
@@ -55,3 +98,6 @@ if (_('buyCart')) {
     window.location.href = '/buy?product=cart';
   });
 }
+
+// Set isFirstVisit cookie to false in order to avoid repeated items in cart
+setCookie('isVisited', 'yes', 365);

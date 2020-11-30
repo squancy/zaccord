@@ -38,8 +38,8 @@ const userRegister = (conn, formData, req) => {
         // On successful registration send a welcome email to user
         let emailContent = `
           <p style="font-size: 22px;">Köszöntünk a Zaccord-on!</p>
-          <p>
-            Ezt a levelet azért kapod, mert nemrégiben regisztráltál a Zaccord-ra.
+          <p style="line-height: 1.4;">
+            Ezt a levelet azért kapod, mert nemrégiben regisztráltál a Zaccordra.
             A Zaccord egy olyan szolgáltatás, ahol a vásárlók 3D nyomtatóval készített
             tárgyakat vehetnek vagy a már meglévő tervüket beküldhetik hozzánk és mi azt
             kinyomtatjuk nekik.

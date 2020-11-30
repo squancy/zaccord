@@ -17,6 +17,7 @@ function produceShowcaseOutput(result, isDefault, i, isUneven = false, isBest = 
     var bgStyle = `style="background-image: url('/${imgUrl}')"`;
   }
 
+  /*
   let stylePadding = '';
   if (isUneven) {
     if (i % 2 != 0) {
@@ -25,6 +26,7 @@ function produceShowcaseOutput(result, isDefault, i, isUneven = false, isBest = 
       stylePadding = 'style="padding-right: 5px;"';
     }
   }
+  */
 
   let tagID = id;
   if (isBest) {
@@ -32,7 +34,7 @@ function produceShowcaseOutput(result, isDefault, i, isUneven = false, isBest = 
   }
 
   let output = `
-    <a href="/${url}" class="align" ${stylePadding}>
+    <a href="/${url}" class="align">
       <div class="productItem bgCommon lazy" id="pi_${tagID}"
         ${bgStyle}
         onmouseenter="animateElement('priceTag_${tagID}', 'fadeIn', 'fadeOut', 0.3, true)"

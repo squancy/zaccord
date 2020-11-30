@@ -22,7 +22,8 @@ const buildItemSection = (conn, itemId, req) => {
       // Create html output 
       let output = `
         <div class="overlay" id="overlay"></div>
-        <img src="/images/exit.png" class="exitBtn trans" id="exitBtn" onclick="viewIn3D()">
+        <img src="/images/icons/moreClose.svg" class="exitBtn trans" id="exitBtn"
+          onclick="viewIn3D()">
         <div class="item3DViewer" id="viewBox">
           <img src="/images/icons/loader.gif" id="stlLoader" /> 
         </div>
@@ -40,9 +41,22 @@ const buildItemSection = (conn, itemId, req) => {
       size += 'mm';
       size = size.replace(/\smm/g, 'mm');
       let description = result[0].description.replace('<!--DATE-->', new Date().getFullYear());
+      let gbtn = `
+        <svg class="contSvg blue" style="margin-top: 0; margin-left: 3px;">
+          <svg>
+            <path d="M9,1.5C4.8,1.5,1.5,4.8,1.5,9s3.3,7.5,7.5,7.5s7.5-3.3,7.5-7.5S13.2,1.5,9,1.5z M9,14.5l-1-1 l3.8-3.8H3.5V8.3h8.4L8.1,4.5L9,3.5L14.5,9L9,14.5z"></path>
+          </svg>
+        </svg>
+      `;
+      description = result[0].description.replace('<!--GBTN-->', gbtn);
+      let replaceFor = `Ütésálló csomagolás
+        <li>Ajándék a csomagban</li>
+      `;
+      description = description.replace('Környezetbarát csomagolás', replaceFor);
       let stlPath = result[0].stl_path;
       let showcaseImgs = result[0].img_showcase.split(',');
-      let showcase = '';
+      let firstImage = result[0].img_url;
+      let showcase = `<img src="/${firstImage}" style="height: 0;">`;
       let isBest = result[0].is_best;
       for (let img of showcaseImgs) {
         showcase += `<img src="/images/${img}" style="height: 0;">`;
@@ -154,7 +168,7 @@ const buildItemSection = (conn, itemId, req) => {
         <div class="clear"></div> 
 
         <p class="align">
-          <a href="/mitjelent" class="blueLink">Mit jelentenek ezek?</a>
+          <a href="/mitjelent" class="blueLink">Segítség a specifikációkhoz</a>
         </p>
 
         <p class="align note ddgray">

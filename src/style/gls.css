@@ -41,7 +41,7 @@ hr {
   background-color: white;
   max-width: 1000px;
   position: fixed;
-  top: 100px;
+  top: 55px;
   opacity: 0;
   height: 0;
   z-index: 5;
@@ -68,6 +68,7 @@ hr {
   height: 100%;
   border-top-right-radius: 30px;
   border-bottom-right-radius: 30px;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
 .psOver {

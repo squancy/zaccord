@@ -2,10 +2,14 @@
 const buildAdminSection = (conn) => {
   return new Promise((resolve, reject) => {
     let aQuery = `
-      SELECT o.*, o.price AS aPrice, o.id AS oid, d.*, d.name AS customerName, f.*
+      SELECT o.*, o.price AS aPrice, ud.email AS uemail, o.id AS oid, d.*,
+      d.name AS customerName, f.*, pp.name AS packet_name, pp.zipcode AS packet_zip,
+      pp.city AS packet_city
       FROM orders AS o LEFT JOIN delivery_data AS d
-      ON d.uid = o.uid LEFT JOIN fix_products AS f
-      ON f.id = o.item_id ORDER BY o.status ASC, o.order_time DESC`;
+      ON (d.uid = o.uid OR d.order_id = o.unique_id) LEFT JOIN fix_products AS f
+      ON f.id = o.item_id LEFT JOIN users AS ud ON ud.id = d.uid
+      LEFT JOIN packet_points AS pp ON o.packet_id = pp.packet_id
+      ORDER BY o.status ASC, o.order_time DESC`;
     conn.query(aQuery, [], (err, result, field) => {
       if (err) {
         reject('Hiba történt');
@@ -24,6 +28,10 @@ const buildAdminSection = (conn) => {
       `;
       let sprices = {};
       for (let i = 0; i < result.length; i++) {
+        let packetName = result[i].packet_name;
+        let packetZipcode = result[i].packet_zip;
+        let packetCity = result[i].packet_city;
+        let uemail = result[i].uemail;
         let oid = result[i].oid;
         let aPrice = result[i].aPrice;
         let rvas = result[i].rvas;
@@ -62,14 +70,40 @@ const buildAdminSection = (conn) => {
         let billingCompname = result[i].billing_compname;
         let billingCompTaxNum = result[i].billing_comp_tax_num;
 
+        let normalCompname = result[i].normal_compname;
+        let normalCompnum = result[i].normal_compnum;
+        let nlEmail = result[i].nl_email;
+
+        let compInfo = '';
+        if (normalCompname && normalCompnum) {
+          compInfo = `
+            <div class="inBox"><b>Cégnév:</b> ${normalCompname}</div>
+            <div class="inBox"><b>Adószám:</b> ${normalCompnum}</div>
+          `; 
+        }
+
+        let hexColors = {
+          'Fekete': '#000000',
+          'Fehér': '#ffffff',
+          'Kék': '#0089ff',
+          'Arany': 'gold',
+          'Zöld': '#7aff00',
+          'Piros': 'red'
+        };
+
+        let cColor = hexColors[color];
+
         let sendCE = 'Csomag szállítás/átvétel alatt';
         if (!status) {
           sendCE = `
-            <span id="seHolder_${uniqueID}">
+            <span id="seHolder_${uniqueID}" style="display: block; width: 100%;">
               <button class="fillBtn btnCommon" style="margin-right: 0;" id="se_${uniqueID}"
                 onclick="sendConfEmail('${uniqueID}', '${deliveryType}')">
                 Megerősítő email küldése
               </button>
+              <input type="text" id="glsCode_${uniqueID}" class="dFormField"
+                placeholder="GLS csomagkövető kód"
+                style="background-color: #fff; border: 1px solid #c3c3c3; width: auto;">
             </span>
           `;
         }
@@ -119,8 +153,16 @@ const buildAdminSection = (conn) => {
         let tFinalPrice = Math.round(quantity * aPrice);
         let nextOt = result[i + 1] ? result[i + 1].order_time : '';
         let prevOt = result[i - 1] ? result[i - 1].order_time : '';
-        if (quantity * aPrice < 500 && orderTime != nextOt && orderTime != prevOt) {
-          tFinalPrice += 500 - tFinalPrice;
+        if (quantity * aPrice < 800 && orderTime != nextOt && orderTime != prevOt) {
+          tFinalPrice += 800 - tFinalPrice;
+        }
+
+        let packetPointData = '';
+        if (deliveryType === 'csomagpont') {
+          packetPointData = `
+            <div class="inBox"><b>Csomagpont Név:</b> ${packetName}</div>
+            <div class="inBox"><b>Csomagpont Cím:</b> ${packetZipcode}, ${packetCity}</div>
+          `;
         }
         
         let bInfo = `
@@ -128,6 +170,7 @@ const buildAdminSection = (conn) => {
             <b>Számlázási cím = szállítási cím</b>
           </div>
         `;
+
         if (billingName) {
           bInfo = `
             <div class="inBox"><b>Név:</b> ${billingName}</div>
@@ -148,20 +191,24 @@ const buildAdminSection = (conn) => {
         // Build html output
         output += `
           <span id="${transferID}"></span>
-          <div style="${style}; text-align: center; user-select: text;"
+          <div style="${style}; text-align: center; user-select: text; padding: 10px;"
             id="box_${i}" class="flexDiv bigBox trans">
             <div class="flexDiv smallBox">
               <div class="inBox"><b>Terméknév:</b> ${productName}</div>
               <div class="inBox"><b>Ár:</b> ${aPrice} Ft</div>
-              <div class="inBox"><b>Szín:</b> ${color}</div>
+              <div class="inBox">
+                <b>Szín:</b>
+                <span style="color: ${cColor}; background-color: #a2a2a2;
+                  border-radius: 8px; padding: 3px;">${color}</span>
+              </div>
         `;
 
         if (!litSphere) {
           output += `
               <div class="inBox"><b>Rvas:</b> ${rvas}mm</div>
               <div class="inBox"><b>Sűrűség:</b> ${suruseg}%</div>
-              <div class="inBox"><b>Méretezés:</b> x${rvas}</div>
-              <div class="inBox"><b>Fvas:</b> ${rvas}mm</div>
+              <div class="inBox"><b>Méretezés:</b> x${scale}</div>
+              <div class="inBox"><b>Fvas:</b> ${fvas}mm</div>
           `;
         } else {
           output += `
@@ -185,8 +232,11 @@ const buildAdminSection = (conn) => {
               <div class="inBox"><b>Város:</b> ${city}</div>
               <div class="inBox"><b>Cím:</b> ${address}</div>
               <div class="inBox"><b>Tel.:</b> ${mobile}</div>
+              <div class="inBox"><b>E-mail:</b> ${uemail || nlEmail}</div>
               <div class="inBox"><b>Szállítási mód:</b> ${deliveryType}</div>
               <div class="inBox"><b>Azonosító:</b> ${uniqueID}</div>
+              ${compInfo}
+              ${packetPointData}
               ${sendCE}
             </div>
             <div class="flexDiv smallBox">

@@ -56,9 +56,9 @@ const buildCartSection = (conn, req) => {
               return;
             }
 
-            var url = 'cart';
+            var url = 'uploadPrint?file=' + tid;
             var imgUrl = 'printUploads/thumbnails/' + tid + '.png';
-            var productName = 'Bérnyomtatás Termék';
+            var productName = 'Bérnyomtatott Termék';
             var price = Number(content['price_' + tid]);
 
           // Check if cookie item is a lithophane
@@ -76,7 +76,7 @@ const buildCartSection = (conn, req) => {
               return;
             }
 
-            var url = 'cart';
+            var url = 'uploadPrint?image=' + tid;
             var imgUrl = 'printUploads/lithophanes/' + lithophaneFile;
             var productName = 'Litofánia';
             var litSphere = content['sphere_' + tid];
@@ -118,7 +118,7 @@ const buildCartSection = (conn, req) => {
           // Build html output
           let output = `
             <div class="cartItemHolder" id="cartItem_${tid}">
-              <img src="/images/icons/delete.png" class="topRight trans"
+              <img src="/images/icons/moreClose.svg" class="topRight trans"
                 onclick="removeItem('${tid}')">
               <div class="itemLeftCenter">
                 <a href="/${url}">
@@ -329,8 +329,8 @@ const buildCartSection = (conn, req) => {
 
       let ePriceText = '<span id="extraPrice"></span>';
       let extraPrice = 0; 
-      if (finalPrice < 500){
-        extraPrice = 500 - finalPrice;
+      if (finalPrice < 800) {
+        extraPrice = 800 - finalPrice;
         finalPrice += extraPrice;
         ePriceText = `<span id="extraPrice">(+${extraPrice} Ft felár)</span>`;
       }

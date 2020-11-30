@@ -20,8 +20,7 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
       output += `
         <div class="bgCommon litImg productItem"
           style="background-image: url('${url}'); padding-top: ${paddingTop}%"
-          onmouseover="toggleLit(1, '${url}', 'can_${i}', 'img_${i}')"
-          onmouseleave="toggleLit(0, '${url}', 'can_${i}', 'img_${i}')" id="img_${i}"
+          onclick="toggleLit('${url}', 'can_${i}', 'img_${i}')" id="img_${i}"
           data-src="${url}">
           <canvas id="can_${i}" style="display: none;">
           </canvas>
@@ -53,6 +52,9 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
           </p>
         </div>
       </div>
+      <p class="align note ddgray" id="chargeNote" style="margin-bottom: 30px;">
+        A litofánia nézethez kattints a képre
+      </p>
     `;
 
     output += genQuan();
@@ -138,6 +140,7 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
               if (!itemsSoFar) itemsSoFar = '{}';
               itemsSoFar = JSON.parse(itemsSoFar);
               setCookie('cartItems', JSON.stringify(Object.assign(itemsSoFar, value)), 365);
+              updateCartNum();
             }
           }
         }

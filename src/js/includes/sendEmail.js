@@ -5,12 +5,12 @@ const nodemailer = require('nodemailer');
 function sendEmail(from, content, email, subject) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
-      host: 'zaccord.com',
+      host: 'HOST',
       port: 465,
       secure: true, 
       auth: {
-        user: 'info@zaccord.com',
-        pass: 'Render11Render11'
+        user: 'USER',
+        pass: 'PASS'
       }
     });
 

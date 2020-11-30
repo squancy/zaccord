@@ -74,7 +74,7 @@ const buildAccountSection = (conn, userID) => {
                 átírható!
               </p>
               <hr class="hrStyle">
-              <div class="flexDiv" style="flex-wrap: wrap;">
+              <div class="flexDiv" style="flex-wrap: wrap; justify-content: space-evenly;">
                 <input type="password" class="dFormField" id="cpass"
                   placeholder="Jelenlegi jelszó">
                 <input type="password" class="dFormField" id="pass" placeholder="Új jelszó">

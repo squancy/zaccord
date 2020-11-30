@@ -7,6 +7,7 @@ const validateParams = require('./includes/validateParams.js');
 const validateLitParams = require('./includes/validateLitParams.js');
 const parseCookies = require('./includes/parseCookies.js');
 const formatOrderId = require('./includes/formatOrderId.js');
+const getPrice = require('./includes/modelPriceCalc/getPrice.js');
 const constants = require('./includes/constants.js');
 const NodeStl = require('node-stl');
 const fs = require('fs');
@@ -14,6 +15,9 @@ const fs = require('fs');
 // Shipping and money handle prices constants are used throughout the page
 const SHIPPING_PRICE = constants.shippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
+
+const calcCPPrice = constants.calcCPPrice;
+const getCoords = constants.getCoords;
 
 // Build page where the customer can buy the products/custom print
 const buildBuySection = (conn, paramObj, req) => {
@@ -85,103 +89,103 @@ const buildBuySection = (conn, paramObj, req) => {
         shippingText = `A 15000 Ft feletti rendeléseknél ingyenes a szállítás`;
         discountText = '(3% kedvezmény)';
       }
-      
+
       let actualShippingPrice = (price > 15000) ? 0 : SHIPPING_PRICE;
       return [discount, discountText, actualShippingPrice, shippingText];
     }
 
     // Reusable promise for generating a single item for output
     function buildItemOutput(isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas,
-      quantity) {
+        quantity) {
       return new Promise((resolve, reject) => {
-        // Get the product with that id from database & validate parameters
-        let cQuery = 'SELECT * FROM fix_products WHERE id = ? LIMIT 1'; 
-        conn.query(cQuery, [product], (err, result, field) => {
-          if (err) {
-            reject('Egy nem várt hiba történt, kérlek próbáld újra');
-            return;
-          }
+          // Get the product with that id from database & validate parameters
+          let cQuery = 'SELECT * FROM fix_products WHERE id = ? LIMIT 1'; 
+          conn.query(cQuery, [product], (err, result, field) => {
+              if (err) {
+              reject('Egy nem várt hiba történt, kérlek próbáld újra');
+              return;
+              }
 
-          // Product does not exist
-          if (result.length < 1) {
-            reject('Nincs ilyen termék');
-            return;
-          }
+              // Product does not exist
+              if (result.length < 1) {
+              reject('Nincs ilyen termék');
+              return;
+              }
 
-          // Product exists, now validate params
-          if (!validateParams(paramObj)) {
-            reject('Hibás paraméter érték');
-            return;
-          }
+              // Product exists, now validate params
+              if (!validateParams(paramObj)) {
+              reject('Hibás paraméter érték');
+              return;
+              }
 
-          let prodURL = result[0]['url'];
-          let itemID = result[0]['id'];
-          let imgURL = result[0]['img_url'];
-          let price = result[0]['price'];
-          let name = result[0]['name'];
+              let prodURL = result[0]['url'];
+              let itemID = result[0]['id'];
+              let imgURL = result[0]['img_url'];
+              let price = result[0]['price'];
+              let name = result[0]['name'];
 
-          let data = {
-            'orderID': orderID,
-            'itemID': itemID,
-            'prodURL': prodURL,
-            'imgURL': imgURL,
-            'price': calcPrice(price, rvas, suruseg, scale, fvas),
-            'name': name,
-            'rvas': rvas,
-            'suruseg': suruseg,
-            'scale': scale,
-            'color': color,
-            'fvas': fvas,
-            'quantity': quantity,
-            'fixProduct': true
-          };
+              let data = {
+                'orderID': orderID,
+                'itemID': itemID,
+                'prodURL': prodURL,
+                'imgURL': imgURL,
+                'price': calcPrice(price, rvas, suruseg, scale, fvas),
+                'name': name,
+                'rvas': rvas,
+                'suruseg': suruseg,
+                'scale': scale,
+                'color': color,
+                'fvas': fvas,
+                'quantity': quantity,
+                'fixProduct': true
+              };
 
-          // Calculate shipping price & final price
-          let total = data.price * quantity;
-          let discount, discountText, shippingPrice, shippingText;
-          [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
- 
-          let finalPrice = data.price * quantity * discount;
-          if (isCrt) {
-            finalPrice *= 1 / discount
-          }
+              // Calculate shipping price & final price
+              let total = data.price * quantity;
+              let discount, discountText, shippingPrice, shippingText;
+              [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
 
-          // Generate html output
-          let output = genItem(false, false, false, data);
+              let finalPrice = data.price * quantity * discount;
+              if (isCrt) {
+                finalPrice *= 1 / discount
+              }
 
-          if (!isCrt) {
-            resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
-          } else {
-            resolve([output, data, finalPrice]);
-          }
-        });
+              // Generate html output
+              let output = genItem(false, false, false, data);
+
+              if (!isCrt) {
+                resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
+              } else {
+                resolve([output, data, finalPrice]);
+              }
+          });
       });
     }
 
     function buildCPOutput(rvas, suruseg, color, scale, fvas, quantity, isFromCrt = false,
-      fname = false) {
+        fname = false) {
       return new Promise((resolve, reject) => {
-        // Validate params
-        if (!validateParams(paramObj)) {
+          // Validate params
+          if (!validateParams(paramObj)) {
           reject('Hibás paraméter érték');
           return;
-        }
+          }
 
-        // Validate files
-        if (!isFromCrt) {
+          // Validate files
+          if (!isFromCrt) {
           var files = paramObj.files.split(',');
-        } else {
+          } else {
           var files = [fname];
-        }
-        let finalPrice = 0;
-        let output = '';
-        let dataAll = [];
-        for (let i = 0; i < files.length; i++) {
+          }
+          let finalPrice = 0;
+          let output = '';
+          let dataAll = [];
+          for (let i = 0; i < files.length; i++) {
           let file = files[i];
           let uid = Number(file.split('_')[0]);
 
           // Make sure file belongs to user TODO: check id
-          if (uid != userID && Number.isInteger(uid)) {
+          if (userID && id != userID && Number.isInteger(uid)) {
             reject('Hibás felhasználó');
             return;
           }
@@ -194,18 +198,17 @@ const buildBuySection = (conn, paramObj, req) => {
             reject('Nincs ilyen fájl');
             return;
           }
-         
-          // Get weight to calculate price
-          let stl = new NodeStl(filePath);
-          let weight = (stl.weight).toFixed(2);
-          let price = calcPrice(Math.round(weight * 100 + weight * 1300 / 60), rvas, suruseg,
-            scale, fvas);
+
+          // Get volume to calculate price
+          let [W, H, D] = getCoords(filePath);
+          let basePrice = calcCPPrice(W, H, D);
+          let price = calcPrice(basePrice, rvas, suruseg, scale, fvas);
           finalPrice += price * quantity;
-         
+
           // Build image path for thumbnail
           thPath = thPath.split('/');
           thPath = (thPath[thPath.length - 3] + '/' + thPath[thPath.length - 2] + '/' +
-            thPath[thPath.length - 1]); 
+              thPath[thPath.length - 1]); 
 
           let pName = 'Bérnyomtatás Termék #' + (i + 1);
           if (isFromCrt) pName = 'Bérnyomtatás Termék';
@@ -228,57 +231,57 @@ const buildBuySection = (conn, paramObj, req) => {
 
           output += genItem(false, false, false, data);
           dataAll.push(data);
-        }
-        if (isFromCrt) dataAll = data;
-        resolve([output, finalPrice, dataAll]);
+          }
+          if (isFromCrt) dataAll = data;
+          resolve([output, finalPrice, dataAll]);
       });
     }
 
     // Build output for lithophanes
     function buildLitOutput(sphere, color, size, quantity, file) {
       return new Promise((resolve, reject) => {
-        let output = '';
-        let params = {
+          let output = '';
+          let params = {
           'sphere': sphere,
           'color': color,
           'size': size,
           'quantity': quantity,
           'file': file
-        };
+          };
 
-        if (!validateLitParams(params))  {
+          if (!validateLitParams(params))  {
           reject('Hibás paraméter érték heheheh');
           return;
-        }
+          }
 
-        let prodURL = '';
-        let imgURL = 'printUploads/lithophanes/' + file;
-        let price = calcLitPrice(size);
-        let name = 'Litofánia'
+          let prodURL = '';
+          let imgURL = 'printUploads/lithophanes/' + file;
+          let price = calcLitPrice(size);
+          let name = 'Litofánia'
 
-        let data = {
-          'orderID': orderID,
-          'prodURL': prodURL,
-          'imgURL': imgURL,
-          'price': price,
-          'name': name,
-          'color': color,
-          'size': size,
-          'sphere': sphere,
-          'file': file,
-          'quantity': quantity,
-          'fixProduct': false
-        };
+          let data = {
+            'orderID': orderID,
+            'prodURL': prodURL,
+            'imgURL': imgURL,
+            'price': price,
+            'name': name,
+            'color': color,
+            'size': size,
+            'sphere': sphere,
+            'file': file,
+            'quantity': quantity,
+            'fixProduct': false
+          };
 
-        let finalPrice = price * quantity;
-        output += genItem(false, false, false, data, true);
+          let finalPrice = price * quantity;
+          output += genItem(false, false, false, data, true);
 
-        resolve([output, finalPrice, data]);
+          resolve([output, finalPrice, data]);
       }).catch(err => {
         console.log(err);
         reject('Egy nem várt hiba történt, kérlek próbáld újra');
         return;
-      });
+        });
     }
 
     // Build the delivery info section
@@ -290,9 +293,9 @@ const buildBuySection = (conn, paramObj, req) => {
           <label class="container" id="toAddrHolder">
             <div style="padding-bottom: 0;">GLS házhozszállítás</div>
             <div class="lh sel">
-              A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
-              terméket/termékeket.<br>
-              Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
+            A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
+            terméket/termékeket.<br>
+            Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
             <input type="radio" name="radio2" id="toAddr">
             <span class="checkmark"></span>
@@ -301,9 +304,9 @@ const buildBuySection = (conn, paramObj, req) => {
           <label class="container" id="packetPointHolder">
             <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
             <div class="lh sel">
-              A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
-              csomagot ami ezután lesz átvehető.<br>
-              Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
+            A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
+            csomagot ami ezután lesz átvehető.<br>
+            Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
             <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
             <input type="radio" name="radio2" id="packetPoint">
@@ -312,7 +315,8 @@ const buildBuySection = (conn, paramObj, req) => {
 
           <div id="glsBigBox"></div>
           <div class="overlay" id="overlay"></div>
-          <img src="/images/exit.png" class="exitBtn trans" id="exitBtn" onclick="exitMap()">
+          <img src="/images/icons/closeLight.svg" class="exitBtn trans" id="exitBtn"
+            onclick="exitMap()">
         `;
 
         output += `
@@ -321,33 +325,37 @@ const buildBuySection = (conn, paramObj, req) => {
 
         let extraCharge = '';
         let charge = 0;
-        if (finalPrice < 500) {
-          charge = 500 - finalPrice;
+        if (finalPrice < 800) {
+          charge = 800 - finalPrice;
           extraCharge = `<span>(+${charge} Ft felár)</span>`;
         }
 
         if (finalPrice < 15000) charge += SHIPPING_PRICE;
 
-        genDelivery(conn, userID).then(result => {
+        genDelivery(conn, userID, !!userID).then(result => {
           output += result;
 
           // Provide 'different billing address' form
           output += `
+            <div class="align" style="margin: 10px 0 20px 0;" id="normalBac">
+              <label class="chCont">Cégként vásárolok
+                <input type="checkbox" id="compNormal"
+                  onchange="companyBilling('normalCompname', 'normalCompnum', 'normal',
+                    'normalDiv')">
+                <span class="cbMark"></span>
+              </label>
+            </div>
+ 
             <button class="btnCommon fillBtn pad centr" id="diffBilling">
               Eltérő számlázási cím
             </button>
             <div id="billingHolder">
               <div id="billingForm" class="flexDiv"
-                style="margin-top: 10px; flex-wrap: wrap; justify-content: center;"
+                style="margin-top: 10px; flex-wrap: wrap; justify-content: space-evenly;"
                 data-status="close">
               </div>
             </div>
           `;
-
-          // If user is not logged in provide a login form
-          if (!userID) {
-            output += genAuthForm();
-          } 
 
           // Shipping text is currently not used
           /*
@@ -402,26 +410,6 @@ const buildBuySection = (conn, paramObj, req) => {
       });
     }
 
-    // Build login & register form for unauthorized users
-    function genAuthForm() {
-      return `
-        <p class="blueHead" style="font-size: 24px;">5. Hitelesítés</p>
-        <p class="grayHead">Bejelentkezés</p>
-        <div class="flexDiv" style="flex-wrap: wrap;">
-          <input type="text" class="bFormField" id="email" placeholder="E-mail">
-          <input type="password" class="bFormField" id="pass" placeholder="Jelszó"
-            style="margin-right: 0;">
-        </div>
-
-        <p class="grayHead">Regisztráció</p>
-        <div class="flexDiv" style="flex-wrap: wrap;">
-          <input type="text" class="dFormField" id="emailReg" placeholder="E-mail">
-          <input type="password" class="dFormField" id="passReg" placeholder="Jelszó">
-          <input type="password" class="dFormField" id="repassReg" placeholder="Jelszó újra">
-        </div>
-      `; 
-    }
-
     // User buys a single product from items page or orders a custom print / lithophane
     if (Number.isInteger(Number(paramObj.product)) ||
       ['cp', 'lit'].indexOf(paramObj.product) > -1) {
@@ -460,8 +448,8 @@ const buildBuySection = (conn, paramObj, req) => {
           buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
             output += lastOutput;
 
-            // Extra charge below 500Ft
-            if (finalPrice < 500) finalPrice += 500 - finalPrice;
+            // Extra charge below 800Ft
+            if (finalPrice < 800) finalPrice += 800 - finalPrice;
 
             output += `
               </section>
@@ -496,8 +484,8 @@ const buildBuySection = (conn, paramObj, req) => {
             output += lastOutput;
             let finalPrice = data[3];
 
-            // Extra charge below 500Ft
-            if (finalPrice < 500) finalPrice += 500 - finalPrice;
+            // Extra charge below 800Ft
+            if (finalPrice < 800) finalPrice += 800 - finalPrice;
 
             output += `
               </section>
@@ -642,8 +630,8 @@ const buildBuySection = (conn, paramObj, req) => {
         buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
           output += lastOutput;
 
-          // Order with a total value of less than 500Ft will get a 500 - price extra charge
-          if (finalPrice < 500) finalPrice += 500 - finalPrice;
+          // Order with a total value of less than 800Ft will get a 800 - price extra charge
+          if (finalPrice < 800) finalPrice += 800 - finalPrice;
           output += `
             </section>
             <script type="text/javascript">

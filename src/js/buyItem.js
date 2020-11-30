@@ -1,4 +1,5 @@
 const validateEmail = require('email-validator');
+const randomstring = require('randomstring');
 const userExists = require('./includes/userExists.js');
 const itemExists = require('./includes/itemExists.js');
 const calcPrice = require('./includes/calcPrice.js');
@@ -22,6 +23,7 @@ const COUNTRIES = constants.countries;
 const buyItem = (conn, dDataArr, req, res, userSession) => {
   return new Promise((resolve, reject) => {
     // Extract data from form data obj
+    let UID = req.user.id ? req.user.id : null;
     let name = dDataArr[0].name;
     let city = dDataArr[0].city;
     let address = dDataArr[0].address;
@@ -32,13 +34,17 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let localFinalPrice = 0;
     let finalPrice = dDataArr[0].finalPrice;
     let shippingPrice = dDataArr[0].shippingPrice;
-    let authType = dDataArr[0].authType;
+    let isLoggedIn = dDataArr[0].isLoggedIn;
     let isLit = dDataArr[0].isLit;
     let emailTotPrice = dDataArr[0].emailTotPrice;
     let emailOutput = dDataArr[0].emailOutput;
+    let nlEmail = dDataArr[0].nlEmail;
+
+    console.log(dDataArr);
 
     // Replace classes & ids with inline CSS for emails
     emailOutput = makeInline(emailOutput);
+
     let uniqueID = Math.round(Math.random() * Math.pow(10, 12));
 
     // Fields about packet points
@@ -57,14 +63,6 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     // Because of async queries a track variable is needed for packet point checking in db
     let ppUpdated = false;
 
-    if (authType) {
-      var email = dDataArr[0].email;
-      var pass = dDataArr[0].pass;
-      var emailReg = dDataArr[0].emailReg;
-      var passReg = dDataArr[0].passReg;
-      var repassReg = dDataArr[0].repassReg;
-    }
-    
     // Validate billing info & credentials
     let billingType = dDataArr[0].billingType;
     let billingName = dDataArr[0].billingName;
@@ -74,6 +72,16 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let billingAddress = dDataArr[0].billingAddress;
     let billingCompname = dDataArr[0].billingCompname;
     let billingCompnum = dDataArr[0].billingCompnum;
+
+    // Buy as a company but not with a different invoice address
+    let normalCompname = dDataArr[0].normalCompname;
+    let normalCompnum = dDataArr[0].normalCompnum;
+
+    // Make sure both fields are set and valid
+    if ((!normalCompname && normalCompnum) || (normalCompname && !normalCompnum)) {
+      reject('Kérlek add meg mindkét adatot a cégről');
+      return;
+    }
 
     let billingEmail = 'Megegyezik a szállítási címmel';
     if (billingType !== 'same') {
@@ -89,6 +97,14 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           <div><b>Adószám: </b>${billingCompnum}</div>
         `;
       }
+    }
+
+    let compInfo = '';
+    if (normalCompname) {
+      compInfo = `
+        <div><b>Cégnév: </b>${normalCompname}</div>
+        <div><b>Adószám: </b>${normalCompnum}</div>
+      `;
     }
 
     if (billingType != 'same') {      
@@ -113,62 +129,6 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
       }
     }
 
-    // Handle user authentication if not logged in
-    if (!authType) {
-      var userID = req.user.id;
-      runPurchase();
-    } else if (authType == 'login') {
-      if (!email || !pass) {
-        reject('Adj meg minden bejelentkezési adatot');
-        return;
-      }
-
-      let formData = {
-        'email': email,
-        'pass': pass
-      };
-
-      userLogin(conn, formData, req).then(data => {
-        userSession(req, res, function uSession() {
-          req.user.id = userID = data;
-          runPurchase();
-        });
-      }).catch(err => {
-        reject('Egy nem várt hiba történt, kérlek próbáld újra')
-        return;
-      });
-    } else if (authType == 'register') {
-      if (!emailReg || !passReg || !repassReg) {
-        reject('Kérlek tölts ki minden mezőt');
-        return;
-      } else if (!validateEmail.validate(emailReg)) {
-        reject('Kérlek valós emailt adj meg');
-        return;
-      } else if (passReg != repassReg) {
-        reject('A jelszavak nem egyeznek');
-        return;
-      } else if (passReg.length < 6) {
-        reject('A jelszónak minimum 6 karakterből kell állnia');
-        return;
-      }
-
-      let formData = {
-        'email': emailReg,
-        'pass': passReg
-      };
-
-      userRegister(conn, formData, req).then(data => {
-        // Auto log in user after successful registration
-        userSession(req, res, function uSession() {
-          req.user.id = userID = data;
-          runPurchase();
-        });
-      }).catch(err => {
-        reject(err);
-        return;
-      });
-    }
-
     /*
       Common date for all items in order to indicate that all those items belongs to the same
       order
@@ -183,6 +143,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
       });
     }
 
+    runPurchase();
+
     function movePurchase() {
       return new Promise((resolve, reject) => {
         let commonDate = new Date().toMysqlFormat();
@@ -191,12 +153,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           localFinalPrice += d.price * d.quantity;
         }
 
-        console.log(dDataArr)
-
-        // Give discount for 15000 Ft < purchases and also an extra price for 500 Ft > purchases
+        // Give discount for 15000 Ft < purchases and also an extra price for 800 Ft > purchases
         let discount = 0.97;
         if (localFinalPrice < 15000) discount = 1;
-        if (localFinalPrice < 500) localFinalPrice += 500 - localFinalPrice;
+        if (localFinalPrice < 800) localFinalPrice += 800 - localFinalPrice;
 
         // Make sure the final price is valid
         if (Math.round(finalPrice) != Math.round(localFinalPrice * discount)) {
@@ -204,12 +164,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           return;
         }
 
-        // Make sure user is logged in
-        if (!userID) {
-          reject('Jelentkezz be'); 
-          return;
-        // Make sure none of the delivery vars is empty
-        } else if (!name || !city || !address || !mobile || !pcode || !payment) {
+        if (!name || !city || !address || !mobile || !pcode || !payment) {
           reject('Hiányzó szállítási információ'); 
           return;
         // Validate postal code
@@ -231,6 +186,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Hiányzó csomagpont adatok');
           return;          
         }
+
+        console.log('huuuu')
         
         let cnt = 0;
         for (let formData of dDataArr) {
@@ -282,153 +239,153 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
             }
           }
 
-          // Make sure user exists in db with the given ID
-          userExists(conn, userID).then(data => {
-            // Make sure item exists with the given ID  
-            let process = new Promise((resolve, reject) => {
-              // When ordering a custom print we do not check the existance of item in db
-              let handler = itemExists(conn, itemID, true);
-              if (fixProduct) {
-                handler = itemExists(conn, itemID);
+          // Make sure item exists with the given ID  
+          let process = new Promise((resolve, reject) => {
+            // When ordering a custom print we do not check the existance of item in db
+            let handler = itemExists(conn, itemID, true);
+            if (fixProduct) {
+              handler = itemExists(conn, itemID);
+            }
+
+            handler.then(data => {
+              if (data != 'success') {
+                let originalPrice = data[0].price;
+                if (calcPrice(originalPrice, rvas, suruseg, scale, fvas) != price) {
+                  // Check if price is correct with the given parameters
+                  reject('Hibás ár'); 
+                  return;
+                }
               }
 
-              handler.then(data => {
-                if (data != 'success') {
-                  let originalPrice = data[0].price;
-                  if (calcPrice(originalPrice, rvas, suruseg, scale, fvas) != price) {
-                    // Check if price is correct with the given parameters
-                    reject('Hibás ár'); 
-                    return;
-                  }
-                }
+              // Request is valid, push data to db
+              let isTrans = payment == 'transfer' ? 1 : 0;
+              let transID = isTrans ? orderID : '';
 
-                // Request is valid, push data to db
-                let isTrans = payment == 'transfer' ? 1 : 0;
-                let transID = isTrans ? orderID : '';
+              // If cash on delivery add extra price
+              if (payment != 'transfer') {
+                shippingPrice += MONEY_HANDLE;
+              }
 
-                // If cash on delivery add extra price
-                if (payment != 'transfer') {
-                  shippingPrice += MONEY_HANDLE;
-                }
+              let iQuery = `
+                INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, fvas,
+                  lit_sphere, lit_size, lit_fname,
+                  quantity, is_transfer, transfer_id, is_fix_prod, status, shipping_price,
+                  cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
+                  normal_compname, normal_compnum,
+                  billing_name, billing_country, billing_city,
+                  billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
+                  order_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `;
 
-                let iQuery = `
-                  INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, fvas,
-                    lit_sphere, lit_size, lit_fname,
-                    quantity, is_transfer, transfer_id, is_fix_prod, status, shipping_price,
-                    cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
-                    billing_name, billing_country, billing_city,
-                    billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
-                    order_time)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?)
-                `;
+              // Decide if product is a custom print (attach filename) or fixed product
+              if (!fixProduct) {
+                itemID = 0;
+                var cpFname = formData.itemID;
+              } else {
+                var cpFname = '';
+              }
+            
+              price *= discount;
+              let sameBillingAddr = billingType == 'same' ? 1 : 0;
+              let isCashOnDel = deliveryType == 'toAddr' ? 1: 0;
+              let packetDbID = deliveryType == 'packetPoint' ? packetID : '';
 
-                // Decide if product is a custom print (attach filename) or fixed product
-                if (!fixProduct) {
-                  itemID = 0;
-                  var cpFname = formData.itemID;
-                } else {
-                  var cpFname = '';
-                }
+              let valueArr = [
+                UID, itemID, price, String(rvas), String(suruseg),
+                String(scale), color, String(fvas), sphere, size, file, quantity, isTrans, 
+                transID, fixProduct, 0,
+                Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
+                sameBillingAddr, normalCompname, normalCompnum, billingName, billingCountry,
+                billingCity, billingPcode, billingAddress, billingCompname, billingCompnum, 
+                commonDate
+              ];
               
-                price *= discount;
-                let sameBillingAddr = billingType == 'same' ? 1 : 0;
-                let isCashOnDel = deliveryType == 'toAddr' ? 1: 0;
-                let packetDbID = deliveryType == 'packetPoint' ? packetID : '';
+              if (payment != 'transfer') {
+                shippingPrice -= MONEY_HANDLE;
+              }
 
-                let valueArr = [
-                  req.user.id, itemID, price, String(rvas), String(suruseg),
-                  String(scale), color, String(fvas), sphere, size, file, quantity, isTrans, 
-                  transID, fixProduct, 0,
-                  Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
-                  sameBillingAddr, billingName, billingCountry,
-                  billingCity, billingPcode, billingAddress, billingCompname, billingCompnum, 
-                  commonDate
-                ];
+              conn.query(iQuery, valueArr, (err, result, field) => {
+                if (err) {
+                  console.log(err, 'asd');
+                  reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                  return;
+                }
 
-                conn.query(iQuery, valueArr, (err, result, field) => {
-                  if (err) {
-                    console.log(err, 'asd');
-                    reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                    return;
-                  }
+                // If delivery type if packet point insert contact info to db
+                if (deliveryType == 'packetPoint') {
+                  // First check if the packet point is already in the db
+                  // If it is, just update the existing row
+                  // Otherwise insert the packet point as a new row
 
-                  // If delivery type if packet point insert contact info to db
-                  if (deliveryType == 'packetPoint') {
-                    // First check if the packet point is already in the db
-                    // If it is, just update the existing row
-                    // Otherwise insert the packet point as a new row
+                  let mQuery = `
+                    SELECT id FROM packet_points WHERE packet_id = ? LIMIT 1
+                  `;
 
-                    let mQuery = `
-                      SELECT id FROM packet_points WHERE packet_id = ? LIMIT 1
-                    `;
+                  conn.query(mQuery, [packetID], (err, result, fields) => {
+                    if (err) {
+                      reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                      return;
+                    } 
 
-                    conn.query(mQuery, [packetID], (err, result, fields) => {
-                      if (err) {
-                        reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                        return;
-                      } 
+                    // Check existance in db
+                    if (result.length > 0) {
+                      // Update data in db
+                      let updateQuery = `
+                        UPDATE packet_points SET name = ?, zipcode = ?,
+                        city = ?, contact = ?, phone = ?, email = ?, lat = ?, lon = ?
+                        WHERE packet_id = ?
+                      `;
 
-                      // Check existance in db
-                      if (result.length > 0) {
-                        // Update data in db
-                        let updateQuery = `
-                          UPDATE packet_points SET name = ?, zipcode = ?,
-                          city = ?, contact = ?, phone = ?, email = ?, lat = ?, lon = ?
-                          WHERE packet_id = ?
-                        `;
+                      let updateParams = [
+                        packetName, packetZipcode, packetCity, packetContact, packetPhone,
+                        packetEmail, packetLat, packetLon, packetID
+                      ];
 
-                        let updateParams = [
-                          packetName, packetZipcode, packetCity, packetContact, packetPhone,
-                          packetEmail, packetLat, packetLon, packetID
-                        ];
+                      conn.query(updateQuery, updateParams, (err, result, fields) => {
+                        if (err) {
+                          reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                          return;
+                        }                    
 
-                        conn.query(updateQuery, updateParams, (err, result, fields) => {
-                          if (err) {
-                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                            return;
-                          }                    
+                        resolve('success');
+                      });
 
-                          resolve('success');
-                        });
+                    // Only insert to db for the 1st time (because of async)
+                    } else if (!ppUpdated) {
+                      let pQuery = `
+                        INSERT INTO packet_points (
+                          packet_id, name, zipcode, city, contact, phone, email, lat, lon
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      `;
 
-                      // Only insert to db for the 1st time (because of async)
-                      } else if (!ppUpdated) {
-                        let pQuery = `
-                          INSERT INTO packet_points (
-                            packet_id, name, zipcode, city, contact, phone, email, lat, lon
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        `;
+                      // Insert packet point data as a new row
+                      let pValues = [
+                        packetID, packetName, Number(packetZipcode), packetCity,
+                        packetContact,
+                        packetPhone, packetEmail, packetLat, packetLon
+                      ];
 
-                        // Insert packet point data as a new row
-                        let pValues = [
-                          packetID, packetName, Number(packetZipcode), packetCity,
-                          packetContact,
-                          packetPhone, packetEmail, packetLat, packetLon
-                        ];
-
-                        ppUpdated = true;
-                        conn.query(pQuery, pValues, function packetInsert(err, result, field) {
-                          if (err) {
-                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                            return;
-                          }                    
-                          
-                          resolve('success');
-                        });
-                      }
-                    });
-                  } else {
-                    resolve('success');
-                  }
-                });
+                      ppUpdated = true;
+                      conn.query(pQuery, pValues, function packetInsert(err, result, field) {
+                        if (err) {
+                          reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                          return;
+                        }                    
+                        
+                        resolve('success');
+                      });
+                    }
+                  });
+                } else {
+                  resolve('success');
+                }
               });
-            }).catch(err => {
-              console.log(err);
-              reject('Nincs ilyen termék');
             });
           }).catch(err => {
-            reject('Nincs ilyen felhasználó');
+            console.log(err);
+            reject('Nincs ilyen termék');
           });
 
           promises.push(process);
@@ -436,12 +393,22 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
 
         Promise.all(promises).then(data => {
           // Also update delivery info in db if needed
-          let dQuery = `
-            UPDATE delivery_data
-            SET name = ?, postal_code = ?, city = ?, address = ?, mobile = ?, date = NOW()
-            WHERE uid = ?
-          `;
-          let deliveryArr = [name, pcode, city, address, mobile, req.user.id];
+          if (isLoggedIn) {
+            var dQuery = `
+              UPDATE delivery_data
+              SET name = ?, postal_code = ?, city = ?, address = ?, mobile = ?, nl_email = NULL,
+              order_id = NULL, date = NOW() WHERE uid = ?
+            `;
+            var deliveryArr = [name, pcode, city, address, mobile, nlEmail, UID];
+          } else {
+            var dQuery = `
+              INSERT INTO delivery_data (uid, name, postal_code, city, address, mobile,
+              nl_email, order_id, date)
+              VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, NOW())
+            `;
+            var deliveryArr = [name, pcode, city, address, mobile, nlEmail, uniqueID];
+          }
+
           conn.query(dQuery, deliveryArr, (err, result, field) => {
             if (err) {
               console.log(err);
@@ -450,9 +417,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
             }
 
             let eQuery = 'SELECT email FROM users WHERE id = ? LIMIT 1';
-            conn.query(eQuery, [req.user.id], (err, result, field) => {
+            conn.query(eQuery, [UID], (err, result, field) => {
               // On successful ordering, send customer a notification email
-              let email = result[0].email;
+              // If query result is null then user is not in db -> get email from form field
+              let email = result[0] ? result[0].email : nlEmail;
               let emailContent = `
                 <p style="font-size: 24px;">Megkaptuk a rendelésed!</p>
                 <p style="font-size: 16px;">
@@ -490,6 +458,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                       <b>Átvétel: </b> ${deliveryType == 'toAddr'
                         ? 'Házhozszállítás' : 'Csomagpont átvétel'}
                     </div>
+                    ${compInfo}
                   </div>
                 </div>
 
@@ -521,6 +490,17 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
 
               let subject = 'Megkaptuk a rendelésed! - Azonosító: ' + uniqueID;
               sendEmail('info@zaccord.com', emailContent, email, subject);
+
+              // Send a notification email to us about every new order
+              //let ownerEmails = ['mark@pearscom.com', 'turcsanmate113@gmail.com'];
+              let ownerEmails = [];
+              let sj = 'Dől a zsé, jönnek a rendelők! - Azonosító: ' + uniqueID;
+              let cnt = '<p style="font-size: 18px;">Új rendelés érkezett!</p>';
+              for (let i = 0; i < ownerEmails.length; i++) {
+                sendEmail('info@zaccord.com', cnt, ownerEmails[i], sj);
+              }
+
+              console.log('last part')
               
               resolve('success');
             });
