@@ -3,6 +3,8 @@ const calcPrice = require('./includes/calcPrice.js');
 const escapeVars = require('./includes/escapeVars.js');
 const calcLitPrice = require('./includes/calcLitPrice.js');
 const fs = require('fs');
+const constants = require('./includes/constants.js');
+const PRINT_COLORS = constants.printColors;
 
 // Build cart page from cookies & validate them on server side
 const buildCartSection = (conn, req) => {
@@ -269,7 +271,7 @@ const buildCartSection = (conn, req) => {
                       onchange="chColor(this, '${tid}')">
           `;
 
-          for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
+          for (let c of PRINT_COLORS) {
             let selected = decodeURIComponent(color) == c ? 'selected' : '';
             output += `
               <option value="${c}" ${selected}>${c}</option>

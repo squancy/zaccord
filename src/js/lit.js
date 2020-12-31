@@ -58,15 +58,7 @@ if (window.mobileCheck()) {
   window.addEventListener('DOMContentLoaded', (event) => {
     _('clickNote').style.display = 'block';
   });
-
-  // Remove old event listeners (mouseover, mouseleave) if user is on mobile
-  _('img_0').onmouseover = null;
-  _('img_0').onmouseleave = null;
-  _('img_0').addEventListener('click', () => {
-    let url = _('img_0').getAttribute('data-src');
-    toggleLit(state, url, 'can_0', 'img_0');
-    state = !state;
-  }); 
+  _('chargeNote').style.display = 'none';
 }
 
 // Fill in size <select> with dynamic sizes
@@ -123,13 +115,7 @@ img.onload = function() {
 // Update the price of the lithophane based on its dimensions
 function updateLit() {
   let firstCoord = _('size').value.split('x')[0].replace('mm', '');
-  if (firstCoord == '100') {
-    _('priceHolder').innerText = '3490';
-  } else if (firstCoord == '150') {
-    _('priceHolder').innerText = '4990';
-  } else {
-    _('priceHolder').innerText = '7990';
-  }
+  _('priceHolder').innerText = LIT_PRICES[firstCoord];
   _('sizeHolder').innerText = sizesObj[firstCoord];
 }
 

@@ -28,21 +28,20 @@ function calcP(price) {
 }
 
 // Change color of the stl model in the browser
-let colorMaps = {
-  'Fehér': '#ffffff',
-  'Fekete': '#000000',
-  'Kék': '#4285f4',
-  'Piros': '#dc143c',
-  'Arany': '#ffff33',
-  'Zöld': '#32cd32'
-};
+let colorMaps = {};
+
+for (let i = 0; i < PRINT_COLORS.length; i++) {
+  pcolor = PRINT_COLORS[i];
+  hcolor = HEX_ARR[i];
+  colorMaps[pcolor] = hcolor;
+}
 
 // When clicking on the color selector circles change the color of the model as well
 if (_('color') && _('stlCont_0')) {
   _('color').addEventListener('change', function changeColor(e) {
     let v = _('color').value;
-    chooseColor(colorMaps[v]);
-    fbq('track', 'CustomizeProduct');
+    chooseColor(colorMaps[v].toLowerCase());
+    if (typeof fbq !== 'undefined') fbq('track', 'CustomizeProduct');
   });
 }
 
@@ -98,7 +97,7 @@ function updateQtyUI() {
     _('minus').style.opacity = '0.4';
     _('minus').style.cursor = 'not-allowed';
   }
-  fbq('track', 'CustomizeProduct');
+  if (typeof fbq !== 'undefined') fbq('track', 'CustomizeProduct');
 }
 
 /*

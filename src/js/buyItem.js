@@ -376,6 +376,9 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                         
                         resolve('success');
                       });
+                    } else {
+                      // Packet point is being inserted asynchronously into the db
+                      resolve('success');
                     }
                   });
                 } else {

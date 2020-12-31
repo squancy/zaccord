@@ -38,6 +38,7 @@ const sendOpinion = require('./src/js/sendOpinion.js');
 const delCartFile = require('./src/js/delCartFile.js');
 const buildReferencePage = require('./src/js/referenceLogic.js');
 const buildRefImage = require('./src/js/buildRefImage.js');
+const sendPrototype = require('./src/js/sendPrototype.js');
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -63,7 +64,6 @@ const sendCompressedFile = helpers.sendCompressedFile;
 const constants = require('./src/js/includes/constants.js');
 const successReturn = constants.successReturn;
 const FILES_TO_CACHE = constants.filesToCache;
-console.log(FILES_TO_CACHE)
 
 // NOTE: change ADMIN constants if you want to use that feature
 // Admin URLs (marked with capital letters), password & username
@@ -127,6 +127,34 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({'status': 'success'}));
       });
     });
+  } else if (req.url === '/validatePrototype' && req.method === 'POST') {
+    // Perform server-side validation of user data
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      let responseData = {};
+
+      // Now validate form data
+      if (!formData.email || !formData.name || !formData.tel) {
+        errorFormResponse(res, 'Kérlek tölts ki minden mezőt');
+      } else if (!validateEmail.validate(formData.email)) {
+        errorFormResponse(res, 'Kérlek valós e-mailt adj meg');
+      } else {
+        sendPrototype(conn, formData, req).then(data => {
+          // Auto log in user after successful registration
+          responseData.success = 'Sikeres kapcsolatfelvétel';
+          res.writeHead(200, {'Content-Type': 'application/json'});
+          res.end(JSON.stringify(responseData));
+        }).catch(err => {
+          errorFormResponse(res, err);
+        });
+      }
+    });    
   } else if (req.url === '/validateRegister' && req.method === 'POST') {
     // Make sure user is not alreday logged in
     if (req.user.id) {
@@ -480,7 +508,7 @@ const server = http.createServer((req, res) => {
       let paramArr = [conn, formData, req, res, userSession];
       returnToClient(buyItem, paramArr, null, res, successReturn);
     });
-  } else if (req.url === '/ADMIN_LOGIN_URL' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/adminLogin' && req.method.toLowerCase() === 'post') {
     // Admin page
     let body = '';
     req.on('data', data => {
@@ -495,7 +523,7 @@ const server = http.createServer((req, res) => {
 
   // NOTE: change the following URL if you want to use this feature
   // It should match with the URL seen in admin.js
-  } else if (req.url === '/CONF_EMAIL_SEND' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/sendConfEmail' && req.method.toLowerCase() === 'post') {
     // Send an confirmation email to the customer if the package is ready
     let body = '';
     req.on('data', data => {
@@ -511,7 +539,7 @@ const server = http.createServer((req, res) => {
       
       returnToClient(sendConfEmail, [conn, uid, delType, glsCode], null, res, successReturn);
     });
-  } else if (req.url === '/ORDER_STATUS_UPDATE' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/updateOrderStatus' && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
     req.on('data', data => {
@@ -682,7 +710,7 @@ const server = http.createServer((req, res) => {
               console.log(err);
               pageCouldNotLoad(res, userID);
             });
-          } else if (req.url.substr(0, 14) === '/ADMIN_URL') {
+          } else if (req.url.substr(0, 14) === '/lick_weebshit') {
             // Admin page login authentication
             let q = url.parse(req.url, true); 
             let qdata = q.query;
@@ -690,7 +718,7 @@ const server = http.createServer((req, res) => {
             let pass = decodeURIComponent(qdata.pass);
 
             // Make sure username and password are correct
-            if (user != 'ADMIN_USERNAME' || pass != 'ADMIN_PASS') {
+            if (user != 'weebshit' || pass != 'HJ!RCY~KuK(xhX2-') {
               responseCache('text/html', res, true);
               res.end('hiba', 'utf8');
             }
@@ -759,21 +787,18 @@ const server = http.createServer((req, res) => {
           // Cache page for faster load
           // Also compress text-based resources
           let cacheType;
-          if (['text/javascript', 'text/css', 'text/html'].indexOf(contentType) > -1) {
-            console.log(filePath)
+          if (FILES_TO_CACHE.indexOf(filePath) > -1) {
+            // Cache constant files and resources
+            responseCache(contentType, res, true, 'public');
+            res.end(content, 'utf8');
+          } else if (['text/javascript', 'text/css', 'text/html'].indexOf(contentType) > -1) {
             let appendAsset = contentType == 'text/html';
             let cc = 'no-cache';
             if (FILES_TO_CACHE.indexOf(filePath) > -1) cc = 'public';
             sendCompressedFile(filePath, res, req, contentType, appendAsset, userID, cc);
           } else { 
-            if (FILES_TO_CACHE.indexOf(filePath) > -1) {
-              // Cache constant files and resources
-              cacheType = 'public';
-            } else {
-              // Otherwise, check resource in cache and if it's unchanged load if from there
-              cacheType = 'no-cache';
-            }
-            responseCache(contentType, res, true, cacheType);
+            // Check resource in cache and if it's unchanged load if from there
+            responseCache(contentType, res, true, 'no-cache');
             res.end(content, 'utf8');
           }
         }

@@ -3,6 +3,8 @@ const parseCookies = require('./parseCookies.js');
 const sizeOf = require('image-size');
 const compress = require('compression')
 const CombinedStream = require('combined-stream');
+const { Readable } = require('stream');
+const minify = require('minify');
 
 /*
   Common helper functions used in app.js
@@ -210,6 +212,7 @@ function litDimensions(path) {
   return [width, height];
 }
 
+// Compress .js, .css and .html files with gzip
 function sendCompressedFile(fname, response, request, contentType, append, userID, cacheType) {
   function next() {}
   compress({})(request, response, next);
@@ -223,6 +226,7 @@ function sendCompressedFile(fname, response, request, contentType, append, userI
   response.writeHead(200, {'Content-Type': contentType,
                            'Cache-control': 'max-age=31536000, ' + cacheType});
   if (append) {
+    // Append footer and header to html files
     let combinedStream = CombinedStream.create();
     combinedStream.append(fs.createReadStream(fname));
     combinedStream.append(fs.createReadStream(headerPath));
@@ -230,6 +234,8 @@ function sendCompressedFile(fname, response, request, contentType, append, userI
 
     combinedStream.pipe(response);
   } else {
+    // Minify .js and .css files before piping the stream -> turned out to be slower!!!
+    // minify(fname, {}).then(data => Readable.from([data]).pipe(response));
     fs.createReadStream(fname).pipe(response);
   }
 }

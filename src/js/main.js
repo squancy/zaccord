@@ -166,7 +166,7 @@ function changeNavTextColor() {
     _('bny').style.color = '#4285f4';
   } else if (ending == 'register' || ending == 'account') {
     _('register').style.color = '#4285f4';
-  } else if (ending == 'login') {
+  } else if (ending == 'prototype') {
     _('login').style.color = '#4285f4';
   }
 }
@@ -174,7 +174,7 @@ function changeNavTextColor() {
 // If user is on mobile change icon src
 function changeNavIcons() {
   let icons = document.querySelectorAll('.hideSeek > a > img');
-  let newIcons = ['cartBlue.svg', 'printerBlue.svg', 'accountBlue.svg', 'loginBlue.svg'];
+  let newIcons = ['cartBlue.svg', 'printerBlue.svg', 'protBlue.svg', 'loginBlue.svg'];
   let prefix = '/images/icons/';
   let url = window.location.href.split('/');
   let ending = url[url.length - 1];
@@ -182,7 +182,7 @@ function changeNavIcons() {
     icons[0].src = prefix + newIcons[0];
   } else if (ending == 'print') {
     icons[1].src = prefix + newIcons[1];
-  } else if (ending == 'register' || ending == 'account') {
+  } else if (ending == 'prototype') {
     icons[2].src = prefix + newIcons[2];
   } else if (ending == 'login') {
     icons[3].src = prefix + newIcons[3];
@@ -276,17 +276,6 @@ function redirect(url) {
 }
 
 _('moreMenu').addEventListener('click', toggleMoreMenu);
-
-if (window.matchMedia("(max-width: 923px)").matches) {
-  _('dynamicBtn').style.display = 'block';
-  if (_('register').innerText == 'Regisztráció') {
-    _('dynamicBtn').innerHTML = '<p class="gothamNormal">Bejelentkezés</p>';
-    _('dynamicBtn').addEventListener('click', (e) => redirect('/login'));
-  } else {
-    _('dynamicBtn').innerHTML = '<p class="gothamNormal">Kijelentkezés</p>';
-    _('dynamicBtn').addEventListener('click', (e) => redirect('/logout'));
-  }
-}
 
 let clinks = document.getElementsByClassName('contactLinks');
 for (let clink of clinks) {

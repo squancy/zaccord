@@ -80,6 +80,22 @@ input[type=number] {
   height: 25px;
 }
 
+.w33 {
+  width: 33.333%;
+}
+
+.w50 {
+  width: 50%;
+}
+
+#prot4 {
+  background-image: url('../images/prot4.jpg')
+}
+
+#prot5 {
+  background-image: url('../images/prot5.jpg')
+}
+
 .wideShowcase {
   width: 100%;
   position: relative;
@@ -87,6 +103,11 @@ input[type=number] {
   margin-top: 140px;
   max-height: 400px;
 }
+
+.protBg {
+  margin-top: 90px;
+}
+
 
 .liveCharCount {
   text-align: right;
@@ -101,6 +122,22 @@ input[type=number] {
 .delFile {
   opacity: 0.6;
   cursor: pointer;
+}
+
+.prots {
+  padding: 25px;
+}
+
+#prot1 {
+  background-image: url('../images/prot_1.jpg')
+}
+
+#prot2 {
+  background-image: url('../images/prot_2.jpeg')
+}
+
+#prot3 {
+  background-image: url('../images/prot_3.jpg')
 }
 
 .delFile:hover {
@@ -121,9 +158,12 @@ input[type=number] {
   padding: 10px;
 }
 
+.refImgHolder {
+  padding: 10px 20px 10px 20px;
+}
+
 .refImgHolder > img {
-  -webkit-box-shadow: 0 -7px 7px -10px rgba(0, 0, 0, 0.12), 0 7px 20px -8px rgba(0, 0, 0, 0.12);
-          box-shadow: 0 -7px 7px -10px rgba(0, 0, 0, 0.12), 0 7px 20px -8px rgba(0, 0, 0, 0.12);
+  box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
   width: 100%;
 }
 
@@ -217,7 +257,7 @@ input[type=number] {
   color: #171a20;
 }
 
-.darken {
+.darken, .darkenProt {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -225,6 +265,10 @@ input[type=number] {
   left: 0;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 30px;
+}
+
+.darkenProt {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .mainText {
@@ -285,6 +329,10 @@ input[type=number] {
   background-color: #e8e8e8;
   -webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.24);
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.24);
+}
+
+textarea {
+  -webkit-appearance: none;
 }
 
 input,
@@ -359,6 +407,11 @@ a {
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
   background-color: #4e4e4e;
   min-width: calc(33.333% - 6px);
+}
+
+.stlCont > div > canvas {
+  border-radius: 30px;
+  width: 100% !important;
 }
 
 header {
@@ -701,7 +754,7 @@ select:hover {
 
 .cpInfo > div {
   width: 50%;
-  padding: 10px;
+  padding: 25px;
 }
 
 .cpInfo > div > p:nth-child(2) {
@@ -979,6 +1032,7 @@ footer > div > div a:hover {
   font-family: 'Roboto', sans-serif;
   word-wrap: break-word;
   overflow-x: hidden;
+  padding-bottom: 20px;
 }
 
 .mainShowcase {
@@ -1562,6 +1616,10 @@ input, select {
   font-family: 'Gotham', 'Roboto', sans-serif;
 }
 
+.ffprot {
+  font-size: 28px;
+}
+
 .blueHead {
   color: #4285f4;
   font-size: 18px;
@@ -1581,7 +1639,6 @@ input, select {
 
 .formField, .dFormField, .bFormField {
   width: 100%;
-  width: 100%;
   padding: 15px;
   font-size: 16px;
   border-radius: 20px;
@@ -1598,6 +1655,7 @@ input, select {
      -moz-user-select: text;
       -ms-user-select: text;
           user-select: text;
+  resize: none;
 }
 
 .formField:focus, .dFormField:focus, .bFormField:focus {
@@ -1620,7 +1678,7 @@ input, select {
 
 #normalDiv {
   -ms-flex-pack: distribute;
-      justify-content: space-around;
+      justify-content: space-between;
 }
 
 .formContainer {
@@ -1655,13 +1713,16 @@ input, select {
   margin-bottom: 10px;
 }
 
-.oflow {
-  width: 90%;
+.oflow, .ofref {
   overflow: hidden;
   display: inline-block;
   -o-text-overflow: ellipsis;
      text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.oflow {
+  width: 90%;
 }
 
 /*
@@ -1673,7 +1734,7 @@ input, select {
     margin: 0 25px 0 25px;
   }
 
-  .bgShowcase, .darken {
+  .bgShowcase, .darken, .darkenProt {
     border-radius: 0;
   }
 
@@ -1681,9 +1742,17 @@ input, select {
     width: 98% !important;
     margin: 0 auto;
   }
+
+  .protBg {
+    margin-top: 60px;
+  }
 }
 
 @media only screen and (max-width: 923px) {
+  .w33 {
+    width: 50%;
+  }
+
   .itemContainer, header {
     height: 50px;
     -webkit-box-align: center;
@@ -1712,6 +1781,10 @@ input, select {
   .wideShowcase {
     margin-top: 110px;
     height: 33vh;
+  }
+
+  .protBg {
+    margin-top: 50px;
   }
 
   .styleHolder {
@@ -1909,6 +1982,10 @@ input, select {
     width: 100%;
   }
 
+  .w33, .w50 {
+    width: 100%;
+  }
+
   .column > div > img:hover {
     -webkit-filter: brightness(100%) !important;
   } 
@@ -1948,7 +2025,7 @@ input, select {
     display: none;
   }
 
-  .mainText, .mainTitle {
+  .mainText, .mainTitle, .ffprot {
     font-size: 24px;
   }
 
@@ -2064,6 +2141,10 @@ input, select {
     width: calc(50% - 5px);
   }
 
+  .protmob {
+    width: 100%;
+  }
+
   .cookieAccept p {
     margin-right: 0;
   }
@@ -2122,14 +2203,14 @@ input, select {
   -webkit-box-flex: 33.333%;
           flex: 33.333%;
   max-width: 33.333%;
-  padding: 0 5px;
+  padding: 0 20px;
 }
 
 .refDownload {
   position: absolute;
   width: 50px;
   height: 50px;
-  bottom: 50px;
+  bottom: 80px;
   left: calc(50% - 25px);
   border-radius: 50%;
   padding: 4px;
@@ -2147,6 +2228,11 @@ input, select {
 
 .refCont {
   position: relative;
+  margin-bottom: 40px;
+}
+
+.refCont > img {
+  box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
 }
 
 .column > div > img {

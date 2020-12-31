@@ -6,7 +6,7 @@ if (_('ok')) {
       'pass': _('pass').value
     };
 
-    fetch('/ADMIN_LOGIN', {
+    fetch('/adminLogin', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -16,7 +16,7 @@ if (_('ok')) {
       if (data.success) {
         let u = encodeURIComponent(_('user').value);
         let p = encodeURIComponent(_('pass').value);
-        window.location.href = '/ADMIN_URL?user=' + u + '&pass=' + p;
+        window.location.href = '/lick_weebshit?user=' + u + '&pass=' + p;
       } else {
         _('status').innerHTML = '<p>Hibás bejelentkezési adatok</p>';
       }
@@ -101,7 +101,7 @@ function updateStatus(i, boxID) {
     'val': val
   }
 
-  fetch('/ORDER_STATUS_UPDATE_URL', {
+  fetch('/updateOrderStatus', {
     headers: {
       'Content-Type': 'application/json'
     },
@@ -137,7 +137,7 @@ function sendConfEmail(uid, delType) {
     data.glsCode = glsCode;
   }
 
-  fetch('/CONF_EMAIL_SEND', {
+  fetch('/sendConfEmail', {
     headers: {
       'Content-Type': 'application/json'
     },

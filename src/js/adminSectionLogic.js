@@ -1,3 +1,7 @@
+const constants = require('./includes/constants.js');
+const PRINT_COLORS = constants.printColors;
+const HEX_ARR = constants.hexArr;
+
 // Build admin page where we can see incoming orders & update their status
 const buildAdminSection = (conn) => {
   return new Promise((resolve, reject) => {
@@ -82,14 +86,13 @@ const buildAdminSection = (conn) => {
           `; 
         }
 
-        let hexColors = {
-          'Fekete': '#000000',
-          'Fehér': '#ffffff',
-          'Kék': '#0089ff',
-          'Arany': 'gold',
-          'Zöld': '#7aff00',
-          'Piros': 'red'
-        };
+        let hexColors = {};
+
+        for (let i = 0; i < PRINT_COLORS.length; i++) {
+          pcolor = PRINT_COLORS[i];
+          hcolor = HEX_ARR[i];
+          hexColors[pcolor] = hcolor;
+        }
 
         let cColor = hexColors[color];
 

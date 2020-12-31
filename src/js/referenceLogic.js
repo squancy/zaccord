@@ -1,6 +1,7 @@
 const constants = require('./includes/constants.js');
 const NUM_OF_COLS = constants.numOfCols;
 const NUM_OF_IMGS = constants.numOfImgs;
+const REF_BG = constants.refBg;
 
 const buildReferencePage = (conn) => {
   return new Promise((resolve, reject) => {
@@ -27,21 +28,30 @@ const buildReferencePage = (conn) => {
         }
 
         for (let j = initial; j < upperLimit; j++) {
+          console.log(j);
           let id = result[j].id;
           let imgUrl = result[j].img_url;
           let title = result[j].title;
           let description = result[j].description;
+          let shortDesc = description.split('.')[0] + '.' + description.split('.')[1] + '.';
 
           content += `
             <div class="refCont">
-              <img src="/images/referenceImages/${imgUrl}" style="width: 100%;" class="trans"
-                onclick="window.location.href = '/refImage?id=${id}'">
+              <img data-src="/images/referenceImages/${imgUrl}"
+                style="width: 100%; height: 100%" class="trans lazy"
+                onclick="window.location.href = '/refImage?id=${id}'"
+                src="${REF_BG}"
+                >
               <a href="/images/referenceImages/${imgUrl}" download="${imgUrl}">
                 <div class="refDownload trans">
                   <img src="/images/icons/download.png">
                 </div>
               </a>
-              <p class="gotham align">${title}</p>
+              <p class="gotham align font18" style="margin-bottom: 5px;">${title}</p>
+              <p class="font14 ofref ddgray"
+                style="width: 90%; margin: 0 auto; display: block;">
+                ${shortDesc}
+              </p>
             </div>
           `;
           if (j == upperLimit - 1) initial = upperLimit;
@@ -52,6 +62,12 @@ const buildReferencePage = (conn) => {
       content += `
           </div>
         </section>
+        <script src="/js/includes/lazyLoad.js"></script>
+        <script type="text/javascript">
+          var lload = new LazyLoad({
+            elements_selector: ".lazy"
+          });
+        </script>
       `;
 
       resolve(content);

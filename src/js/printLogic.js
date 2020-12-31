@@ -3,12 +3,13 @@ const buildMainSection = (conn) => {
   return new Promise((resolve, reject) => {
     // Build file upload form
     let output = `
-      <section class="keepBottom flexDiv" id="cprintHolder">     
+      <section class="keepBottom flexDiv" id="cprintHolder" style="padding-bottom: 0px;">
         <div class="flexDiv styleHolder" style="border-radius: 30px; width: 100%;">
           <div class="cPrintDivs leftDiv flexDiv" id="dropDiv" ondrop="dropFile(event)">
             <form action="/uploadPrint" enctype="multipart/form-data" method="post" id="fdz"
               style="margin-bottom: 10px;">
-              <img src="/images/icons/ddupload.svg" width="90" style="margin: 0 auto;">
+              <img src="/images/icons/ddupload.svg" width="90" height="90"
+                style="margin: 0 auto;">
               <p class="gotham font24 dgray" style="margin-bottom: 15px;" id="dragdrop">
                 Húzd ide a fájlokat
               </p> 
@@ -47,7 +48,56 @@ const buildMainSection = (conn) => {
     `;
 
     output += `
-      <section class="keepBottom" style="margin-top: 80px;">
+      <section class="keepBottom" style="margin-top: 40px;">
+        <div id="cpFadeHolder" style="opacity: 0;">
+          <p class="gotham font26 align">Már megvan a 3D-s modell? Mi kinyomtatjuk neked!</p>
+          <p class="align font18 lh">
+            Csak egy STL fájlra van szükséged és azonnal meg is rendelheted a kívánt terméket.
+            A 3D nyomtatás kínálta lehetőségek közel végtelenek, így bármit kinyomtatunk neked
+            ami belefér egy 20cm x 20cm x 20cm nagyságú kockába.
+          </p>
+          <p class="align">
+            <a href="/printHelp" class="blueLink align">
+              További információ
+              <svg class="contSvg blue">
+                <svg>
+                  <path d="M9,1.5C4.8,1.5,1.5,4.8,1.5,9s3.3,7.5,7.5,7.5s7.5-3.3,7.5-7.5S13.2,1.5,9,1.5z M9,14.5l-1-1 l3.8-3.8H3.5V8.3h8.4L8.1,4.5L9,3.5L14.5,9L9,14.5z"></path>
+                </svg>
+              </svg>
+            </a>
+            <span class="orSep">vagy</span>
+            <a class="blueLink align jumpToPrint">
+              Ugrás a nyomtatáshoz
+              <svg class="contSvg blue">
+                <svg>
+                  <path d="M9,1.5C4.8,1.5,1.5,4.8,1.5,9s3.3,7.5,7.5,7.5s7.5-3.3,7.5-7.5S13.2,1.5,9,1.5z M9,14.5l-1-1 l3.8-3.8H3.5V8.3h8.4L8.1,4.5L9,3.5L14.5,9L9,14.5z"></path>
+                </svg>
+              </svg>
+            </a>
+          </p>
+          <div class="flexDiv cpInfo lh">
+            <div class="align">
+              <div class="cpInfoImg bgCommon" id="cpInfoImg1"></div>
+              <p class="gothamMedium">Tervezd meg a saját modelledet</p>
+              <p>
+                Bármilyen programmal megtervezheted a modellt, vagy ha nem szeretnél erre időt
+                áldozni, akkor látogass el a
+                <a href="https://www.thingiverse.com" class="blueLink font16">Thingiversre</a>
+                ahol rengeteg ingyenes modellt tölthetsz le.
+              </p>
+            </div>
+            <div class="align">
+              <div class="cpInfoImg bgCommon" id="cpInfoImg2"></div>
+              <p class="gothamMedium">Mi kinyomtatjuk neked</p>
+              <p>
+                Miután megvan az STL fájl már csak fel kell töltened a Zaccordra és már meg is
+                vásárolhatod a terméket. Nincs szükség kapcsolatfelvételre vagy árajánlatra, az
+                algoritmus mindent elvégez helyetted.
+              </p>
+            </div>
+          </div>
+        </div> 
+
         <div id="litFadeHolder">
           <p class="gotham font26 align" style="margin-top: 0;">
             Örökítsd meg legszebb képeidet 3D-ben!
@@ -100,54 +150,6 @@ const buildMainSection = (conn) => {
           </div>
         </div>
 
-        <div id="cpFadeHolder" style="opacity: 0;">
-          <p class="gotham font26 align">Már megvan a 3D-s modell? Mi kinyomtatjuk neked!</p>
-          <p class="align font18 lh">
-            Csak egy STL fájlra van szükséged és azonnal meg is rendelheted a kívánt terméket.
-            A 3D nyomtatás kínálta lehetőségek közel végtelenek, így bármit kinyomtatunk neked
-            ami belefér egy 20cm x 20cm x 20cm nagyságú kockába.
-          </p>
-          <p class="align">
-            <a href="/printHelp" class="blueLink align">
-              További információ
-              <svg class="contSvg blue">
-                <svg>
-                  <path d="M9,1.5C4.8,1.5,1.5,4.8,1.5,9s3.3,7.5,7.5,7.5s7.5-3.3,7.5-7.5S13.2,1.5,9,1.5z M9,14.5l-1-1 l3.8-3.8H3.5V8.3h8.4L8.1,4.5L9,3.5L14.5,9L9,14.5z"></path>
-                </svg>
-              </svg>
-            </a>
-            <span class="orSep">vagy</span>
-            <a class="blueLink align jumpToPrint">
-              Ugrás a nyomtatáshoz
-              <svg class="contSvg blue">
-                <svg>
-                  <path d="M9,1.5C4.8,1.5,1.5,4.8,1.5,9s3.3,7.5,7.5,7.5s7.5-3.3,7.5-7.5S13.2,1.5,9,1.5z M9,14.5l-1-1 l3.8-3.8H3.5V8.3h8.4L8.1,4.5L9,3.5L14.5,9L9,14.5z"></path>
-                </svg>
-              </svg>
-            </a>
-          </p>
-          <div class="flexDiv cpInfo lh">
-            <div class="align">
-              <div class="cpInfoImg bgCommon" id="cpInfoImg1"></div>
-              <p class="gothamMedium">Tervezd meg a saját modelledet</p>
-              <p>
-                Bármilyen programmal megtervezheted a modellt, vagy ha nem szeretnél erre időt
-                áldozni, akkor látogass el a
-                <a href="https://www.thingiverse.com" class="blueLink font16">Thingiversre</a>
-                ahol rengeteg ingyenes modellt tölthetsz le.
-              </p>
-            </div>
-            <div class="align">
-              <div class="cpInfoImg bgCommon" id="cpInfoImg2"></div>
-              <p class="gothamMedium">Mi kinyomtatjuk neked</p>
-              <p>
-                Miután megvan az STL fájl már csak fel kell töltened a Zaccordra és már meg is
-                vásárolhatod a terméket. Nincs szükség kapcsolatfelvételre vagy árajánlatra, az
-                algoritmus mindent elvégez helyetted.
-              </p>
-            </div>
-          </div>
-        </div> 
 
         <div id="fdmFadeHolder" style="opacity: 0;">
           <p class="gotham font26 align">FDM (szálhúzásos) technológia</p>
@@ -198,6 +200,13 @@ const buildMainSection = (conn) => {
             </div>
           </div>
         </div>
+        <p class="align lh">
+          Egyedi nyomtatás vagy prototípusgyártás esetén látogass el a
+          <a class="blueLink font16" href="/prototype">Prototípusgyártás</a> oldalra vagy
+          vedd fel velünk a kapcsolatot a
+          <a class="blueLink font16" href="mailto:info@zaccord.com">info@zaccord.com</a>
+          email címen keresztül.
+        <p>
       </section>
     `;
     resolve(output);

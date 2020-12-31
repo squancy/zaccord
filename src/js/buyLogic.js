@@ -98,67 +98,67 @@ const buildBuySection = (conn, paramObj, req) => {
     function buildItemOutput(isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas,
         quantity) {
       return new Promise((resolve, reject) => {
-          // Get the product with that id from database & validate parameters
-          let cQuery = 'SELECT * FROM fix_products WHERE id = ? LIMIT 1'; 
-          conn.query(cQuery, [product], (err, result, field) => {
-              if (err) {
-              reject('Egy nem várt hiba történt, kérlek próbáld újra');
-              return;
-              }
+        // Get the product with that id from database & validate parameters
+        let cQuery = 'SELECT * FROM fix_products WHERE id = ? LIMIT 1'; 
+        conn.query(cQuery, [product], (err, result, field) => {
+          if (err) {
+            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+            return;
+          }
 
-              // Product does not exist
-              if (result.length < 1) {
-              reject('Nincs ilyen termék');
-              return;
-              }
+          // Product does not exist
+          if (result.length < 1) {
+            reject('Nincs ilyen termék');
+            return;
+          }
 
-              // Product exists, now validate params
-              if (!validateParams(paramObj)) {
-              reject('Hibás paraméter érték');
-              return;
-              }
+          // Product exists, now validate params
+          if (!validateParams(paramObj)) {
+            reject('Hibás paraméter érték');
+            return;
+          }
 
-              let prodURL = result[0]['url'];
-              let itemID = result[0]['id'];
-              let imgURL = result[0]['img_url'];
-              let price = result[0]['price'];
-              let name = result[0]['name'];
+          let prodURL = result[0]['url'];
+          let itemID = result[0]['id'];
+          let imgURL = result[0]['img_url'];
+          let price = result[0]['price'];
+          let name = result[0]['name'];
 
-              let data = {
-                'orderID': orderID,
-                'itemID': itemID,
-                'prodURL': prodURL,
-                'imgURL': imgURL,
-                'price': calcPrice(price, rvas, suruseg, scale, fvas),
-                'name': name,
-                'rvas': rvas,
-                'suruseg': suruseg,
-                'scale': scale,
-                'color': color,
-                'fvas': fvas,
-                'quantity': quantity,
-                'fixProduct': true
-              };
+          let data = {
+            'orderID': orderID,
+            'itemID': itemID,
+            'prodURL': prodURL,
+            'imgURL': imgURL,
+            'price': calcPrice(price, rvas, suruseg, scale, fvas),
+            'name': name,
+            'rvas': rvas,
+            'suruseg': suruseg,
+            'scale': scale,
+            'color': color,
+            'fvas': fvas,
+            'quantity': quantity,
+            'fixProduct': true
+          };
 
-              // Calculate shipping price & final price
-              let total = data.price * quantity;
-              let discount, discountText, shippingPrice, shippingText;
-              [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
+          // Calculate shipping price & final price
+          let total = data.price * quantity;
+          let discount, discountText, shippingPrice, shippingText;
+          [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
 
-              let finalPrice = data.price * quantity * discount;
-              if (isCrt) {
-                finalPrice *= 1 / discount
-              }
+          let finalPrice = data.price * quantity * discount;
+          if (isCrt) {
+            finalPrice *= 1 / discount
+          }
 
-              // Generate html output
-              let output = genItem(false, false, false, data);
+          // Generate html output
+          let output = genItem(false, false, false, data);
 
-              if (!isCrt) {
-                resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
-              } else {
-                resolve([output, data, finalPrice]);
-              }
-          });
+          if (!isCrt) {
+            resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
+          } else {
+            resolve([output, data, finalPrice]);
+          }
+        });
       });
     }
 
@@ -173,9 +173,9 @@ const buildBuySection = (conn, paramObj, req) => {
 
           // Validate files
           if (!isFromCrt) {
-          var files = paramObj.files.split(',');
+            var files = paramObj.files.split(',');
           } else {
-          var files = [fname];
+            var files = [fname];
           }
           let finalPrice = 0;
           let output = '';
@@ -210,13 +210,13 @@ const buildBuySection = (conn, paramObj, req) => {
           thPath = (thPath[thPath.length - 3] + '/' + thPath[thPath.length - 2] + '/' +
               thPath[thPath.length - 1]); 
 
-          let pName = 'Bérnyomtatás Termék #' + (i + 1);
-          if (isFromCrt) pName = 'Bérnyomtatás Termék';
+          let pName = 'Bérnyomtatott Termék #' + (i + 1);
+          if (isFromCrt) pName = 'Bérnyomtatott Termék';
 
           var data = {
             'orderID': orderID,
             'itemID': file,
-            'prodURL': '#',
+            'prodURL': 'uploadPrint?file=' + file,
             'imgURL': thPath,
             'price': price,
             'name': pName,
@@ -261,7 +261,7 @@ const buildBuySection = (conn, paramObj, req) => {
 
           let data = {
             'orderID': orderID,
-            'prodURL': prodURL,
+            'prodURL': 'uploadPrint?image=' + file.replace(/.png|.jpg|.jpeg/, ''),
             'imgURL': imgURL,
             'price': price,
             'name': name,
@@ -295,7 +295,7 @@ const buildBuySection = (conn, paramObj, req) => {
             <div class="lh sel">
             A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
             terméket/termékeket.<br>
-            Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
+            Szállítási költség: 15000Ft alatt ${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
             <input type="radio" name="radio2" id="toAddr">
             <span class="checkmark"></span>
@@ -306,7 +306,7 @@ const buildBuySection = (conn, paramObj, req) => {
             <div class="lh sel">
             A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
             csomagot ami ezután lesz átvehető.<br>
-            Szállítási költség: 15000Ft alatt +${SHIPPING_PRICE} Ft, felette ingyenes.
+            Szállítási költség: 15000Ft alatt ${SHIPPING_PRICE} Ft, felette ingyenes.
             </div>
             <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
             <input type="radio" name="radio2" id="packetPoint">
@@ -568,7 +568,7 @@ const buildBuySection = (conn, paramObj, req) => {
       let isfcp = false;
       for (let key of Object.keys(cartItems).filter(el => el[0] != 'i')) {
         let currentItem = cartItems[key];
-        let id = key.replace('content_', '');
+        var id = key.replace('content_', '');
         let itemID = Number(id.split('_')[1]);
 
         if (currentItem['sphere_' + id]) {

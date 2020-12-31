@@ -1,11 +1,9 @@
+const constants = require('./constants.js');
+const LIT_PRICES = constants.litPrices;
+
 function calcLitPrice(size) {
   let firstCoord = size.split('x')[0].replace('mm', '');
-  let sizesObj = {
-    '100': 3490,
-    '150': 4990,
-    '200': 7990
-  };
-  return sizesObj[firstCoord];
+  return LIT_PRICES[firstCoord];
 }
 
 module.exports = calcLitPrice;

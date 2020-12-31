@@ -1,3 +1,5 @@
+// Use constant values from js/includes/constants.js
+
 if (_('priceHolder')) {
   var basePrice = Number(_('priceHolder').innerHTML);
 }
@@ -9,12 +11,7 @@ function displayErrorMsg(msg) {
 
 function calcLitPrice(size) {
   let firstCoord = size.split('x')[0].replace('mm', '');
-  let sizesObj = {
-    '100': 3490,
-    '150': 4990,
-    '200': 7990
-  };
-  return sizesObj[firstCoord];
+  return LIT_PRICES[firstCoord];
 }
 
 // Add item to cart
@@ -30,39 +27,21 @@ function addToCart(id) {
   let fvas = Number(_('fvas').value);
   let quantity = Number(_('quantity').value); 
 
-  // Make sure all parameters have a valid value
-  let surusegValues = [10];
-  let quantityValues = [];
-  let colorValues = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Arany', 'Piros'];
-  for (let i = 20; i <= 80; i += 20) {
-    surusegValues.push(i);
-  }
-
-  let scaleValues = [2];
-  for (let i = 0.7; i <= 1.3; i += 0.3) {
-    scaleValues.push(Number(i.toFixed(2)));
-  }
-
-  let fvasValues = [];
-  for (let i = 0.8; i <= 2.4; i += 0.4) {
-    fvasValues.push(Number(i.toFixed(2)));
-  }
-
   // Validation on client-side
   _('status').innerHTML = '';
-  if ([0.12, 0.2, 0.28].indexOf(rvas) < 0) {
+  if (LAYER_WIDTH_VALUES.indexOf(rvas) < 0) {
     displayErrorMsg('A rétegvastagság értéke nem megfelelő');
     return;
-  } else if (surusegValues.indexOf(suruseg) < 0) {
+  } else if (INFILL_VALUES.indexOf(suruseg) < 0) {
     displayErrorMsg('A sűrűség értéke nem megfelelő');
     return 
-  } else if (colorValues.indexOf(color) < 0) {
+  } else if (PRINT_COLORS.indexOf(color) < 0) {
     displayErrorMsg('A szín értéke nem megfelelő');
     return 
-  } else if (scaleValues.indexOf(scale) < 0) {
+  } else if (SCALE_VALUES.indexOf(scale) < 0) {
     displayErrorMsg('A méretezés értéke nem megfelelő');
     return 
-  } else if (fvasValues.indexOf(fvas) < 0) {
+  } else if (WALL_WIDTH_VALUES.indexOf(fvas) < 0) {
     displayErrorMsg('A falvastagság értéke nem megfelelő');
     return 
   } else if (quantity % 1 !== 0 || quantity < 1 || quantity > 10) {

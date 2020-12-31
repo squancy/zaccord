@@ -1,3 +1,6 @@
+const constants = require('./constants.js');
+const PRINT_COLORS = constants.printColors;
+
 // Generate a form where the user can change the item's parameters
 function genSpecs(price, size, isLit = false) {
   if (!isLit) {
@@ -36,7 +39,7 @@ function genSpecs(price, size, isLit = false) {
               <select class="specSelect" id="color">
     `;
     
-    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
+    for (let c of PRINT_COLORS) {
       let selected = c == 'Fehér' ? 'selected' : '';
       output += `
         <option value="${c}" ${selected}>${c}</option>
@@ -108,7 +111,7 @@ function genSpecs(price, size, isLit = false) {
               <select class="specSelect" id="color">
     `;
 
-    for (let c of ['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany']) {
+    for (let c of PRINT_COLORS) {
       let selected = c == 'Fehér' ? 'selected' : '';
       output += `
         <option value="${c}" ${selected}>${c}</option>

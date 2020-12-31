@@ -377,7 +377,7 @@ function showMap(e) {
 
   _('overlay').style.opacity = '1';
   _('overlay').style.height = document.body.scrollHeight + "px";
-  _('glsBigBox').style.height = '50vh';
+  _('glsBigBox').style.height = '80vh';
   _('glsBigBox').style.opacity = '1';
   if (width > 768) {
     _('glsBigBox').style.width = Math.round(width * 0.7) + 'px';

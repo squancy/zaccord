@@ -1,13 +1,17 @@
 const sizeOf = require('image-size');
 const fs = require('fs');
+const constants = require('./constants.js');
+const PRINT_COLORS = constants.printColors;
+const LIT_FORMS = constants.litForms;
 
 function validateLitParams(paramObj) {
+  console.log(paramObj);
   // Validate color
-  if (['Fekete', 'Fehér', 'Kék', 'Piros', 'Zöld', 'Arany'].indexOf(paramObj.color) < 0) {
+  if (PRINT_COLORS.indexOf(paramObj.color) < 0) {
     return false;
 
   // Validate sphere
-  } else if (['Domború', 'Homorú', 'Sima'].indexOf(paramObj.sphere) < 0) {
+  } else if (LIT_FORMS.indexOf(paramObj.sphere) < 0) {
     return false;
   }
 
@@ -22,7 +26,6 @@ function validateLitParams(paramObj) {
     return false;
 
   // Validate quantity
-  console.log(paramObj.q);
   } else if (paramObj.q < 1 || paramObj.q > 10) {
     return false;
 

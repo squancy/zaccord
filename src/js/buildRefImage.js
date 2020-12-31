@@ -1,3 +1,6 @@
+const constants = require('./includes/constants.js');
+const REF_BG = constants.refBg;
+
 const buildRefImage = (conn, id) => {
   return new Promise((resolve, reject) => {
     // First make sure a reference image with such an id exists in db
@@ -24,7 +27,8 @@ const buildRefImage = (conn, id) => {
       let content = `
         <section class="keepBottom">
           <div class="refImgHolder"> 
-            <img src="/images/referenceImages/${imgUrl}" class="brad">
+            <img data-src="/images/referenceImages/${imgUrl}"
+              src="${REF_BG}" class="brad lazy">
           </div>
           <div class="refInfoHolder">
             <p class="prodName refName">${title}</p>
@@ -45,6 +49,12 @@ const buildRefImage = (conn, id) => {
             </p>
           </div>
         </section>
+        <script src="/js/includes/lazyLoad.js"></script>
+        <script type="text/javascript">
+          var lload = new LazyLoad({
+            elements_selector: ".lazy"
+          });
+        </script>
       `; 
       resolve(content);
     });

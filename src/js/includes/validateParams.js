@@ -1,16 +1,26 @@
+const constants = require('./constants.js');
+const PRINT_COLORS = [...constants.printColors]; // create a copy because it's later altered
+const LAYER_WIDTH_VALUES = constants.layerWidthValues;
+const INFILL_VALUES = constants.infillValues;
+const SCALE_VALUES = constants.scaleValues;
+const WALL_WIDTH_VALUES = constants.wallWidthValues;
+
+for (let i = 0; i < PRINT_COLORS.length; i++) {
+  PRINT_COLORS[i] = PRINT_COLORS[i].toLowerCase();
+}
+
 // Validate customization parameters
 function validateParams(obj) {
-  let colorArr = ['fekete', 'fehér', 'kék', 'arany', 'zöld', 'piros'];
   for (let k of Object.keys(obj)) {
-    if (k === 'rvas' && [0.12, 0.2, 0.28].indexOf(Number(obj[k])) < 0) {
+    if (k === 'rvas' && LAYER_WIDTH_VALUES.indexOf(Number(obj[k])) < 0) {
       return false;
-    } else if (k === 'suruseg' && [10, 20, 40, 60, 80].indexOf(Number(obj[k])) < 0) {
+    } else if (k === 'suruseg' && INFILL_VALUES.indexOf(Number(obj[k])) < 0) {
       return false;
-    } else if (k === 'color' && colorArr.indexOf(obj[k].toLowerCase()) < 0) {
+    } else if (k === 'color' && PRINT_COLORS.indexOf(obj[k].toLowerCase()) < 0) {
       return false;
-    } else if (k === 'scale' && [0.7, 1.0, 1.3].indexOf(Number(obj[k])) < 0) {
+    } else if (k === 'scale' && SCALE_VALUES.indexOf(Number(obj[k])) < 0) {
       return false;
-    } else if (k === 'fvas' && [0.8, 1.2, 1.6, 2, 2.4].indexOf(Number(obj[k])) < 0) {
+    } else if (k === 'fvas' && WALL_WIDTH_VALUES.indexOf(Number(obj[k])) < 0) {
       return false;
     } else if ((k === 'q' || k === 'quantity') &&
       (obj[k] % 1 !== 0 || obj[k] < 1 || obj[k] > 10)) {

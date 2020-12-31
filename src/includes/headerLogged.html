@@ -36,6 +36,18 @@
 
     <div>
       <p class="hideText">
+        <a href="/prototype" id="login">Prototípusgyártás</a>
+      </p> 
+      <p class="hideSeek">
+        <a href="/prototype">
+          <img src="/images/icons/protBlack.svg" width="25" height="25">
+        </a>
+      </p>
+      <div class="hoverNavbar animate__animated" id="login_anim"></div>
+    </div>
+
+    <div id="loginMenuBtn">
+      <p class="hideText">
         <a href="/account" id="register">Fiók</a>
       </p> 
       <p class="hideSeek">
@@ -44,18 +56,6 @@
         </a>
       </p>  
       <div class="hoverNavbar animate__animated" id="register_anim"></div>
-    </div>
-
-    <div id="loginMenuBtn">
-      <p class="hideText">
-        <a href="/logout" id="login">Kijelentkezés</a>
-      </p> 
-      <p class="hideSeek">
-        <a href="/logout">
-          <img src="/images/icons/login.svg">
-        </a>
-      </p>
-      <div class="hoverNavbar animate__animated" id="login_anim"></div>
     </div>
 
     <div id="mmHolder">
@@ -75,6 +75,9 @@
 
   <div class="mainMenuCont">
     <div id="dynamicBtn" class="trans" style="display: none;"></div>
+    <div class="trans" onclick="redirect('/logout')">
+      <p class="gothamNormal">Kijelentkezés</p>
+    </div>
     <div class="trans" onclick="redirect('/printHelp')">
       <p class="gothamNormal">Segítség Bérnyomtatáshoz</p>
     </div>
@@ -120,5 +123,5 @@
 
 <noscript>
   <img height="1" width="1"
-    src="https://www.facebook.com/tr?id=378598896627941&ev=PageView&noscript=1" />
+    src="https://www.facebook.com/tr?id=405507547313452&ev=PageView&noscript=1" />
 </noscript>

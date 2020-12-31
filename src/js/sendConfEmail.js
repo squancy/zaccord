@@ -38,7 +38,7 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
 
               // Make sure there is a non-empty email field
               if (result[0].nl_email) resolve(result[0].nl_email);
-              else reject('invalid email');
+              else reject('unvalid email');
             });
           });
         } else {
