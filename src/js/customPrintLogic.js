@@ -26,12 +26,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     let totVolume = 0;
     let stlContainers = '';
     let totPrintTime = 0;
-
+    
     let stlWidth = '';
     if (filePaths.length === 1) {
-      stlWidth = 'style="min-width: 100%"';
+      stlWidth = 'style="min-width: 100%;"';
     } else if (filePaths.length === 2) {
-      stlWidth = 'style="min-width: calc(50% - 6px)"';
+      stlWidth = 'style="min-width: calc(50% - 6px);"';
+    } else {
+      stlWidth = 'style="min-width: calc(33% - 6px);"';
     }
     
     /*
@@ -134,13 +136,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         </div>
         <div id="colorPicker" class="flexDiv animate__animated animate__fadeIn"
           style="display: none;">
-          <div class="colorPick" onclick="chooseColor('#4285f4', 0, true)"
+          <div class="colorPick" onclick="chooseColor('#0089ff', 0, true)"
             style="background-color: #4285f4;">
           </div>
           <div class="colorPick" onclick="chooseColor('#ffffff', 1, true)"
             style="background-color: #ffffff;">
           </div>
-          <div class="colorPick" onclick="chooseColor('#dc143c', 2, true)"
+          <div class="colorPick" onclick="chooseColor('#ff0000', 2, true)"
             style="background-color: #dc143c;">
           </div>
           <div class="colorPick bgCommon" onclick="chooseDisplay('flat', 3)"
@@ -326,6 +328,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           let id = getID();
           let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
           chooseColor(colorMaps[colorVal]);
+          console.log('a', colorMaps[colorVal])
           if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
         }
 
@@ -343,8 +346,8 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
           let hexToName = {
             '#ffffff': 'Fehér',
-            '#dc143c': 'Piros',
-            '#4285f4': 'Kék'
+            '#ff0000': 'Piros',
+            '#0089ff': 'Kék'
           };
 
           if (isRev) {
@@ -353,9 +356,9 @@ const buildCustomPrint = (conn, userID, filePaths) => {
             updateCookie('color');
           } else {
             let hexToNum = {
-              '#4285f4': 0,
+              '#0089ff': 0,
               '#ffffff': 1,
-              '#dc143c': 2
+              '#ff0000': 2
             };
             highlightBtn(hexToNum[color]);
           }
@@ -364,6 +367,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         function highlightBtn(id) {
           let btns = document.getElementsByClassName('colorPick');
           for (let i = 0; i < btns.length; i++) {
+            console.log(i, id)
             if (i === id) {
               btns[i].style.border = '2px solid #4285F4';
             } else {
