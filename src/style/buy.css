@@ -76,6 +76,6 @@
   }
 
   .visa {
-    left: calc(50% - 130px);
+    right: calc(50% - 130px);
   }
 }
