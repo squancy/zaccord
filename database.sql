@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.5
+-- version 4.9.2
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Jan 02, 2021 at 12:22 AM
--- Server version: 10.3.27-MariaDB-log
--- PHP Version: 7.3.6
+-- Host: localhost
+-- Generation Time: Feb 28, 2021 at 01:15 AM
+-- Server version: 10.4.11-MariaDB
+-- PHP Version: 7.2.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -19,7 +19,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `zaccordc_3d`
+-- Database: `3d`
 --
 
 -- --------------------------------------------------------
@@ -208,6 +208,7 @@ CREATE TABLE `orders` (
   `suruseg` enum('10','20','40','60','80') COLLATE utf8mb4_bin DEFAULT NULL,
   `scale` enum('0.7','1','1.3','1.0') COLLATE utf8mb4_bin DEFAULT NULL,
   `color` enum('Fekete','Fehér','Kék','Piros','Zöld','Arany','Sárga','Zölden Foszforeszkáló') COLLATE utf8mb4_bin NOT NULL,
+  `printMat` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `fvas` enum('0.8','1.2','1.6','2.0','2.4','2') COLLATE utf8mb4_bin DEFAULT NULL,
   `lit_sphere` enum('Domború','Homorú','Sima','') COLLATE utf8mb4_bin DEFAULT NULL,
   `lit_size` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
@@ -215,6 +216,7 @@ CREATE TABLE `orders` (
   `quantity` int(11) NOT NULL,
   `is_transfer` tinyint(1) NOT NULL,
   `transfer_id` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `transaction_id` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `is_fix_prod` tinyint(1) NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 0,
   `shipping_price` int(11) NOT NULL,
@@ -254,6 +256,8 @@ CREATE TABLE `packet_points` (
   `lon` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
 --
 -- Table structure for table `prototype`
 --
@@ -266,8 +270,6 @@ CREATE TABLE `prototype` (
   `message` text DEFAULT NULL,
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `reference_images`
@@ -315,15 +317,6 @@ CREATE TABLE `users` (
   `ip_addr` varchar(255) COLLATE utf8mb4_bin NOT NULL,
   `register_time` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
--- --------------------------------------------------------
-
---
--- Structure for view `a`
---
-DROP TABLE IF EXISTS `a`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`zaccordc`@`localhost` SQL SECURITY DEFINER VIEW `a`  AS  select `reference_images`.`id` AS `id`,`reference_images`.`img_url` AS `img_url`,`reference_images`.`title` AS `title`,`reference_images`.`description` AS `description`,`reference_images`.`rvas` AS `rvas`,`reference_images`.`fvas` AS `fvas`,`reference_images`.`infill` AS `infill`,`reference_images`.`size` AS `size`,`reference_images`.`date_added` AS `date_added` from `reference_images` ;
 
 --
 -- Indexes for dumped tables
@@ -385,7 +378,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `delivery_data`
 --
 ALTER TABLE `delivery_data`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -403,19 +396,19 @@ ALTER TABLE `fix_products`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=182;
 
 --
 -- AUTO_INCREMENT for table `packet_points`
 --
 ALTER TABLE `packet_points`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `prototype`
 --
 ALTER TABLE `prototype`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `reference_images`
@@ -427,7 +420,7 @@ ALTER TABLE `reference_images`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
