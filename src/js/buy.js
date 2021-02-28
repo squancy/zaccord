@@ -411,6 +411,7 @@ function showMap(e) {
   _('overlay').style.opacity = '1';
   _('overlay').style.height = document.body.scrollHeight + "px";
   _('glsBigBox').style.opacity = '1';
+  _('exitBtn').setAttribute('onclick', 'exitCont("glsBigBox")');
 
   resizeGlsBox();
   
