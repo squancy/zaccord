@@ -1,0 +1,101 @@
+#psitems-canvas {
+  overflow: auto;
+  width: 30%;
+  height: calc(100% - 40px);
+  width: 100%;
+  line-height: 1.4;
+}
+
+#psitems-canvas > div:nth-child(3n + 1) {
+  background-color: #f4f4f4;
+  color: #545454;
+  border-radius: 30px;
+  margin-top: 10px;
+  padding: 15px !important;
+  font-size: 14px;
+  transition: 0.2s all ease-in-out;
+}
+
+#psitems-canvas > div:nth-child(3n + 1):hover {
+  color: #151515;
+  background-color: #e8e8e8;
+}
+
+#psitems-canvas > div:nth-child(3n) {
+  display: none !important;
+}
+
+#psitems-canvas > div:last-child {
+  display: none;
+}
+
+hr {
+  display: none;
+}
+
+#glsBigBox {
+  width: 90%;
+  height: 80vh;
+  border: 2px solid #4285f4;
+  border-radius: 30px;
+  background-color: white;
+  max-width: 1000px;
+  position: fixed;
+  top: 55px;
+  opacity: 0;
+  height: 0;
+  z-index: 5;
+}
+
+#left-canvas {
+  font-family: 'Roboto', sans-serif;
+	font-size: 12px;
+  overflow: hidden;        
+  float: left;
+  width: 40%;
+  height: 100%;
+  padding: 20px;
+}
+
+#right-canvas { 
+  float: right;
+  width: 60%;
+  height: 100%;
+}
+
+#map-canvas { 
+  width: 100%;
+  height: 100%;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
+
+.psOver {
+  background-color: infobackground;
+}
+
+.psSelected {
+  color: #4285f4 !important;
+  background-color: #e8e8e8 !important;
+}
+
+.exitBtn {
+  top: 20px;
+  right: 20px;
+  opacity: 1;
+}
+
+@media only screen and (max-width: 500px) {
+  #left-canvas, #right-canvas {
+    width: 100%;
+    float: none;
+    height: 50%;
+  }
+
+  #map-canvas {
+    border-radius: 0;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+  }
+}

@@ -1,0 +1,143 @@
+.inputBlock {
+  position: relative;
+  margin-top: 40px;
+  font-family: 'Roboto';
+  display: block;
+  background: #FFF;
+}
+
+.input {
+  font-size: 15px;
+  padding: 0 0 6px;
+  display: block;
+  width: 100%;
+  height: auto;
+  border: none;
+  box-sizing: border-box;
+  resize: none
+}
+
+.input:focus {
+  outline: none;
+}
+
+/* LABEL */
+
+label {
+  color: #777 !important;
+  font-size: 15px;
+  font-weight: normal;
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  transition: 0.2s ease all;
+  -moz-transition: 0.2s ease all;
+  -webkit-transition: 0.2s ease all;
+}
+
+
+/* active state */
+
+.input:focus~label,
+.input:not(:empty)~label {
+  top: -15px;
+  font-size: 11px;
+  color: #4285f4 !important;
+}
+
+
+/* BOTTOM BARS */
+
+.bar {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.bar:before,
+.bar:after {
+  content: '';
+  height: 2px;
+  width: 0;
+  bottom: 1px;
+  position: absolute;
+  background: #4285f4;
+  transition: 0.2s ease all;
+  -moz-transition: 0.2s ease all;
+  -webkit-transition: 0.2s ease all;
+}
+
+.bar:before {
+  left: 50%;
+}
+
+.bar:after {
+  right: 50%;
+}
+
+
+/* active state */
+
+.input:focus~.bar:before,
+.input:focus~.bar:after {
+  width: 50%;
+}
+
+
+/* HIGHLIGHTER */
+
+.highlight {
+  position: absolute;
+  height: 73%;
+  width: 100%;
+  top: 25%;
+  left: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  border-bottom: 1px solid #777;
+}
+
+
+/* active state */
+
+.input:focus~.highlight {
+  -webkit-animation: inputHighlighter 0.3s ease;
+  -moz-animation: inputHighlighter 0.3s ease;
+  animation: inputHighlighter 0.3s ease;
+  border: none;
+}
+
+
+/* ANIMATIONS */
+
+@-webkit-keyframes inputHighlighter {
+  from {
+    background: #5264AE;
+  }
+  to {
+    width: 0;
+    background: transparent;
+  }
+}
+
+@-moz-keyframes inputHighlighter {
+  from {
+    background: #5264AE;
+  }
+  to {
+    width: 0;
+    background: transparent;
+  }
+}
+
+@keyframes inputHighlighter {
+  from {
+    background: #5264AE;
+  }
+  to {
+    width: 0;
+    background: transparent;
+  }
+}
+
+[class='input textarea'] height: auto !important color: #000000 !important font-size: 15px !important div color: #000000 !important font-size: 15px !important~.highlight height: 77% !important

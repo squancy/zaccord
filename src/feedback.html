@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <title>Zaccord - Visszajelzés</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
+    <link rel="stylesheet" href="/style/textarea.css">
+    <meta name="description" content="Számít a véleményed! Az őszinte kritikát szívesen
+      fogadjuk.">
+    <meta name="keywords" content="Zaccord, vélemény, feedback">
+    <meta name="author" content="Mark Frankli">
+    <script src="/js/includes/mobileCheck.js" async></script>
+    <script src="/js/includes/short.js" defer></script>
+    <script src="/js/includes/year.js" defer></script>
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/includes/registerSW.js"></script>
+    <script src="/js/includes/cookie.js" defer></script>
+    <script src="/js/charCount.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="/images/icons/logo.svg">
+    <link rel="shortcut icon" href="/images/icons/logo.svg" type="image/x-icon">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="Zaccord">
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+  <body> 
+    <section class="keepBottom">
+      <p class="mainTitle">Számít a véleményed!</p>
+      <p class="lh align">
+        Szeretnénk, ha a Zaccord egy olyan szolgáltatás lenne, amit minden felhasználó szívesen
+        használ, ezért nagy hangsúlyt fektetünk a vásárlók véleményeire és visszajelzéseire.
+        Írd le őszinte véleményed arról, hogy mit látnál szívesen a Zaccordon és hogy szerinted
+        mivel lehetne egy olyan oldalt építeni amit mindenki örömmel használ. 
+      </p>
+
+      <div class="inputBlock" id="opinionBox">
+        <div contentEditable class="input" id="opContent" required></div>
+        <span class="highlight" id="hl"></span>
+        <span class="bar" id="br"></span>
+        <label id="title">Írd le mit gondolsz...</label>
+      </div>
+
+      <div class="liveCharCount gotham">
+        <span id="liveCount">0</span>/1000
+      </div>
+      
+      <button class="fillBtn btnCommon centerSingleBtn" id="sendOpinion">Elküldöm</button>
+
+      <div id="status" class="errorBox"></div>
+      <div id="succBox" class="successBox"></div>
+    </section>
+  </body>
+</html>

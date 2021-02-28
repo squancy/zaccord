@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" version="1.1" width="512" height="512" x="0" y="0" viewBox="0 0 510.641 510.641" style="enable-background:new 0 0 512 512" xml:space="preserve" class="">
+  <g>
+    <g xmlns="http://www.w3.org/2000/svg">
+      <path d="m255.32 34.641 66.503 38.395 15-25.98-81.503-47.056-81.502 47.056 15 25.98z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m64.206 144.98 66.503-38.395-15-25.981-81.503 47.056v94.111h30z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m64.206 288.87h-30v94.11l81.503 47.056 15-25.98-66.503-38.396z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m255.32 476-66.502-38.396-15 25.981 81.502 47.056 81.503-47.056-15-25.981z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m446.434 365.66-66.502 38.396 15 25.98 81.502-47.056v-94.11h-30z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m394.932 80.604-15 25.981 66.502 38.395v76.791h30v-94.111z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m416.401 348.32v-168.679l-146.081 84.339v168.68z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m109.239 153.66 146.081 84.34 146.081-84.34-146.081-84.34z" fill="#4285f4" data-original="#000000" style="" class=""/>
+      <path d="m94.24 348.32 146.08 84.34v-168.68l-146.08-84.339z" fill="#4285f4" data-original="#000000" style="" class=""/>
+    </g>
+  </g>
+</svg>

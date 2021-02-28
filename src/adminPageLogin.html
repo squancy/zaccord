@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <title>Zaccord - Admin Felület</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
+    <script src="/js/includes/short.js" defer></script>
+    <script src="/js/admin.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/includes/mobileCheck.js" defer></script>
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
+    <script src="/js/includes/cookie.js" defer></script>
+
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="Zaccord">
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/x-icon" href="/images/icons/logo.svg">
+    <link rel="shortcut icon" href="/images/icons/logo.svg" type="image/x-icon">
+  </head>
+  <body> 
+    <section class="keepBottom">
+      <p class="mainTitle">Zaccord admin felület</p>
+      <div class="formContainer">
+        <input type="text" class="formField" id="user" placeholder="Felhasználónév">
+        <input type="password" class="formField" id="pass" placeholder="Jelszó"
+          style="margin-bottom: 0;">
+        <div id="errStatus" class="errorBox"></div>
+        <div class="loadImg" id="loader"></div>
+        <div id="status" class="errorBox" style="margin-top: 20px;"></div>
+        <button class="fillBtn btnCommon" id="ok" style="margin-top: 20px;">
+          Baszassuk neki
+        </button>
+      </div>
+    </section>
+  </body>
+</html>

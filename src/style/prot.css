@@ -1,0 +1,107 @@
+.prototypeOptions {
+  width: calc(33.333% - 20px);
+  border-radius: 30px;
+  box-shadow: 7px 8px 15px 0 rgb(0 0 0 / 20%);
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.protHeader {
+  font-size: 34px;
+  background-color: #4285f4; 
+  border-radius: 30px 30px 0px 0px;
+  color: white;
+  padding: 20px;
+}
+
+.noMargin {
+  margin-top: 0px; 
+}
+
+.subText {
+  font-size: 14px;
+  color: #656565;
+  padding-top: 5px;
+}
+
+.subHighlight {
+  font-size: 16px;
+}
+
+.protContent {
+  padding: 20px;
+}
+
+.price {
+  font-size: 28px;
+}
+
+.flexProtCont {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  max-width: 1300px;
+  margin: 0 auto;
+  font-family: 'Roboto', sans-serif; 
+}
+
+.protContItem {
+  margin-bottom: 30px;
+}
+
+.wideProtCont {
+  width: 100%;
+}
+
+#p5Holder {
+  padding-right: 20px;
+}
+
+.protContItem:not(:first-child) > p {
+  margin-bottom: 5px;
+}
+
+.protContItem:last-child {
+  margin-bottom: 0;
+}
+
+.protHr {
+  border: 0;
+  height: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+
+.nom {
+  margin-bottom: 0;
+}
+
+
+@media screen and (max-width: 1300px) {
+  .flexProtCont {
+    padding: 20px 20px 0 20px;
+    justify-content: space-around;
+  }
+
+  .price {
+    font-size: 24px;
+  }
+
+  .protHeader {
+    font-size: 26px;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  .prototypeOptions {
+    width: calc(50% - 20px);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .prototypeOptions {
+    width: 100%;
+  }
+}

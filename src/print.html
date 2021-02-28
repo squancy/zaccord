@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <title>Zaccord - Bérnyomtatás & Litofánia</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/component.css">
+    <link rel="stylesheet" href="/style/normalize.css">
+    <link rel="stylesheet" href="/style/cprintStyle.css">
+    <meta name="description" content="Van egy 3D-s fájlod? Mi azonnal kinyomtatjuk neked!">
+    <meta name="keywords" content="zaccord, bérnyomtatás">
+    <meta name="author" content="Mark Frankli">
+    <script src="/js/includes/cookie.js"></script>
+    <script src="/js/includes/mobileCheck.js" defer></script>
+    <script src="/js/includes/short.js"></script>
+    <script src="/js/clientScripts/constants.js" defer></script>
+    <script src="/js/includes/fileInput.js" defer></script>
+    <script src="/js/includes/jquery.min.js" defer></script>
+    <script src="/js/includes/dropzone.min.js"></script>
+    <script src="/js/includes/registerSW.js"></script>
+    <script src="/js/includes/jqueryCustom.js" defer></script>
+    <script src="/js/includes/year.js" defer></script>
+    <script src="/js/clientScripts/cpShowcaseLogic.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/print.js" defer></script>
+    <script src="/js/printInfo.js" defer></script>
+    <script src="/js/pupload.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="/images/icons/logo.svg">
+    <link rel="shortcut icon" href="/images/icons/logo.svg" type="image/x-icon">
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="Zaccord">
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+    <meta name="theme-color" content="#ffffff" />
+    <script type="text/javascript">
+      // Change text if on mobile
+      document.addEventListener('DOMContentLoaded', (event) => {
+        let isMobile = window.mobileCheck();
+        if (isMobile) {
+          _('dragdrop').innerHTML = 'Tölts fel fájlokat';
+          _('or').innerHTML = 'és';
+        }
+      });
+
+      //fbq('track', 'ViewContent');
+    </script>
+  </head>
+  <body>   
+  </body>
+</html>

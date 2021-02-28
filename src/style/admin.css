@@ -1,0 +1,34 @@
+.bigBox {
+  flex-direction: column;
+  border: 2px solid #ccc;
+  border-radius: 30px;
+  background-color: rgb(241, 248, 255);
+}
+
+.smallBox {
+  flex-wrap: wrap;
+}
+
+.inBox {
+  display: grid;
+  margin: 20px;
+}
+
+.inBox > b {
+  font-family: 'Gotham', 'Roboto', sans-serif; 
+}
+
+.pc {
+  color: black;
+  font-weight: normal;
+}
+
+.blk {
+  color: black;
+}
+
+@media only screen and (max-width: 768px) {
+  .inBox {
+    margin: 10px;
+  }
+}

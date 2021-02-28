@@ -1,0 +1,101 @@
+.wideDynamicShowcase, .wideDynamicShowcaseLit, .wideDynamicShowcaseFdm {
+  width: calc(100% - 40px);
+  -webkit-box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
+          box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
+  border-radius: 30px;
+  margin: 0 20px 0 20px;
+  height: 500px;
+  position: relative;
+}
+
+.wideHidden {
+  overflow: hidden;
+  height: 500px;
+  border-radius: 30px;
+}
+
+.noOflow {
+  position: absolute;
+  width: 100%;
+  top: 260px;
+}
+
+.normalOflow {
+  position: relative;
+}
+
+.innerImg {
+  opacity: 0;
+  width: 100%;
+  height: 500px;
+  border-radius: 30px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  object-fit: cover;
+}
+
+#cp_0, #fdm_0, #lit_0, #mat_0 {
+  opacity: 1;
+}
+
+.ctrlButtons {
+  position: absolute;
+  top: 50%;
+  margin-top: -20px;
+  background: #fff;
+  left: auto;
+  font: normal 32px/36px arial,sans-serif;
+  text-align: center;
+  color: #2d2d2d;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  letter-spacing: -13px;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 12%), 0 2px 6px rgb(0 0 0 / 24%);
+  z-index: 222;
+}
+
+.ctrlButtons:hover {
+  cursor: pointer;
+  background-color: #e2e2e2;
+}
+
+#cpRightButton, #litRightButton, #fdmRightButton, #matRightButton {
+  right: 40px;
+}
+
+#cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton {
+  left: 40px;
+  letter-spacing: -5px;
+}
+
+.capitalTitle {
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+}
+
+#litFadeHolder, #fdmFadeHolder, #matFadeHolder {
+  margin-top: 60px;
+}
+
+@media only screen and (max-width: 923px) {
+  .wideDynamicShowcase, .wideDynamicShowcaseLit, .wideDynamicShowcaseFdm, .wideHidden, .innerImg {
+    height: 400px;
+  }
+
+  .noOflow {
+    top: 210px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  #cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton {
+    left: -15px;
+  }
+
+  
+  #cpRightButton, #litRightButton, #fdmRightButton, #matRightButton {
+    right: -15px;
+  }
+}

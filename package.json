@@ -1,0 +1,42 @@
+{
+  "name": "Zaccord",
+  "version": "1.0.0",
+  "description": "A webshop for selling 3D printed products.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app"
+  },
+  "author": "Mark Frankli",
+  "license": "ISC",
+  "dependencies": {
+    "animate.css": "^4.1.0",
+    "bcrypt": "^4.0.1",
+    "client-sessions": "^0.8.0",
+    "combined-stream": "^1.0.8",
+    "commander": "^5.1.0",
+    "compression": "^1.7.4",
+    "email-validator": "^2.0.4",
+    "formidable": "^1.2.2",
+    "galleria": "^1.6.1",
+    "get-pixels": "^3.3.2",
+    "graceful-fs": "^4.2.4",
+    "image-size": "^0.8.3",
+    "minify": "^6.0.1",
+    "mv": "^2.1.1",
+    "mysql": "^2.18.1",
+    "node-html-parser": "^1.2.20",
+    "node-stl": "^0.7.0",
+    "node-stl-to-thumbnail": "^1.1.0",
+    "nodemailer": "^6.4.6",
+    "paylike": "^2.0.2",
+    "querystring": "^0.2.0",
+    "randomstring": "^1.1.5",
+    "resize-img": "^2.0.0",
+    "sync-mysql": "^3.0.1",
+    "xtend": "~2.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}

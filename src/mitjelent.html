@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <title>Zaccord - Fogalmak és Jelentésük?</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/animate/animate.css">
+    <link rel="stylesheet" href="/style/nprogress.css">
+    <link rel="stylesheet" href="/style/style.css">
+    <meta name="description" content="Segítség a paraméterek beállításához">
+    <meta name="keywords" content="Zaccord, paraméter, mit jelent">
+    <meta name="author" content="Mark Frankli">
+    <script src="/js/includes/mobileCheck.js" defer></script>
+    <script src="/js/includes/short.js" defer></script>
+    <script src="/js/includes/year.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/includes/registerSW.js"></script>
+    <script src="/js/includes/cookie.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="/images/icons/logo.svg">
+    <link rel="shortcut icon" href="/images/icons/logo.svg" type="image/x-icon">
+    <script src="/js/includes/nprogress.js"></script>
+    <script src="/js/includes/hload.js"></script>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="Zaccord">
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png">
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+  <body>   
+    <section class="keepBottom lh">
+      <p class="mainTitle">Fogalmak &amp; Jelentésük</p>
+      <p class="blueHead">Rétegvastagság</p>
+      <p class="shiftRight">
+        A 3D nyomtatás egy additív gyártási folyamat, tehát a modellek rétegekből épülnek fel.
+        Az egymást követő rétegeknek vastagsága van, ezt hívjuk rétegvastagságnak. Minél kisebb
+        a rétegek közötti távolság, annál pontosabb és részletesebb lesz a kívánt modell,
+        viszont ezzel együtt drasztikusan megemelkedik a nyomtatási idő. Nagyobb vastagságú
+        rétegek használatával a modell gyorsabban elkészül, habár ezt nem javasoljuk pontos,
+        részletes tárgyaknál.
+      </p>
+
+      <p class="blueHead">Sűrűség</p>
+      <p class="shiftRight">
+        A 3D-s modell belső telítettségét jelenti. Ahogy nő a sűrűség értéke, annál több anyag
+        kell a termék elkészítéséhez, de annál masszívabb is lesz. Szoborszerű vagy kevésbé
+        használatos tárgyaknál felesleges a termék sűrű kitötlése, viszont rendszeresen
+        használt eszközöknél érdemes beállítani egy nagyobb értéket. A sűrűség növelésével nő
+        a nyomtatási idő és a modell tömege is.
+      </p>
+
+      <p class="blueHead">Szín</p>
+      <p class="shiftRight">
+        A nyomtatási anyag színe. Jelenleg egy terméket csak egy színnel tudunk nyomtatni,
+        vagyis egy modellen belül csak egy szín alkalmazható.
+      </p>
+
+      <p class="blueHead">Méretezés</p>
+      <p class="shiftRight">
+        A tárgy méreteinek kicsinyítését, nagyítását jelenti az alapértelmezetthez képest.
+        Az összes tengely mentén való méretváltozással járó folyamat.
+        Például egy 10mm x 10mm x 10mm-es termék x0.5-ös méretezéssel
+        5mm x 5mm x 5mm-es lesz.
+      </p>
+
+      <p class="blueHead">Falvastagság</p>
+      <p class="shiftRight">
+        A termék külső, tömör falának vastagsága. A nagyobb falvastagság stabilitást ad a
+        tárgynak, de növeli a nyomtatási időt. Fontos hogy ezen érték változtatása nem
+        befolyásolja a termék méreteit, hiszen a nyomtató befelé vastagítja meg a falakat.
+      </p>
+    </section>
+  </body>
+</html>
