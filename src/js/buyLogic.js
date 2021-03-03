@@ -376,9 +376,12 @@ const buildBuySection = (conn, paramObj, req) => {
                   <input type="submit" class="fillBtn btnCommon" id="plBtn" value="Fizetés" />
                 </form>
                 <div class="align" id="unsuccAuth">
-                  <p style="color: red;" class="font24">Sikertelen azonosítás</p>
-                  <button class="fillBtn btnCommon" id="again" onclick="startAgain()">Újrakezdés</button>
+                  <p style="color: red;" id="unsuccAuthTxt" class="font24 gotham"></p>
                 </div>
+              </div>
+              <div class="plBlueBottom gotham flexDiv trans" id="plBtnUI">
+                <div>Fizetés</div>
+                <div id="plAmountDyn"></div>
               </div>
             </div>
 

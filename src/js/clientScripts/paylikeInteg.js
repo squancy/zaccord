@@ -1,27 +1,75 @@
 let paylike = Paylike('6fbb909f-0183-4d0b-b804-6e567c160a3a');
 
-let plForm = document.querySelector('form#checkout');
+// Define possible error codes and their explanations
+const errorCodes = [
+  {"INTERNAL_ERROR": "Belső hiba történt"},
+  {"ENDPOINT_NOT_FOUND": "Végpont nem található"},
+  {"VERSION_MISSING": "Hiányzó verziószám"},
+  {"VERSION_UNSUPPORTED": "Nem támogatott verzió"},
+  {"BODY_INVALID": "Érvénytelen adatok"}, 
+  {"REQUEST_INVALID": "Érvénytelen kérés"},
+  {"TOKEN_INVALID": "Érvénytelen token"},
+  {"TOKEN_TYPE_UNEXPECTED": "Nem ismert token típus"},
+  {"TEST_MODE_MIXED": "Mixelt teszt mód"},
+  {"PAYMENT_INTEGRATION_KEY_UNKNOWN": "Ismeretlen integrációs kulcs"},
+  {"PAYMENT_INTEGRATION_DISABLED": "Fizetési integráció letiltva"},
+  {"PAYMENT_CHALLENGE_UNAVAILABLE": "Fizetési challenge nem érhető el"},
+  {"PAYMENT_CARD_NUMBER_INVALID": "Érvénytelen kártyaszám"},
+  {"PAYMENT_CARD_SCHEME_UNKNOWN": "Ismeretlen kártyatípus"},
+  {"PAYMENT_CARD_SCHEME_UNSUPPORTED": "Nem támogatott kártyatípus"},
+  {"PAYMENT_CARD_SECURITY_CODE_INVALID": "Érvénytelen CVC kód"},
+  {"PAYMENT_CARD_EXPIRED": "A kártya lejárt"},
+  {"PAYMENT_CARD_DISABLED": "Letiltott kártya"},
+  {"PAYMENT_CARD_LOST": "Elvesztett kártya"},
+  {"PAYMENT_AMOUNT_LIMIT": "Nincs elég pénz a kártyán"},
+  {"PAYMENT_INSUFFICIENT_FUNDS": "Nincs elég pénz a kártyán"},
+  {"PAYMENT_RECEIVER_BLOCKED": "Fizetés fogadása tiltva van"},
+  {"PAYMENT_REJECTED_BY_ISSUER": "Fizetés elutasítva a kibocsáltó által"},
+  {"PAYMENT_REJECTED": "Fizetés elutasítva"},
+  {"TDSECURE_REQUIRED": "TDSecure kód szükséges"},
+  {"TDSECURE_FAILED": "Hibás TDSecure kód"},
+  {"TDSECURE_PARES_INVALID": "Érvénytelen PaRes kód"}
+];
 
-let plError = _('plErrorStat');
-let plSubmit = plForm.querySelector('input[type=submit]');
+// Get a specific error explanation by error code
+function getErrorMessage(errorCode) {
+  for (let i = 0; i < errorCodes.length; i++) {
+    if (errorCodes[i][errorCode]) {
+      return errorCodes[i][errorCode];
+    }
+  }
+  return 'Egy nem várt hiba történt';
+}
 
-let plEmail = plForm.querySelector('input[name=email]');
-let plName = plForm.querySelector('input[name=name]');
+_('plAmountDyn').innerText = _('fPrice').innerText + ' Ft';
 
+const plForm = document.querySelector('form#checkout');
+
+const plError = _('plErrorStat');
+const plSubmit = plForm.querySelector('input[type=submit]');
+const plSubmitUI = _('plBtnUI');
+
+const plEmail = plForm.querySelector('input[name=email]');
+const plName = plForm.querySelector('input[name=name]');
+
+// Library for auto-formatting card input
 Paylike.assistNumber(plForm.querySelector('input.card-number'));
 Paylike.assistExpiry(plForm.querySelector('input.card-expiry'));
 
 let plFinished = false;
-let plAmount = Number(_('fPrice').innerText) * 100;
+const plAmount = Number(_('fPrice').innerText) * 100;
 
-let formCont = document.getElementsByClassName('plFormCont')[0];
+const formCont = document.getElementsByClassName('plFormCont')[0];
+const checkoutContent = _('checkout').innerHTML;
+const bottomContent = _('plBtnUI').innerHTML;
 
-let ifr = document.createElement("iframe");
-ifr.setAttribute('id', 'tif');
-formCont.appendChild(ifr);
+function submitForm() {
+  $('#plBtn').click();
+}
 
-_('plBtn').value = 'Fizetés - ' + _('fPrice').innerText + ' Ft';
+_('plBtnUI').setAttribute('onclick', 'submitForm()');
 
+// Open popup window
 _('paylikeCont').addEventListener('click', function openTransaction(e) {
   if (plFinished) return;
   _('exitBtn').setAttribute('onclick', 'exitCont("plOuter")');
@@ -43,90 +91,272 @@ window.addEventListener('resize', e => {
   }
 });
 
+// Reset UI and variables for a new try after an error
 function startAgain(e) {
   _('unsuccAuth').style.display = 'none';
-  _('checkout').style.display = 'block';
+  _('checkout').innerHTML = checkoutContent;
+  _('plBtnUI').innerHTML = bottomContent;
+  _('plBtnUI').setAttribute('onclick', 'submitForm()');
   plError.innerHTML = '';
+  $iframes = new Set();
 }
 
+// Implement newer version of 3-D secure manually for card compatibility
 plForm.addEventListener('submit', function(e){
   e.preventDefault();
 
   plSubmit.disabled = true;
-  plSubmit.value = 'Folyamatban...';
+  plSubmitUI.innerText = 'Folyamatban...';
   plError.innerHTML = '';
 
-  paylike.pay(plForm, {
-    currency: 'HUF',
-    amount: plAmount,
-    locale: 'hu'
-  }, function(err, r){
-    plSubmit.value = 'Fizetés - ' + _('fPrice').innerText + ' Ft';
-    plSubmit.disabled = false;
-
-    if (err) {
-      // If an error is returned then check if 3-D secure is required
-      // If it is, redirect user to the URL returned back
-      console.log(err)
-      if (err.code === 30) {
-        let ACSurl = err.tds.url;
-        let pareq = err.tds.pareq;
-        let oid = err.tds.oid;
-        let returnUrl = 'https://gateway.paylike.io/acs-response';
-
-        let iframeDoc = _('tif').contentDocument || _('tif').contentWindow.document;
-        let content = `
-          <p style="text-align: center; color: #4285f4; font-size: 20px; font-family: sans-serif;">
-            Egy kis türelmet...
-          </p>
-          <form method="POST" action="${ACSurl}">
-            <input type="hidden" name="PaReq" value="${pareq}">
-            <input type="hidden" name="TermUrl" value="${returnUrl}">
-            <input type="hidden" name="MD" value="${oid}">
-            <input type="submit" id="sm" style="display: none;">
-          </form>
-        `;
-
-        iframeDoc.open();
-        iframeDoc.write(content);
-        iframeDoc.close();
-
-        $("#tif").contents().find("#sm").click();
-        _('checkout').style.display = 'none';
-        _('tif').style.display = 'block';
-
-        window.addEventListener('message', function(e) {
-          let pares = e.data && e.data.pares;
-          console.log(pares);
-          paylike.pay(plForm, {
-            currency: 'HUF',
-            amount: plAmount,
-            tds: { pares: pares },
-            locale: 'hu'
-          }, function(err, r) {
-            if (err) {
-              _('tif').style.display = 'none';
-              _('unsuccAuth').style.display = 'block';
-              iframeDoc.open();
-              iframeDoc.write('');
-              iframeDoc.close();
-              ifr.setAttribute('src', 'about:blank');
-            }
-          });
-        });
-      }
-      plError.innerHTML = '<p>' + err + '</p>';
-      return;
+  // First get card credentials
+  let types = ['pcn', 'pcsc']; 
+  let cardNumberSerialized = _('card-number').value.replace(/\s/g, '');
+  let cardCodeSerialized = _('card-code').value.replace(/\s/g, '');
+  let expiryMonth = Number(_('card-expiry').value.replace(/\s/g, '').split('/')[0]);
+  let expiryYear = Number(_('card-expiry').value.replace(/\s/g, '').split('/')[1]);
+  if (expiryYear < 2000) {
+    expiryYear += 2000;
+  }
+  let values = [cardNumberSerialized, cardCodeSerialized];
+  let tokenizedCredentials = [];
+  let promises = [];
+  
+  // Fetch URL for tokenizing card credentials before sending them over the network
+  for (let i = 0; i < 2; i++) {
+    let data = {
+      type: types[i],
+      value: values[i]
+    };
+    
+    let vaultPromise = new Promise((resolve, reject) => {
+      fetch('https://vault.paylike.io', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Version': '1'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(resp => resp.json())
+      .then(token => resolve(token));
+    });
+    promises.push(vaultPromise);
+  }
+  
+  // Wait for all token promises to resolve
+  // Then fetch the URL for challenges
+  Promise.all(promises).then(tokens => {
+    for (let obj of tokens) {
+      tokenizedCredentials.push(obj);
     }
 
-    exitCont('plOuter');
-    _('plInfoHolder').innerHTML = `
-      <br>
-      <span class="blue">
-        A bankkártyádat sikeresen felvettük a rendszerbe!
-      </span>
-    `;
+    let paymentData = {
+      integration: {
+        key: '6fbb909f-0183-4d0b-b804-6e567c160a3a'
+      },
+      amount: {
+        currency: 'HUF',
+        exponent: 2,
+        value: plAmount
+      },
+      
+      card: {
+        number: tokenizedCredentials[0],
+        expiry: {
+          month: expiryMonth,
+          year: expiryYear
+        },
+        code: tokenizedCredentials[1]
+      },
+      hints: []
+    };
+    
+    // Loop over all the challenges and solve them
+    // After succeeding, save the transfer id (authorization id)
+    loop(paymentData).then(data => {
+      if (data.error) {
+        _('unsuccAuthTxt').innerHTML = getErrorMessage(data.error);
+        _('unsuccAuth').style.display = 'block';
+        _('plBtnUI').setAttribute('onclick', 'startAgain()');
+        _('plBtnUI').innerText = 'Újrakezdés';
+        return;
+      }
 
-    transactionID = r.transaction.id;
-  });
+      exitCont('plOuter');
+      _('plInfoHolder').innerHTML = `
+        <br>
+        <span class="blue">
+          A bankkártyádat sikeresen felvettük a rendszerbe!
+        </span>
+      `;
+
+      transactionID = data.authorizationID; 
+      return;
+    });
+  }); 
 });
+
+let $iframes = new Set()
+
+// When a message is dispatched from the iframe to the parent window capture it
+window.addEventListener('message', function (e) {
+	for (const $iframe of $iframes) {
+		if ($iframe.contentWindow !== e.source) continue
+		if (typeof e.data !== 'object' || e.data === null || !e.data.hints) {
+			continue;
+		}
+    
+    _('plBtnUI').innerText = 'Megerősítés';
+		$iframe.resolve(e.data)
+	}
+});
+
+// Recursively solve all challenges
+// If an error occurs during the process return that back to the handler
+function loop(payment, hints = []) {
+	const response = fetch('https://b.paylike.io/payments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept-Version': '1'
+    },
+    body: JSON.stringify({...payment, hints})
+	})
+  .then(resp => resp.json())
+  .then(data => {
+    if (data.code) {
+      return {error: data.code};
+    }
+    return data;
+  });
+
+	const newHints = response.then((response) => {
+    if (response.error) return {error: response.error};
+		else if (!Array.isArray(response.challenges)) return [];
+		return performChallenge(payment, hints, response.challenges[0]);
+	});
+
+  // New hints are appended to prev hints (new hints last)
+  // If we get an auth. id we are done; else make a recursive call with extended hints
+	return Promise.all([response, newHints]).then(([response, newHints]) => {
+		if (response.authorizationId !== undefined) {
+			return response.authorizationId;
+		} else {
+      if (newHints.error) return {error: newHints.error}
+			return loop(payment, [...hints, ...newHints]);
+		}
+	})
+}
+
+// Perform one of 3 challenge types:
+// - fetch: fetch a URL
+// - iframe / background-iframe: create iframe on client's device, submit a form inside of it 
+function performChallenge(payment, hints, challenge) {
+	switch (challenge.type) {
+		case 'fetch': {
+      return fetch('https://b.paylike.io' + challenge.path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Version': '1'
+        },
+        body: JSON.stringify({...payment, hints})
+      })
+      .then(resp => resp.json())
+      .then(result => result.hints);
+		}
+
+		case 'iframe':
+		case 'background-iframe': {
+			const hidden = challenge.type === 'background-iframe'
+      const init = fetch('https://b.paylike.io' + challenge.path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Version': '1'
+        },
+        body: JSON.stringify({...payment, hints})
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        return data;
+      });
+			const message = init.then(
+				(init) =>
+					new Promise((resolve) => {
+						const {action, fields = {}, timeout} = init;
+						const timer =
+							timeout !== undefined &&
+							setTimeout(resolve, timeout);
+						const name = 'challenge-frame';
+						const $iframe = ce('iframe', {
+							name,
+							scrolling: 'auto',
+							style: {
+								border: 'none',
+								width: '390px',
+								height: '400px',
+								display: hidden ? 'none' : 'block',
+							},
+							resolve,
+						});
+
+						const $form = ce(
+							'form',
+							{
+								method: 'POST',
+								action,
+								target: name,
+								style: {display: 'none'},
+							},
+							Object.entries(fields).map(([name, value]) =>
+								ce('input', {type: 'hidden', name, value})
+							)
+						);
+
+						$iframes.add($iframe)
+            if (!action.includes('paylike.io')) {
+              _('checkout').innerHTML = '';
+            } else {
+              _('checkout').innerHTML = '<img src="/images/icons/loader.gif" class="centerLoad">';
+            }
+
+						_('checkout').appendChild($iframe);
+						document.body.appendChild($form);
+						$form.submit();
+						document.body.removeChild($form);
+						const cleaned = message.then(() => {
+							clearTimeout(timer);
+							$iframes.delete($iframe);
+							_('checkout').removeChild($iframe);
+						});
+
+						return Promise.all([message, cleaned])
+              .then(([msg]) => msg);
+					})
+			);
+			return Promise.all([init, message]).then(([init, message]) => {
+				return [
+					...(init.hints || []),
+					...((message && message.hints) || []),
+				];
+			});
+		}
+		default: {
+			throw new Error(`Unsupported challenge type "${challenge.type}"`);
+		}
+	}
+}
+
+// Create a specific DOM element with optional fields and children
+function ce(tag, opts = {}, children = []) {
+	const {style = {}, ...attrs} = opts;
+	const el = document.createElement(tag);
+	Object.assign(el, attrs);
+	Object.assign(el.style, style);
+	for (const child of children) {
+		el.appendChild(child);
+	}
+	return el;
+}

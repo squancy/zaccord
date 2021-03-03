@@ -23,7 +23,7 @@ function genDelivery(conn, userID, isLoggedIn = true) {
       }
 
       let output = `
-        <div class="flexDiv" style="flex-wrap: wrap;" id="normalDiv">
+        <div class="flexDiv" style="flex-wrap: wrap; justify-content: space-evenly;" id="normalDiv">
           <input type="text" class="dFormField" id="name" placeholder="Név"
             value="${name}">
           <input type="text" class="dFormField" id="pcode" placeholder="Irányítószám"
