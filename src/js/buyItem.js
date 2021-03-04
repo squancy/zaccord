@@ -170,6 +170,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
         if (!name || !city || !address || !mobile || !pcode || !payment) {
           reject('Hiányzó szállítási információ'); 
           return;
+        } else if (payment == 'credit' && !transactionID) {
+          reject('Add hozzá a bankkártyádat a fizetéshez'); 
         // Validate postal code
         } else if (!Number.isInteger(pcode) || pcode < 1000 || pcode > 9985) {
           reject('Hibás irányítószám'); 

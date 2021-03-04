@@ -81,6 +81,9 @@ function submitOrder() {
   } else if (!Number.isInteger(pcode) || pcode < 1000 || pcode > 9985) {
     statusFill('errStatus', 'Kérlek valós irányítószámot adj meg');
     return;
+  } else if (creditCard && !transactionID) {
+    statusFill('errStatus', 'Kérlek add hozzá a bankkártyádat a fizetéshez');
+    return;
   } else if (!isAgree || !isAgree2) {
     // Did not accept the terms & policy
     statusFill('errStatus', 'Fogadd el az ÁSZF-et és az Adatvédelmi Nyilatkozatot');
