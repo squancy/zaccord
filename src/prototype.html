@@ -37,7 +37,7 @@
         <div class="darkenProt"></div>
         <div class="textCenter">
           <p class="mainText lh gotham align" style="padding: 10px;">
-            Prototípusgyártás &amp; egyedi 3D nyomtatás a Zaccordon
+            Prototípusgyártás &amp; egyedi 3D nyomtatás
           </p>
         </div>
       </div>
@@ -219,20 +219,6 @@
         Az SLA nyomtató ezzel szemben fényre keményedő műgyanta alapanyagból állítja elő a
         kívánt modellt, ami ezután UV fénnyel utókezelve lesz a megfelelő szilárdság elérése
         érdekében.
-        <!--
-        Fontosabb paraméterek:
-        <ul class="dul" style="margin-top: 5px; margin-left: 10px;">
-          <li><span class="blue">Nyomtatási terület:</span>
-            1mm x 1mm x 1mm - 230mm x 230mm x 300mm</li>
-          <li><span class="blue">Rétegvastagság:</span> 0.12mm - 0.8mm, 0.08mm lépésközzel</li>
-          <li><span class="blue">Falvastagság:</span> 0.4mm - teljesen tömörig, 0.4mm
-            lépésközzel</li>
-          <li><span class="blue">Nyomtatás színe:</span> fekete, fehér, kék, zöld, arany,
-          piros, sárga, zölden foszforeszkáló (igény szerint lehetőség van ezektől eltérő
-          színnel is nyomtatni, a többletköltségeket fedezve)</li>
-          <li><span class="blue">Sűrűség:</span> 1% - 100%</li>
-        </ul>
-        -->
       </p>
       <br>
 
@@ -243,17 +229,18 @@
         <a href="/materialHelp" class="blueLink font16">Nyomtatási Anyagok</a> oldalra.
       </p>
 
-      <p class="mainTitle ffprot" style="margin-top: 40px;">Vedd fel velünk a kapcsolatot!</p>
+      <p class="mainTitle ffprot" id="getInCont" style="margin-top: 40px;">Prototípus
+      árajánlatkérés</p>
       <div class="flexDiv" style="flex-wrap: wrap;" id="normalDiv">
         <input type="text" class="dFormField" id="name" placeholder="Név" value="">
         <input type="email" class="dFormField" id="email" placeholder="Email">
         <input type="text" class="dFormField protmob" id="mobile"
           placeholder="Telefonszám" value="">
-        <textarea placeholder="Üzenet (nem kötelező)" id="message" class="dFormField"
-          style="width: 100%"></textarea>
+        <textarea placeholder="CAD modell URL, termékkel szembeni elvárások: anyag, szín, technológia stb." id="message" class="dFormField"
+          style="width: 100%; height: 100px;"></textarea>
       </div>
       <button class="fillBtn btnCommon" id="submitBtn" style="display: block; margin: 0 auto;">
-        Elküldés
+        Ajánlatkérés
       </button>
       <div id="pstatus" class="align errorBox" style="margin-top: 20px;"></div>
       <div id="succstat" class="align successBox" style="margin-top: 20px;"></div>

@@ -12,6 +12,11 @@ const calcCPPrice = constants.calcCPPrice;
 const getPrintTime = constants.getPrintTime;
 const getCoords = constants.getCoords;
 
+// Check if model fits the size of SLA printing (115 x 65 x 150)
+function shouldAllowSLA(box) {
+  return (box[0] > 115 || box[1] > 65 || box[2] > 150) ? false : true
+}
+
 // In this version of the code there is no extra price for products below 800 Ft
 // Since the minimum price of a model is 1K Ft
 
@@ -23,9 +28,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     let sizes = [];
     let sizeMM = 0;
     let subPrices = [];
+    let subSizes = [];
     let totVolume = 0;
     let stlContainers = '';
     let totPrintTime = 0;
+    let cnt = 0;
+    let largestVolume = 0;
+
+    let allowSLA = true;
     
     let stlWidth = '';
     if (filePaths.length === 1) {
@@ -52,6 +62,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       extraMarginDown = '0px';
     }
 
+    
     for (let i = 0; i < filePaths.length; i++) {
       let path = filePaths[i];
       let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/mm^3 density
@@ -60,9 +71,12 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       totVolume += Number(volume);
       let [W, H, D] = getCoords(path);
       let boxVolume = stl.boundingBox.reduce((a, c) => a * c);
-      if (boxVolume > sizeMM) {
+      if (boxVolume > largestVolume) {
         sizeMM = stl.boundingBox.map(a => a.toFixed(2) + 'mm x ').join(' ');
+        largestVolume = boxVolume;
       }
+
+      if (allowSLA) allowSLA = shouldAllowSLA(stl.boundingBox);
 
       let basePrice = calcCPPrice(W, H, D);
       let subpriceText = '';
@@ -96,7 +110,15 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       totPrintTime += getPrintTime(W, H, D);
       totalPrice += basePrice;
       subPrices.push(basePrice);
+      subSizes.push(stl.boundingBox.map(x => x.toFixed(2)));
       sizes.push(boxVolume);
+      cnt++;
+    }
+    
+    // Calculate the ratio of sub prices to the total price
+    let subPriceRatios = [];
+    for (let price of subPrices) {
+      subPriceRatios.push(price / totalPrice);
     }
 
     // Only select the maximum size when having more models
@@ -126,6 +148,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
     // Build html output
     let content = `
+      <textarea id="techVal" style="display: none;">FDM</textarea>
       <section class="keepBottom">
         <div class="flexDiv" style="margin-bottom: ${extraMarginDown}; flex-wrap: wrap;">
           ${stlContainers}
@@ -192,10 +215,23 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     `;
     
     content += genQuan(afterWorkNote);
+    
+    let disableSLAClass = allowSLA ? '' : 'slaDisabled';
+    content += `
+      <div class="fdmOrSla gotham flexDiv font18">
+        <div class="fdmChoice align techChosen trans" id="fdmChoice">
+          FDM
+        </div>
+        <div class="slaChoice align techOther trans ${disableSLAClass}" id="slaChoice">
+          SLA
+        </div>
+      </div>
+    `;
+
     content += genSpecs(totalPrice, sizeMM, false, true);
 
     content += `
-        <div class="specBox">
+        <div class="specBox" style="justify-content: center;">
           <button class="fillBtn btnCommon threeBros" id="buyCP">
             Vásárlás
           </button> 
@@ -213,12 +249,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         </p>
 
         <p class="align note ddgray">
-          A specifikációk megváltoztatása árváltozást vonhat maga után!
-          Több termék esetén ezek változtatása minden egyes termékre értendő!
+          A specifikációk megváltoztatása árváltozást vonhat maga után és
+          több termék esetén ezek változtatása minden egyes termékre értendő!
         </p>
 
         <p class="align note ddgray">
-          Ha nem szeretnél bajlódni a paraméterekkel, hagyd az alapbeállításokon!
+          FDM és SLA nyomtatáshoz a maximum méretek rendre 220mm x 220mm x 220mm és 115mm x 65mm x
+          150mm.
         </p>
       </section>
     `;
@@ -236,8 +273,14 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         // Initialize vars used globally
         let data = [];
         let arr = [];
+        let subPriceRatios = Array.from('${subPriceRatios}'.split(','));
         let subPrices = Array.from('${subPrices}'.split(','));
+        let subSizes = Array.from('${subSizes}'.split(','));
+        let subPricesSLA = subPrices.map(x => Math.round(x * 2.1));
+        let basePriceSLA = subPricesSLA.reduce((acc, val) => acc + val);
         let thumbs = [];
+        let sizeCnt = 0;
+        let modelIDs = [];
 
         // Loop over file paths and extract file names used for thumbnails & .stl
         for (let f of Array.from('${filePaths}'.split(','))) {
@@ -252,7 +295,6 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         }
 
         // Make sure the num of items in cookies do not exceed 15
-        console.log(isFirstVisit);
         let canGo = true;
         if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + arr.length > 15
           || !isFirstVisit) {
@@ -267,9 +309,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           
           // Unique id
           let id = arr[i].split('/')[2].replace('.stl', '');
+          modelIDs.push(id);
           if ((!getCookie('cartItems') ||
             !Object.keys(JSON.parse(getCookie('cartItems'))).length ||
             !JSON.parse(getCookie('cartItems'))['content_' + id]) && canGo) {
+            
+            let modelSize = subSizes[sizeCnt] + ',' + subSizes[sizeCnt + 1] + ',' +
+              subSizes[sizeCnt + 2];
 
             // Build cookie object (later converted to str)
             let value = {
@@ -281,9 +327,13 @@ const buildCustomPrint = (conn, userID, filePaths) => {
                 ['fvas_' + id]: _('fvas').value,
                 ['quantity_' + id]: _('quantity').value,
                 ['price_' + id]: subPrices[i],
-                ['printMat_' + id]: _('printMat').value
+                ['printMat_' + id]: _('printMat').value,
+                ['size_' + id]: modelSize,
+                ['tech_' + id]: 'FDM'
               }
             };
+
+            sizeCnt += 3;
             
             // Set value in cookies
             let itemsSoFar = getCookie('cartItems');
@@ -301,7 +351,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
           // Use a 3rd party library for viewing .stl files
           let stlView = new StlViewer(document.getElementById("stlCont_" + i), {
-            all_loaded_callback: stlFinished,
+            all_loaded_callback: () => stlFinished(i),
             models: [obj]
           });
 
@@ -309,27 +359,26 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           models.push(stlView);
         }
 
-        function getID() {
+        function getID(i) {
           if (window.location.href.includes('?file=')) {
             return window.location.href.split('?file=')[1];
           } else {
-            return localStorage.getItem('refresh');
+            return localStorage.getItem('refresh').split('|||')[i];
           }
         }
 
         document.getElementsByClassName('hrStyle')[0].style.margin = 0;
 
-        function stlFinished() {
+        function stlFinished(i) {
           document.getElementById('status').innerHTML = '';
           document.getElementById('colorPicker').style.display = 'flex';
 
           // Set color of model
           let soFar = JSON.parse(getCookie('cartItems'));
-          let id = getID();
+          let id = getID(i);
           let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
           chooseColor(colorMaps[colorVal]);
-          console.log('a', colorMaps[colorVal])
-          if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
+          // if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
         }
 
         function chooseDisplay(display, id) {
@@ -367,7 +416,6 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         function highlightBtn(id) {
           let btns = document.getElementsByClassName('colorPick');
           for (let i = 0; i < btns.length; i++) {
-            console.log(i, id)
             if (i === id) {
               btns[i].style.border = '2px solid #4285F4';
             } else {
@@ -375,6 +423,24 @@ const buildCustomPrint = (conn, userID, filePaths) => {
             }
           }
         }
+      
+        function allowSLAUI(shouldSkip) {
+          if (!shouldSkip) {
+            _('slaChoice').classList.remove('slaDisabled');
+          } else {
+            _('slaChoice').classList.add('slaDisabled');
+          }
+        }
+
+        function toggleAllowance(e) {
+          let cookieIDs = localStorage.getItem('refresh').split('|||'); 
+          let freshIDs = arr.map(path => {
+            return path.split('printUploads')[1].replace('/', '').replace('.stl', '');
+          });
+          toggleSLAAllowance('scale', cookieIDs[0].length == 0 ? freshIDs : cookieIDs, allowSLAUI);
+        }
+
+        window.addEventListener('DOMContentLoaded', toggleAllowance);
       </script>
     `;
     resolve(content);

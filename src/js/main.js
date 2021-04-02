@@ -67,7 +67,7 @@ function toggleCategory() {
 }
 
 function toggleLower(disp) {
-  _('toggleLower').style.display = disp;
+  if (_('toggleLower')) _('toggleLower').style.display = disp;
 }
 
 // When category btn is clicked display only items with that category
@@ -75,6 +75,12 @@ function sortByCat(cat, cid, isEye = false) {
   let data = {
     'cat': cat
   };
+
+  // Hide services
+  let conts = document.getElementsByClassName('flexProtCont');
+  for (let cont of Array.from(conts)) {
+    cont.style.display = 'none';
+  }
 
   // Make that btn highlighted
   let categories = document.getElementsByClassName('scat');
@@ -84,7 +90,7 @@ function sortByCat(cat, cid, isEye = false) {
       categories[i].style.color = '#4285f4';
       categories[i].style.backgroundColor = 'rgb(236, 236, 236)';
     } else {
-      categories[i].style.borderColor = '#f1f1f1';
+      categories[i].style.borderColor = '#d0d0d0';
       categories[i].style.backgroundColor = '#fff';
       categories[i].style.color = '#000';
     }

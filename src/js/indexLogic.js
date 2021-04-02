@@ -73,13 +73,20 @@ const buildMainSection = (conn, cat) => {
           <div class="clear"></div>
         `;
 
-        // Only display showcase img if URL is not a specific category
+        // Only further products on a category page
+        // Only display the top of the landing page on the index page
         let popProdsStyle = 'display: inline-block;';
+        let catToggle = 'display: none;';
+        let moreShow = 'diplay: none;';
+        let furtherShow = 'display: flex;';
         let showcaseStyle = 'display: block';
         if (cat) {
           popProdsStyle = 'display: none;';
+          catToggle = 'display: block';
+          moreShow = 'display: flex;';
+          furtherShow = 'display: none;';
           showcaseStyle = 'height: 0px; visibility: hidden;';
-        }
+        } 
 
         output += `
           <div class="wideShowcase" id="wideShowcase" style="${showcaseStyle}">
@@ -87,18 +94,92 @@ const buildMainSection = (conn, cat) => {
               <div class="darken"></div>
               <div class="textCenter">
                 <p class="mainText lh gotham align" style="padding: 10px;">
-                  3D nyomtatott termékek a Zaccordon
+                  Precíz 3D nyomtatás a Zaccordon
                 </p>
               </div>
             </div>
           </div>
-        `;
 
-        output += `
-          <p class="mainTitle" style="margin-top: 40px; margin-bottom: 0; ${popProdsStyle}"
+          <div class="flexProtCont" style="margin-top: 20px; ${furtherShow}">
+            <div class="bgService bgCommon" id="cprintService">
+              <div class="darken keepRounded"></div>
+              <div class="textCenter pad lh">
+                <p class="serviceTxt align font34 gotham servMain servMain">Bérnyomtatás</p>
+                <p class="serviceTxt align gotham">
+                  FDM és SLA nyomtatás számos színnel és anyaggal. Az intelligens algoritmus
+                  segítségével azonnal láthatod az árat és megrendelheted a feltöltött
+                  termékeket.
+                </p>
+                <div class="flexDiv btnAlign">
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/print')">További információ</button>
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/printHelp')">Segítség</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="bgService bgCommon" id="protService">
+              <div class="darken keepRounded"></div>
+              <div class="textCenter pad lh">
+                <p class="serviceTxt align font34 gotham servMain">Prototípusgyártás</p>
+                <p class="serviceTxt align gotham">
+                  A 3D nyomtatott kisszériás prototípusgyártás egy sokkal költséghatékonyabb és gyorsabb
+                  módja a nullsorozatok gyártásának. Egyedi rendelésekhez bátran vedd fel
+                  felünk a kapcsolatot.
+                </p>
+                <div class="flexDiv btnAlign">
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/prototype')">
+                    További információ
+                  </button>
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/prototype#getInCont')">
+                    Kapcsolatfelvétel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="gotham align font34 printTech" id="printTech" style="${popProdsStyle}">
+            Nyomtatási Technológiák
+          </p>
+
+          <div class="flexProtCont" style="${furtherShow}">
+            <div class="bgService bgCommon" id="fdmService">
+              <div class="darken keepRounded"></div>
+              <div class="textCenter pad lh">
+                <p class="serviceTxt align font34 gotham servMain">FDM</p>
+                <p class="serviceTxt align gotham">
+                  Az FDM nyomtatási technológia kiváló a rapid prototypinghoz és
+                  költséghatékony modellezéshez. Ez esetben a nyomtató olvadt filamentből
+                  készíti el a terméket rétegről-rétegre.
+                </p>
+                <div class="flexDiv btnAlign">
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/mitjelent')">További információ</button>
+                </div>
+              </div>
+            </div>
+            <div class="bgService bgCommon" id="slaService">
+              <div class="darken keepRounded"></div>
+              <div class="textCenter pad lh">
+                <p class="serviceTxt align font34 gotham servMain">SLA</p>
+                <p class="serviceTxt align gotham">
+                  Kiváló választás lehet apróbb vagy nagyobb pontosságot igénylő modellekhez,
+                  hiszen minősége a fröccsöntött műanyagéval vetekszik. Ilyenkor a nyomtató
+                  műgyantából állítja elő a terméket, ami utána UV-fénnyel lesz kezelve.
+                </p>
+                <div class="flexDiv btnAlign">
+                  <button class="whiteBtn gotham font18 trans" onclick="redirect('/mitjelent')">További információ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="gotham align font34" style="margin-top: 60px; margin-bottom: 0; ${popProdsStyle}"
             id="popProds">
             Legnépszerűbb Termékek
           </p>
+        `;
+
+        output += `
           <section class="mainShowcase keepBottom animate__animated animate__fadeIn" id="ms">
             <div class="dynamicShowcase" id="dynamicShowcase">
         `;
@@ -124,9 +205,10 @@ const buildMainSection = (conn, cat) => {
             });
           }); 
         }
-        
+
         prodElements.then(data => {
           output += data;
+
           // Add the 4 newest products after most popular ones
           let newestQuery = 'SELECT * FROM fix_products ORDER BY date_added DESC LIMIT 4';
           conn.query(newestQuery, function displayNewItems(err, newRes, fields) {
@@ -134,10 +216,10 @@ const buildMainSection = (conn, cat) => {
               reject('Egy nem várt hiba történt, kérlek próbáld újra 3');
               return;
             }
-
+            
             output += `
               </div>
-              <section class="mainShowcase" id="toggleLower">
+              <section class="mainShowcase" id="toggleLower" style="${catToggle}">
                 <hr class="hrStyle" style="margin-top: 0;">
                 <p class="mainTitle" style="margin-top: 20px;">Újdonságok</p>
                 <div class="dynamicShowcase newies">
@@ -167,9 +249,9 @@ const buildMainSection = (conn, cat) => {
 
             // Finally, select products from other categories 
             output += `
-              <hr class="hrStyle">
-              <p class="mainTitle" style="margin-top: 20px;">További termékek</p>
-              <div class="dynamicShowcase">
+              <hr class="hrStyle" style="${catToggle}">
+              <p class="mainTitle" style="margin-top: 20px; ${catToggle}">További Termékek</p>
+              <div class="dynamicShowcase" style="${moreShow}">
             `;
        
             let uniqueCategories = `SELECT DISTINCT category FROM fix_products ORDER BY RAND()`;
@@ -180,7 +262,7 @@ const buildMainSection = (conn, cat) => {
                   reject('Egy nem várt hiba történt, kérlek próbáld újra 4');
                   return;
                 }
-
+                
                 let currentCat = catRes[i].category;
                 let moreQuery = `
                   SELECT * FROM fix_products WHERE category = ? ORDER BY RAND() LIMIT 4
@@ -194,7 +276,9 @@ const buildMainSection = (conn, cat) => {
                     }
                    
                     let output = '';
-                    if (!innerRes.length) resolve('');
+                    if (!innerRes.length) {
+                      resolve('');
+                    }
                     output += `
                       <div style="width: 100%; justify-content: center; margin-bottom: 10px;"
                         class="flexDiv">

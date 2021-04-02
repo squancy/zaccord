@@ -1,5 +1,4 @@
 // Use constant values from js/includes/constants.js
-
 if (_('priceHolder')) {
   var basePrice = Number(_('priceHolder').innerHTML);
 }
@@ -14,6 +13,10 @@ function calcLitPrice(size) {
   return LIT_PRICES[firstCoord];
 }
 
+function getModelSize() {
+  return _('sizeHolder').innerText.replace(/(x)|(mm)/g, '').replace(/\s+/g, ',');
+}
+
 // Add item to cart
 function addToCart(id) {
   let itemId = id;
@@ -26,6 +29,7 @@ function addToCart(id) {
   let scale = Number(_('scale').value);
   let fvas = Number(_('fvas').value);
   let quantity = Number(_('quantity').value); 
+  let modelSize = getModelSize();
 
   // Validation on client-side
   _('status').innerHTML = '';
@@ -58,7 +62,10 @@ function addToCart(id) {
       ['color_' + id]: encodeURIComponent(color),
       ['scale_' + id]: scale,
       ['fvas_' + id]: fvas,
-      ['quantity_' + id]: quantity
+      ['size_' + id]: modelSize,
+      ['quantity_' + id]: quantity,
+      ['printMat_' + id]: 'PLA',
+      ['tech_' + id]: 'FDM'
     }
   };
 
@@ -122,7 +129,7 @@ function addToCart(id) {
 }
 
 // Update price in the DOM, in real-time
-function updateTotPrice(cartId, newPrice, oldPrice, isLit = false, isCP = false) {
+function updateTotPrice(cartId, newPrice, oldPrice, isLit = false, isCP = false, isSLA = false) {
   if (!cartId) {
     basePrice = Number(_('priceHolder').innerHTML);
     return;
@@ -162,6 +169,7 @@ function updateTotPrice(cartId, newPrice, oldPrice, isLit = false, isCP = false)
     names.push('printMat');
   }
   if (isLit) names = ['sphere', 'size', 'color', 'quantity'];
+  else if (isSLA) names = ['rvas', 'suruseg', 'scale', 'color', 'quantity'];
   for (let name of names) {
     let currentVal = _(name + cartId).value;
     contentSoFar['content_' + cartId][name + '_' + cartId] = encodeURIComponent(currentVal);
@@ -178,9 +186,9 @@ function calculatePrice(price, id = '', isLit, isCP) {
     let fvasVal = Number(_('fvas' + id).value);
    
     // Convert degrees to radians
-    rvasVal *= Math.PI / 180
-    surusegVal *= Math.PI / 180
-    fvasVal *= Math.PI / 180
+    rvasVal *= Math.PI / 180;
+    surusegVal *= Math.PI / 180;
+    fvasVal *= Math.PI / 180;
 
     // Formula for calculating the price with the given params
     // Parameters values in the formula are degrees (converted to rads)
@@ -194,19 +202,20 @@ function calculatePrice(price, id = '', isLit, isCP) {
       let filamentMaterial = _('printMat' + id).value;
       let multiplier;
 
-      if (filamentMaterial == 'PLA') {
+      if (filamentMaterial == PRINT_MATERIALS[0]) {
         multiplier = 1;
-      } else if (filamentMaterial == 'ABS' || filamentMaterial == 'PETG') {
+      } else if (filamentMaterial == PRINT_MATERIALS[1]
+        || filamentMaterial == PRINT_MATERIALS[2]) {
         multiplier = 1.36;
-      } else if (filamentMaterial == 'TPU') {
-        multiplier = 1.814;
       } else {
-        multiplier = 2;
-      }
-      return Math.round(nPrice * multiplier);
+        multiplier = 1.814;
+      } 
+      let fp = Math.round(nPrice * multiplier); 
+      return fp < 1000 ? MIN_PRICE : fp;
     }
 
-    return Math.round(nPrice);
+    let fp = Math.round(nPrice); 
+    return fp < 1000 ? MIN_PRICE : fp;
   } else {
     return calcLitPrice(_('size' + id).value); 
   }
@@ -220,11 +229,24 @@ function getPriceHolder(id) {
   }
 }
 
-function updatePrice(isInCart, price, domElement, isLit, isCP = false) {
+function updatePrice(isInCart, price, domElement, isLit, isCP = false, isSLA = false) {
   let id = isInCart ? isInCart : '';
-  let newPrice = calculatePrice(price, id, isLit, isCP); 
+  if (isSLA) {
+    let lw = Number(_('rvas' + id).value);
+    let infill = _('suruseg' + id).value;
+    let scale = Number(_('scale' + id).value);
+    var newPrice = calcSLAPrice(Math.round(price * 2.1), lw, infill, scale);
+  } else {
+    var newPrice = calculatePrice(price, id, isLit, isCP); 
+  }
   domElement.innerHTML = newPrice;
   return newPrice;
+}
+
+function calcSLAPrice(p, lw, infill, scale) {
+  let multiplier = infill == 'Tömör' ? 1 : 0.8;
+  let fp = Math.round(p * (1 / (lw * 70) + 0.7142857142857143) * multiplier * scale);
+  return fp < 1000 ? MIN_PRICE : fp;
 }
 
 function manageDiscountTxt(newPrice) {
@@ -235,13 +257,13 @@ function manageDiscountTxt(newPrice) {
   }
 }
 
-function updateSpecs(e, price, isInCart = false, isLit = false, isCP = false) {
+function updateSpecs(e, price, isInCart = false, isLit = false, isCP = false, isSLA = false) {
   let value = Number(e.value);
   if (isLit) value = e.value;
   let domElement = getPriceHolder(isInCart);
   
-  var newPrice = updatePrice(isInCart, price, domElement, isLit, isCP);
-  updateTotPrice(isInCart, newPrice, price, isLit, isCP);
+  var newPrice = updatePrice(isInCart, price, domElement, isLit, isCP, isSLA);
+  updateTotPrice(isInCart, newPrice, price, isLit, isCP, isSLA);
 
   updateCartNum();
   //fbq('track', 'CustomizeProduct');
@@ -275,8 +297,10 @@ function buyItem(id) {
   let scale = _('scale').value;
   let fvas = _('fvas').value;
   let q = _('quantity').value;
+  let size = getModelSize();
 
-  window.location.href = `/buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale}&fvas=${fvas}&q=${q}`;
+  window.location.href =
+  `/buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale}&fvas=${fvas}&q=${q}&size=${size}&printMat=PLA&tech=FDM`;
   //fbq('track', 'InitiateCheckout');
 }
 

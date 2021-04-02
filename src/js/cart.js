@@ -41,7 +41,6 @@ function removeItem(tid) {
   }
 
   // Do not delete fix product files 
-  console.log(tid)
   if (extension) {
     let fileObj = {
       'fname': tid,
@@ -101,3 +100,4 @@ if (_('buyCart')) {
 
 // Set isFirstVisit cookie to false in order to avoid repeated items in cart
 setCookie('isVisited', 'yes', 365);
+localStorage.setItem('refresh', '');

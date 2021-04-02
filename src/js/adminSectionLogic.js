@@ -1,4 +1,6 @@
 const constants = require('./includes/constants.js');
+const addHours = require('./includes/addHours.js');
+const EUDateFormat = require('./includes/EUDateFormat.js');
 const PRINT_COLORS = constants.printColors;
 const HEX_ARR = constants.hexArr;
 
@@ -50,8 +52,9 @@ const buildAdminSection = (conn) => {
         let status = result[i].status;
         let shippingPrice = result[i].shipping_price;
         let cpFname = result[i].cp_fname;
-        let orderTime = result[i].order_time;
+        let orderTime = EUDateFormat(addHours(result[i].order_time, 2));
         let uid = result[i].uid;
+        let printTech = result[i].printTech;
 
         let name = result[i].customerName;
         let postalCode = result[i].postal_code;
@@ -81,7 +84,7 @@ const buildAdminSection = (conn) => {
         let printMat = result[i].printMat ? result[i].printMat : 'PLA';
         
         let isTransfer = 'utánvét';
-        if (result[0].is_transfer) {
+        if (Number(result[0].is_transfer)) {
           isTransfer = 'előre utalás';
         } else if (transactionID) {
           isTransfer = 'bankkártyás fizetés';
@@ -216,12 +219,25 @@ const buildAdminSection = (conn) => {
         `;
 
         if (!litSphere) {
+          let postfix = '%';
+          if (suruseg == 'Tömör' || suruseg == 'Üreges') {
+            postfix = '';
+          }
           output += `
               <div class="inBox"><b>Rvas:</b> ${rvas}mm</div>
-              <div class="inBox"><b>Sűrűség:</b> ${suruseg}%</div>
+              <div class="inBox"><b>Sűrűség:</b> ${suruseg}${postfix}</div>
               <div class="inBox"><b>Méretezés:</b> x${scale}</div>
               <div class="inBox"><b>Fvas:</b> ${fvas}mm</div>
+          `;
+
+          if (printTech != 'SLA') {
+            output += `
               <div class="inBox"><b>Anyag:</b> ${printMat}</div>
+            `;
+          }
+
+          output += `
+              <div class="inBox"><b>Technológia:</b> ${printTech}</div>
           `;
         } else {
           output += `

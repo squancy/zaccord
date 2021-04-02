@@ -2,11 +2,22 @@ const parseCookies = require('./includes/parseCookies.js');
 const calcPrice = require('./includes/calcPrice.js');
 const escapeVars = require('./includes/escapeVars.js');
 const calcLitPrice = require('./includes/calcLitPrice.js');
+const shouldAllowSLA = require('./includes/allowSLA.js');
+const calcSLAPrice = require('./includes/calcSLAPrice.js');
 const fs = require('fs');
 const path = require('path');
 const constants = require('./includes/constants.js');
 const PRINT_COLORS = constants.printColors;
 const PRINT_MATERIALS = constants.printMaterials;
+const EXCLUDED_MATERIALS = constants.excludedMaterials;
+const LAYER_WIDTH_VALUES = constants.layerWidthValues;
+const INFILL_VALUES = constants.infillValues;
+const LAYER_WIDTH_VALUES_SLA = constants.layerWidthValuesSLA;
+const INFILL_VALUES_SLA = constants.infillValuesSLA;
+const PRINT_TECHS = constants.printTechs;
+const LIT_FORMS = constants.litForms;
+const SCALE_VALUES = constants.scaleValues;
+const WALL_WIDTH_VALUES = constants.wallWidthValues;
 
 // Build cart page from cookies & validate them on server side
 const buildCartSection = (conn, req) => {
@@ -26,21 +37,30 @@ const buildCartSection = (conn, req) => {
     let cart = JSON.parse(cookies['cartItems']);
     let keys = Object.keys(cart).filter(prop => prop[0] != 'i');
     let queries = [];
+    let tidsArr = [];
     for (let key of keys) {
       let tid = key.replace('content_', '');
+      tidsArr.push(tid);
       let dbId = escapeVars(tid.split('_')[1]);
       let content = cart['content_' + tid]; 
 
       let rvas = content['rvas_' + tid];
-      let suruseg = content['suruseg_' + tid];
+      let suruseg = decodeURIComponent(content['suruseg_' + tid]);
       let color = content['color_' + tid];
       let scale = content['scale_' + tid];
       let fvas = content['fvas_' + tid];
       let quantity = content['quantity_' + tid];
       let printMat = content['printMat_' + tid];
+      let printTech = content['tech_' + tid];
+
+      //let isCP = printTech == 'FDM' || printTech == 'SLA';
+      let isSLA = printTech == 'SLA';
 
       // Get the item from db & make sure it exists
-      let isLit = false;
+      let isLit = content.hasOwnProperty('sphere_' + tid);
+      let isCP = tid.split('_').length > 2 && !isLit;
+      let isFixProd = !isLit && !isCP;
+      let allowSLA;
       let sqlQuery = new Promise((resolve, reject) => {
         conn.query("SELECT * FROM fix_products WHERE id = ? LIMIT 1", [dbId],
         function (err, result, fields) {
@@ -66,10 +86,10 @@ const buildCartSection = (conn, req) => {
             var imgUrl = 'printUploads/thumbnails/' + tid + '.png';
             var productName = 'Bérnyomtatott Termék';
             var price = Number(content['price_' + tid]);
+            allowSLA = shouldAllowSLA(fPath, scale);
 
           // Check if cookie item is a lithophane
           } else if (result.length === 0 && content.hasOwnProperty('sphere_' + tid)) {
-            isLit = true;
             let lithophaneFile = content['file_' + tid];
 
             // Make sure file exists
@@ -103,14 +123,26 @@ const buildCartSection = (conn, req) => {
           // Calculate the actual price of the product with all extras
           if (!isLit) {
             let cp = printMat ? printMat : false;
-            var actualPrice = calcPrice(price, rvas, suruseg, scale, fvas, cp);
-            var selQuan = `updateSpecs(this, ${price}, '${tid}')`;
+            if (printTech == 'SLA') {
+              var actualPrice = calcSLAPrice(Math.round(price * 2.1), rvas, suruseg, scale);
+            } else {
+              var actualPrice = calcPrice(price, rvas, suruseg, scale, fvas, cp);
+            }
+            if (isFixProd) {
+              var selQuan = `updateSpecs(this, ${price}, '${tid}')`;
+            } else if (isLit) {
+              var selQuan = `updateSpecs(this, ${price}, '${tid}', true)`;
+            } else if (printTech != 'SLA') {
+              var selQuan = `updateSpecs(this, ${price}, '${tid}', false, true)`;
+            } else {
+              var selQuan = `updateSpecs(this, ${price}, '${tid}', false, true, true)`;
+            }
           } else {
             var actualPrice = calcLitPrice(content['size_' + tid]);
             var selQuan = `updateSpecs(this, ${price}, '${tid}', true)`;
             let splitted = litSize.split('x');
 
-            // Calculate the ration of width and height of lithophane
+            // Calculate the ratio of width and height of lithophane
             var ratio = Math.min(Number(splitted[0]) / Number(splitted[1]), 
               Number(splitted[1]) / Number(splitted[0]));
 
@@ -138,60 +170,101 @@ const buildCartSection = (conn, req) => {
                 </div>
               </div>
 
-              <div class="flexDiv prodInfo">
-                <div>
+              <div class="flexDiv prodInfo" id="uniqueCont_${tid}">
+                <div id="unitPrice_${tid}">
                   <p>Egységár: <span id="priceHolder_${tid}">${actualPrice}</span> Ft</p>
                 </div>
           `;
-
+          
           if (!isLit) {
-            output += `
-                  <div>
-                    <p>
-                      Rétegvastagság:
-                      <select class="specSelect chItem" id="rvas${tid}"
-                        onchange="updateSpecs(this, ${price}, '${tid}', false, true)">
-            `;
-            
-            for (let vas of [0.12, 0.2, 0.28]) {
-              let selected = vas == rvas ? 'selected' : '';
-              output += `<option value="${vas}" ${selected}>${vas}mm</option>`;
-            }
-
-            output += `            
-                      </select>
-                    </p>
-                  </div>
-                  <div>
-                    <p>
-                      Sűrűség:
-                      <select class="specSelect chItem" id="suruseg${tid}"
-                        onchange="updateSpecs(this, ${price}, '${tid}', false, true)">
-                      <option value="10">10%</option>
-            `;
-
-            for (let i = 20; i <= 80; i += 20) {
-              let selected = i == suruseg ? 'selected' : '';
+            if (printTech != 'SLA') {
               output += `
-                <option value="${i}" ${selected}>${i}%</option>
+                    <div>
+                      <p>
+                        Rétegvastagság:
+                        <select class="specSelect chItem" id="rvas${tid}"
+                          onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP})">
+              `;
+              
+              for (let vas of LAYER_WIDTH_VALUES) {
+                let selected = vas == rvas ? 'selected' : '';
+                output += `<option value="${vas.toFixed(2)}" ${selected}>${vas.toFixed(2)}mm</option>`;
+              }
+
+              output += `            
+                        </select>
+                      </p>
+                    </div>
+                    <div>
+                      <p>
+                        Sűrűség:
+                        <select class="specSelect chItem" id="suruseg${tid}"
+                          onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP})">
+              `;
+
+              for (let i of INFILL_VALUES) {
+                let selected = i == suruseg ? 'selected' : '';
+                output += `
+                  <option value="${i}" ${selected}>${i}%</option>
+                `;
+              }
+
+              output += `
+                        </select>
+                      </p>
+                    </div>
+              `;
+            } else {
+              output += `
+                    <div>
+                      <p>
+                        Rétegvastagság:
+                        <select class="specSelect chItem" id="rvas${tid}"
+                          onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP}, true)">
+              `;
+              
+              for (let lw of LAYER_WIDTH_VALUES_SLA) {
+                let selected = lw == rvas ? 'selected' : '';
+                output += `<option value="${lw.toFixed(2)}" ${selected}>${lw.toFixed(2)}mm</option>`;
+              }
+
+              output += ` 
+                        </select>
+                      </p>
+                    </div>
+                    <div>
+                      <p>
+                        Sűrűség:
+                        <select class="specSelect chItem" id="suruseg${tid}"
+                          onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP}, true)">
+              `;
+
+              for (let i of INFILL_VALUES_SLA) {
+                let selected = i == suruseg ? 'selected' : '';
+                output += `
+                  <option value="${i}" ${selected}>${i}</option>
+                `;
+              }
+
+              output += `
+                        </select>
+                      </p>
+                    </div>
               `;
             }
 
             output += `
-                      </select>
-                    </p>
-                  </div>
-                  <div>
+                  <div id="scaleDiv_${tid}">
                     <p>
                       Méretezés:
                       <select class="specSelect chItem" id="scale${tid}"
-                        onchange="updateSpecs(this, ${price}, '${tid}', false, true)">
+                        onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP}, ${isSLA})">
             `;
 
-            for (let i = 0.7; i <= 1.3; i += 0.3) {
-              let selected = i == scale ? 'selected' : '';
+            for (let sc of SCALE_VALUES) {
+              let selected = sc == scale ? 'selected' : '';
               output += `
-                <option value="${i.toFixed(1)}" ${selected}>x${i.toFixed(1)}</option>
+                <option value="${sc.toFixed(1)}" ${selected}>x${sc.toFixed(1)}</option>
               `; 
             }
 
@@ -199,46 +272,51 @@ const buildCartSection = (conn, req) => {
                       </select>
                     </p>
                   </div>
+            `;
+
+            if (printTech != 'SLA') {
+              output += `
                   <div>
                     <p>
                       Falvastagság:
                       <select class="specSelect chItem" id="fvas${tid}"
-                        onchange="updateSpecs(this, ${price}, '${tid}', false, true)">
-            `;
+                        onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP})">
+              `;
 
-            for (let i = 0.8; i <= 2.4; i += 0.4) {
-              let selected = i.toFixed(1) == fvas ? 'selected' : '';
+              for (let ww of WALL_WIDTH_VALUES) {
+                let selected = ww.toFixed(1) == fvas ? 'selected' : '';
+                output += `
+                  <option value="${ww.toFixed(1)}" ${selected}>${ww.toFixed(1)}mm</option>
+                `; 
+              }
+
               output += `
-                <option value="${i.toFixed(1)}" ${selected}>${i.toFixed(1)}mm</option>
-              `; 
-            }
+                        </select>
+                      </p>
+                    </div>
+              `;
+              
+              if (isCP) {
+                output += `
+                  <div>
+                    <p>
+                      Nyomtatási Anyag:
+                      <select class="specSelect chItem" id="printMat${tid}"
+                        onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP})">
 
-            output += `
+                `;
+                
+                for (let pm of PRINT_MATERIALS) {
+                  let selected = pm == printMat ? 'selected' : '';
+                  output += `<option value="${pm}" ${selected}>${pm}</option>`;
+                }
+                
+                output += `
                       </select>
                     </p>
                   </div>
-            `;
-            
-            if (printMat) {
-              output += `
-                <div>
-                  <p>
-                    Nyomtatási Anyag:
-                    <select class="specSelect chItem" id="printMat${tid}"
-                      onchange="updateSpecs(this, ${price}, '${tid}', false, true)">
-
-              `;
-
-              for (let pm of PRINT_MATERIALS) {
-                let selected = pm == printMat ? 'selected' : '';
-                output += `<option value="${pm}" ${selected}>${pm}</option>`;
+                `;
               }
-              
-              output += `
-                    </select>
-                  </p>
-                </div>
-              `;
             }
           } else {
             output += `
@@ -249,7 +327,7 @@ const buildCartSection = (conn, req) => {
                       onchange="updateLit('sphere', 'sphere${tid}', '${tid}')">
             `;
 
-            for (let c of ['Domború', 'Homorú', 'Sima']) {
+            for (let c of LIT_FORMS) {
               let selected = decodeURIComponent(litSphere) == c ? 'selected' : '';
               output += `
                 <option value="${c}" ${selected}>${c}</option>
@@ -288,7 +366,7 @@ const buildCartSection = (conn, req) => {
           }
 
           output += `
-                <div>
+                <div id="colorDiv_${tid}">
                   <p> 
                     Szín:
                     <select class="specSelect chItem" id="color${tid}"
@@ -306,7 +384,7 @@ const buildCartSection = (conn, req) => {
                     </select>
                   </p>
                 </div>
-                <div>
+                <div id="quantityDiv_${tid}">
                   <p>
                     Mennyiség:
                     <select class="specSelect chItem" id="quantity${tid}"
@@ -326,6 +404,30 @@ const buildCartSection = (conn, req) => {
                 </div>
           `;
 
+          if (isCP) {
+            output += `
+                <div id="printTechDiv_${tid}">
+                  <p>
+                    Technológia:
+                    <select class="specSelect chItem" id="printTech${tid}"
+                      onchange="changeTech('${printTech}', '${tid}', ${price})">
+            `;
+
+            for (let tech of PRINT_TECHS) {
+              if (!allowSLA && tech == 'SLA') continue;
+              let selected = printTech == tech ? 'selected' : '';
+              output += `
+                <option value="${tech}" ${selected}>${tech}</option>
+              `;
+            }          
+
+            output += `
+                  </select>
+                </p>
+              </div>
+            `;
+          }
+
           output += `
               <div>
                 <p class="bold">Összesen: <span id="totpHolder_${tid}">
@@ -335,7 +437,7 @@ const buildCartSection = (conn, req) => {
             </div>
             <div class="clear"></div>
           </div>`;
-        resolve([output, quantity * actualPrice]);
+          resolve([output, quantity * actualPrice]);
         });
       });      
       queries.push(sqlQuery);
@@ -392,6 +494,15 @@ const buildCartSection = (conn, req) => {
       output += `
         <script type="text/javascript">
           let isLoggedIn = ${req.user.id ? true : false};
+          function attachHandlers() {
+            let tidsArr = Array.from('${tidsArr}'.split(','));
+            for (let id of tidsArr) {
+              if (document.getElementById('scale' + id)) {
+                document.getElementById('scale' + id).addEventListener('change', (e) => toggleTechAllowance(id));
+              }
+            }
+          }
+          attachHandlers();
         </script>
       `;
       resolve(output);

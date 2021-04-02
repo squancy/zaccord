@@ -1,4 +1,6 @@
 const genItem = require('./genItem.js');
+const addHours = require('./addHours.js');
+const EUDateFormat = require('./EUDateFormat.js');
 
 // Provide output for user orders
 const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => {
@@ -26,9 +28,8 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
 
       // Loop through items and build UI
       for (let i = 0; i < lim; i++) {
-        console.log(result, result[i], result.length)
         let itemID = result[i].item_id;
-        let orderTime = result[i].order_time;
+        let orderTime = EUDateFormat(addHours(result[i].order_time, 2));
         let prodURL = result[i].url;
         let imgURL = result[i].img_url;
         let price = result[i].fprice;
@@ -42,11 +43,22 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
         let quantity = result[i].quantity;
         let stat = Boolean(result[i].status);
         let paymentOption = Boolean(result[i].is_transfer);
+        let transID = result[i].transaction_id;
         let cpFname = result[i].cp_fname;
         let litSphere = result[i].lit_sphere;
         let litSize = result[i].lit_size;
         let litFname = result[i].lit_fname;
         let uniqueID = result[i].unique_id;
+        let tech = result[i].printTech;
+        
+        let finalPO;
+        if (transID) {
+          finalPO = 'bankkártyás fizetés';
+        } else if (paymentOption) {
+          finalPO = 'előre utalás';
+        } else {
+          finalPO = 'utánvét';
+        }
 
         /*
           If an order is a custom print item id is 0 and cp_fname is the name of the .stl
@@ -61,7 +73,7 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
           imgURL = 'printUploads/lithophanes/' + litFname;
         }
         
-        if (cpFname) name = 'Bérnyomtatás';
+        if (cpFname) name = 'Bérnyomtatott Termék';
         else if (litFname) name = 'Litofánia';
 
         let data = {
@@ -78,11 +90,12 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
           'fvas': fvas,
           'quantity': quantity,
           'stat': stat,
-          'paymentOption': paymentOption,
+          'finalPO': finalPO,
           'sphere': litSphere,
           'size': litSize,
           'file': litFname,
-          'uid': uniqueID
+          'uid': uniqueID,
+          'tech': tech
         };
         
         output += genItem(true, true, true, data, isLit, true);

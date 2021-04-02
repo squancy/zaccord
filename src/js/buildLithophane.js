@@ -71,7 +71,7 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
         A specifikációk megváltoztatása árváltozást vonhat maga után!
       </p>
 
-      <div class="specBox">
+      <div class="specBox" style="justify-content: center;">
         <button class="fillBtn btnCommon threeBros" id="buyLit">
           Vásárlás
         </button> 

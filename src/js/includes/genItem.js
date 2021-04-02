@@ -1,6 +1,7 @@
 // Generate an html box for an item
 function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, data,
   isLit = false, isUID = false, isCP = false) {
+  let printTech = data.tech;
   let output = `
     <div class="cartItemHolder">
       <div class="itemLeftCenter">
@@ -22,12 +23,14 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
       `;
       
   if (!isLit) {
+    let postfix = '%';
+    if (printTech == 'SLA') postfix = '';
     output += `
       <div>
         <p>Rétegvastagság: ${data.rvas}mm</p>
       </div>
       <div>
-        <p>Sűrűség: ${data.suruseg}%</p>
+        <p>Sűrűség: ${data.suruseg}${postfix}</p>
       </div>
     `;
   }
@@ -45,16 +48,29 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
       </div>
     `;
   }
-  
+
+  if (isCP) {
+    output += `
+      <div>
+        <p>Technológia: ${data.tech}</p>
+      </div>
+    `;
+  }
+
   if (!isLit) {
     output += `
       <div>
         <p>Méretezés: x${data.scale}</p>
       </div>
-      <div>
-        <p>Falvastagság: ${data.fvas}mm</p>
-      </div>
     `;
+
+    if (printTech != 'SLA') {
+      output += `
+        <div>
+          <p>Falvastagság: ${data.fvas}mm</p>
+        </div>
+      `;
+    }
   } else {
     output += `
       <div>
@@ -83,11 +99,10 @@ function genItem(isOrderTime = false, isStat = false, isPaymentOption = false, d
     `;
   }
 
-  if (isPaymentOption) {
-    let text = data.paymentOption ? 'előre utalás' : 'utánvétel';
+  if (data.finalPO) {
     output += `
       <div>
-        <p>Fizetési mód: ${text}</p>
+        <p>Fizetési mód: ${data.finalPO}</p>
       </div>
     `;
   }

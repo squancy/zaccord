@@ -55,7 +55,7 @@ if (_('box_0')) {
         extraPrice = 800 - (priceSum + Number(_('allp_' + i).innerText));
       }
       let moneyHandle = 0;
-      if (priceSum + Number(_('allp_' + i).innerText) > 15000) moneyHandle = -390;
+      //if (priceSum + Number(_('allp_' + i).innerText) > 15000) moneyHandle = -390;
       _('totp_' + i).innerText = priceSum + Number(_('allp_' + i).innerText) + sprices[i]
         + extraPrice + moneyHandle;
       priceSum = 0;

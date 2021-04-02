@@ -17,17 +17,6 @@ function produceShowcaseOutput(result, isDefault, i, isUneven = false, isBest = 
     var bgStyle = `style="background-image: url('/${imgUrl}')"`;
   }
 
-  /*
-  let stylePadding = '';
-  if (isUneven) {
-    if (i % 2 != 0) {
-      stylePadding = 'style="padding-right: 0;"';
-    } else {
-      stylePadding = 'style="padding-right: 5px;"';
-    }
-  }
-  */
-
   let tagID = id;
   if (isBest) {
     tagID = 'best_' + id;

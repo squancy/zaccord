@@ -1,35 +1,78 @@
 const constants = require('./constants.js');
 const PRINT_COLORS = constants.printColors;
 const PRINT_MATERIALS = constants.printMaterials;
+const LAYER_WIDTH_VALUES = constants.layerWidthValues;
+const INFILL_VALUES = constants.infillValues;
+const SCALE_VALUES = constants.scaleValues;
+const WALL_WIDTH_VALUES = constants.wallWidthValues;
+const LAYER_WIDTH_VALUES_SLA = constants.layerWidthValuesSLA;
+const INFILL_VALUES_SLA = constants.infillValuesSLA;
 
 // Generate a form where the user can change the item's parameters
 function genSpecs(price, size, isLit = false, isCP = false) {
   if (!isLit) {
     let output = `
       <hr class="hrStyle">
-        <div class="itemSpecifications">
+        <div class="itemSpecifications animate__animated" id="toggleDiv">
           <div class="specBox gotham">
-            <div>
+            <div id="rvasFDMBox">
               <div class="specTitle">Rétegvastagság</div>
               <select class="specSelect" id="rvas" onchange="updateSpecs(this, ${price}, false,
                 false, ${isCP})">
-                <option value="0.12">0.12mm</option>
-                <option value="0.20" selected>0.20mm</option>
-                <option value="0.28">0.28mm</option>
-              </select>
-            </div>
-
-            <div>
-              <div class="specTitle">Sűrűség</div>
-              <select class="specSelect" id="suruseg" onchange="updateSpecs(this, ${price},
-              false, false, ${isCP})">
-                <option value="10">10%</option>
     `;
 
-    for (let i = 20; i <= 80; i += 20) {
-      let selected = i == 20 ? 'selected' : '';
+    for (let lw of LAYER_WIDTH_VALUES) {
+      let selected = lw == 0.2 ? 'selected' : '';
       output += `
-        <option value="${i}" ${selected}>${i}%</option>
+        <option value="${lw.toFixed(2)}" ${selected}>${lw.toFixed(2)}mm</option>
+      `;
+    }
+
+    output += `
+              </select>
+            </div>
+            <div class="SLASpecs" id="rvasSLABox">
+              <div class="specTitle">Rétegvastagság</div>
+                <select class="specSelect" id="rvasSLA"
+                  onchange="updateSLASpecs('rvasSLA', 'rvas')">
+    `;
+
+    for (let lw of LAYER_WIDTH_VALUES_SLA) {
+      let selected = lw == 0.05 ? 'selected' : '';
+      output += `
+        <option value="${lw.toFixed(2)}" ${selected}>${lw.toFixed(2)}mm</option>
+      `; 
+    } 
+
+    output += `
+              </select>
+            </div>
+            <div class="SLASpecs" id="infillSLABox">
+              <div class="specTitle">Sűrűség</div>
+                <select class="specSelect" id="infillSLA"
+                  onchange="updateSLASpecs('infillSLA', 'suruseg')">
+    `;
+    
+    for (let infill of INFILL_VALUES_SLA) {
+      let selected = infill == 'Tömör' ? 'selected' : '';
+      output += `
+        <option value="${infill}" ${selected}>${infill}</option>
+      `;
+    }
+
+    output += `
+              </select>
+            </div>
+            <div id="surusegFDMBox">
+              <div class="specTitle trans">Sűrűség</div>
+                <select class="specSelect" id="suruseg" onchange="updateSpecs(this, ${price},
+                false, false, ${isCP})">
+    `;
+
+    for (let infill of INFILL_VALUES) {
+      let selected = infill == 20 ? 'selected' : '';
+      output += `
+        <option value="${infill}" ${selected}>${infill}%</option>
       `;
     }
 
@@ -59,10 +102,10 @@ function genSpecs(price, size, isLit = false, isCP = false) {
                 onchange="updateScale(this, ${price}, '${size}')">
     `;
 
-    for (let i = 0.7; i <= 1.3; i += 0.3) {
-      let selected = i == 1 ? 'selected' : '';
+    for (let scale of SCALE_VALUES) {
+      let selected = scale == 1 ? 'selected' : '';
       output += `
-        <option value="${i.toFixed(1)}" ${selected}>x${i.toFixed(1)}</option>
+        <option value="${scale.toFixed(1)}" ${selected}>x${scale.toFixed(1)}</option>
       `; 
     }
 
@@ -70,16 +113,16 @@ function genSpecs(price, size, isLit = false, isCP = false) {
               </select>
             </div>
 
-            <div>
+            <div id="fvasFDMBox">
               <div class="specTitle">Falvastagság</div>
               <select class="specSelect" id="fvas" onchange="updateSpecs(this, ${price}, false,
               false, ${isCP})">
     `;
 
-    for (let i = 0.8; i <= 2.4; i += 0.4) {
-      let selected = i.toFixed(2) == 1.2 ? 'selected' : '';
+    for (let ww of WALL_WIDTH_VALUES) {
+      let selected = ww.toFixed(2) == 1.2 ? 'selected' : '';
       output += `
-        <option value="${i.toFixed(1)}" ${selected}>${i.toFixed(1)}mm</option>
+        <option value="${ww.toFixed(1)}" ${selected}>${ww.toFixed(1)}mm</option>
       `;
     }
 
@@ -90,7 +133,7 @@ function genSpecs(price, size, isLit = false, isCP = false) {
 
     if (isCP) {
       output += `
-        <div>
+        <div id="printMatBox">
           <div class="specTitle">Nyomtatás Anyaga</div>
           <select class="specSelect" id="printMat" onchange="updateSpecs(this, ${price}, false,
             false, ${isCP})">
@@ -109,31 +152,31 @@ function genSpecs(price, size, isLit = false, isCP = false) {
     output += `
         </div>
       </div>
-    `;
+      `;
 
     return output;
   } else {
     let output = `
       <hr class="hrStyle">
-        <div class="itemSpecifications">
-          <div class="specBox gotham">
-            <div>
-              <div class="specTitle">Forma</div>
-              <select class="specSelect" id="sphere">
-                <option value="Domború" selected>Domború</option>
-                <option value="Homorú">Homorú</option>
-                <option value="Sima">Sima</option>
-              </select>
-            </div>
+      <div class="itemSpecifications">
+      <div class="specBox gotham">
+      <div>
+      <div class="specTitle">Forma</div>
+      <select class="specSelect" id="sphere">
+      <option value="Domború" selected>Domború</option>
+          <option value="Homorú">Homorú</option>
+          <option value="Sima">Sima</option>
+        </select>
+      </div>
 
-            <div>
-              <div class="specTitle">Méret</div>
-              <select class="specSelect" id="size" onchange="updateLit()">
-              </select>
-            </div>
-            <div>
-              <div class="specTitle">Szín</div>
-              <select class="specSelect" id="color">
+      <div>
+        <div class="specTitle">Méret</div>
+        <select class="specSelect" id="size" onchange="updateLit()">
+        </select>
+      </div>
+      <div>
+        <div class="specTitle">Szín</div>
+        <select class="specSelect" id="color">
     `;
 
     for (let c of PRINT_COLORS) {

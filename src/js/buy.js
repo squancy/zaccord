@@ -163,6 +163,7 @@ function submitOrder() {
   }
 
   if (uvet) data[0].payment = 'uvet';
+  else if (transfer) data[0].payment = 'transfer';
   else data[0].payment = 'credit';
   console.log(data);
 

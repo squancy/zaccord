@@ -186,6 +186,8 @@ function fileServerResponse(extension, req, res, fileResponse) {
     fileResponse('application/xml', req.url, res);
   } else if (extension === '.pdf') {
     fileResponse('application/pdf', req.url, res);
+  } else if (extension == '.txt') {
+    fileResponse('text/plain', req.url, res);
   }
 }
 

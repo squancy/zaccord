@@ -12,19 +12,23 @@ const SHIPPING_PRICE = 1290;
 const MONEY_HANDLE = 390;
 const LIT_FORMS = ['Domború', 'Homorú', 'Sima'];
 const LIT_PRICES = {'100': 1990, '150': 2990, '200': 3990};
-const PRINT_COLORS = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Arany', 'Piros', 'Sárga',
-  'Zölden Foszforeszkáló'];
-const HEX_ARR = ['#000000', '#ffffff', '#0089ff', '#7aff00', 'gold', 'red', '#FFFF00',
-  '#90EE90'];
+const PRINT_COLORS = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Arany', 'Piros', 'Citromsárga'];
+const HEX_ARR = ['#000000', '#ffffff', '#0089ff', '#7aff00', '#FFD700', '#FF0000', '#FFFF66',
+  '#FFFF00'];
 const LAYER_WIDTH_VALUES = [0.12, 0.2, 0.28];
 const INFILL_VALUES = [10];
-const PRINT_MATERIALS = ['PLA', 'ABS', 'PETG', 'TPU', 'UV resin (SLA)'];
+const PRINT_MATERIALS = ['PLA', 'ABS', 'PETG', 'TPU'];
+const LAYER_WIDTH_VALUES_SLA = [0.05, 0.07, 0.1];
+const INFILL_VALUES_SLA = ['Üreges', 'Tömör'];
+const PRINT_TECHS = ['FDM', 'SLA'];
+const MIN_PRICE = 800;
+
 for (let i = 20; i <= 80; i += 20) {
   INFILL_VALUES.push(i);
 }
 
-const SCALE_VALUES = [2];
-for (let i = 0.7; i <= 1.3; i += 0.3) {
+const SCALE_VALUES = [];
+for (let i = 0.5; i <= 1.0; i += 0.1) {
   SCALE_VALUES.push(Number(i.toFixed(2)));
 }
 
@@ -59,7 +63,6 @@ const COUNTRIES = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria
     "Koszovó",
     "Montenegró"];
 
-const MIN_PRICE = 800;
 const FIX_ADD_CPRINT = 500;
 const SUCCESS_RETURN = '{"success": true}';
 const OWNER_EMAILS = ['mark@pearscom.com', 'turcsanmate113@gmail.com'];
@@ -115,10 +118,11 @@ function smoothPrice(P) {
 */
 
 function calcCPPrice(W, H, D) {
-  // If price is above 5K Ft then free after work, otherwise add +1K Ft
+  // If price is above 5K Ft then free cleaning, otherwise add +1K Ft
   let price = Math.round(smoothPrice(((W / B) * (D / ((N / T) / De)) * (H / L)) / 60 * M));
-  if (price < 5000) return Math.round((price + 1000) * 0.5);
-  else return Math.round(price * 0.5);
+  if (price < 1000) return MIN_PRICE;
+  else if (price < 5000) return Math.round((price + 1000) * 0.5);
+  else return Math.round(price * 0.6);
 }
 
 // Get bounding box x, y, z coords
@@ -184,5 +188,8 @@ module.exports = {
   'emailUsername': EMAIL_USER_NAME,
   'emailPassword': EMAIL_PASSWORD,
   'paylikeID': PAYLIKE_ID,
-  'sessionSecret': SESSION_SECRET
+  'sessionSecret': SESSION_SECRET,
+  'layerWidthValuesSLA': LAYER_WIDTH_VALUES_SLA,
+  'infillValuesSLA': INFILL_VALUES_SLA,
+  'printTechs': PRINT_TECHS
 };

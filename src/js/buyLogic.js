@@ -9,6 +9,8 @@ const parseCookies = require('./includes/parseCookies.js');
 const formatOrderId = require('./includes/formatOrderId.js');
 const getPrice = require('./includes/modelPriceCalc/getPrice.js');
 const constants = require('./includes/constants.js');
+const shouldAllowSLA = require('./includes/allowSLA.js');
+const calcSLAPrice = require('./includes/calcSLAPrice.js');
 const NodeStl = require('node-stl');
 const fs = require('fs');
 const path = require('path');
@@ -110,7 +112,11 @@ const buildBuySection = (conn, paramObj, req) => {
             'scale': scale,
             'color': color,
             'fvas': fvas,
+            'printMat': 'PLA',
             'quantity': quantity,
+            'basePrice': price,
+            'prodType': 'fp',
+            'tech': 'FDM',
             'fixProduct': true
           };
 
@@ -136,25 +142,25 @@ const buildBuySection = (conn, paramObj, req) => {
       });
     }
 
-    function buildCPOutput(rvas, suruseg, color, scale, fvas, quantity, printMat, isFromCrt = false,
-        fname = false) {
+    function buildCPOutput(rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
+      tech, isFromCrt = false, fname = false) {
       return new Promise((resolve, reject) => {
-          // Validate params
-          if (!validateParams(paramObj)) {
-            reject('Hibás paraméter érték');
-            return;
-          }
+        // Validate params
+        if (!validateParams(paramObj)) {
+          reject('Hibás paraméter érték');
+          return;
+        }
 
-          // Validate files
-          if (!isFromCrt) {
-            var files = paramObj.files.split(',');
-          } else {
-            var files = [fname];
-          }
-          let finalPrice = 0;
-          let output = '';
-          let dataAll = [];
-          for (let i = 0; i < files.length; i++) {
+        // Validate files
+        if (!isFromCrt) {
+          var files = paramObj.files.split(',');
+        } else {
+          var files = [fname];
+        }
+        let finalPrice = 0;
+        let output = '';
+        let dataAll = [];
+        for (let i = 0; i < files.length; i++) {
           let file = files[i];
           let uid = Number(file.split('_')[0]);
 
@@ -177,10 +183,21 @@ const buildBuySection = (conn, paramObj, req) => {
             return;
           }
 
+          // If model is printed with SLA make sure that it's not too large
+          if (tech == 'SLA' && !shouldAllowSLA(filePath, scale)) {
+            reject('Az STL file túl nagy az SLA nyomtatáshoz'); 
+            return;
+          }
+
           // Get volume to calculate price
           let [W, H, D] = getCoords(filePath);
           let basePrice = calcCPPrice(W, H, D);
-          let price = calcPrice(basePrice, rvas, suruseg, scale, fvas, printMat);
+          let price;
+          if (tech == 'SLA') {
+            price = calcSLAPrice(basePrice * 2.1, rvas, suruseg, scale); 
+          } else {
+            price = calcPrice(basePrice, rvas, suruseg, scale, fvas, printMat);
+          }
           finalPrice += price * quantity;
 
           // Build image path for thumbnail
@@ -204,15 +221,19 @@ const buildBuySection = (conn, paramObj, req) => {
             'color': color,
             'fvas': fvas,
             'quantity': quantity,
-            'printMat': printMat,
+            'printMat': tech != 'SLA' ? printMat : 'UV resin',
+            'tech': tech,
+            'printSize': printSize,
+            'basePrice': basePrice,
+            'prodType': 'cp',
             'fixProduct': false
           };
 
           output += genItem(false, false, false, data, false, false, true);
           dataAll.push(data);
-          }
-          if (isFromCrt) dataAll = data;
-          resolve([output, finalPrice, dataAll]);
+        }
+        if (isFromCrt) dataAll = data;
+        resolve([output, finalPrice, dataAll]);
       });
     }
 
@@ -249,6 +270,8 @@ const buildBuySection = (conn, paramObj, req) => {
             'sphere': sphere,
             'file': file,
             'quantity': quantity,
+            'prodType': 'lit',
+            'tech': 'FDM',
             'fixProduct': false
           };
 
@@ -264,6 +287,7 @@ const buildBuySection = (conn, paramObj, req) => {
     }
 
     // Build the delivery info section
+    // NOTE: temporarily disable packet point shipping until lockdowns are resolved
     function buildLastSection(userID, shippingText, finalPrice, discountText) {
       return new Promise((resolve, reject) => {
         let output = `
@@ -279,8 +303,12 @@ const buildBuySection = (conn, paramObj, req) => {
             <input type="radio" name="radio2" id="toAddr">
             <span class="checkmark"></span>
           </label>
+
+          <p class="gotham align">
+            A jelenlegi COVID-19 korlátozások miatt csak házhozszállítás lehetséges
+          </p>
           
-          <label class="container" id="packetPointHolder">
+          <label class="container" id="packetPointHolder" style="display: none;">
             <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
             <div class="lh sel">
             A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
@@ -469,14 +497,18 @@ const buildBuySection = (conn, paramObj, req) => {
       let product = Number.isInteger(paramObj.product) ? Number(paramObj.product) :
         paramObj.product;
       if (product != 'lit') {
+        var tech = paramObj.tech;
         var rvas = Number(paramObj.rvas);
-        var suruseg = Number(paramObj.suruseg);
+        var suruseg = tech != 'SLA' ? Number(paramObj.suruseg) : paramObj.suruseg;
         var color = paramObj.color;
         var scale = Number(paramObj.scale);
         var fvas = Number(paramObj.fvas);
         var quantity = Number(paramObj.q);
         var printMat = paramObj.printMat;
-        var paramArr = [rvas, suruseg, color, scale, fvas, quantity, printMat];
+        var printSize = paramObj.size.split(',').map(x => Number(x));
+        var paramArr = [
+          rvas, suruseg, color, scale, fvas, quantity, printMat, printSize, tech
+        ];
       } else {
         var sphere = paramObj.sphere;
         var color = paramObj.color;
@@ -632,11 +664,13 @@ const buildBuySection = (conn, paramObj, req) => {
           var file = currentItem['file_' + id];
         } else {
           var isLit = false;
+          var tech = currentItem['tech_' + id];
           var rvas = Number(currentItem['rvas_' + id]);
-          var suruseg = Number(currentItem['suruseg_' + id]);
+          var suruseg = tech != 'SLA' ? Number(currentItem['suruseg_' + id]) : currentItem['suruseg_' + id];
           var scale = Number(currentItem['scale_' + id]);
           var fvas = Number(currentItem['fvas_' + id]);
           var printMat = currentItem['printMat_' + id];
+          var printSize = currentItem['printMat_' + id].split(',').map(x => Number(x));
         }
 
         let color = decodeURIComponent(currentItem['color_' + id]);
@@ -646,7 +680,8 @@ const buildBuySection = (conn, paramObj, req) => {
         let paramArr = [itemID, rvas, suruseg, color, scale, fvas, quantity];
         if (id.split('_').length > 2 && !isLit) {
           isfcp = true;
-          let paramArr = [rvas, suruseg, color, scale, fvas, quantity, printMat];
+          let paramArr = [rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
+            tech];
           var itemQuery = buildCPOutput(...paramArr, true, id);
         } else if (isLit) {
           let paramArr = [sphere, color, size, quantity, file];

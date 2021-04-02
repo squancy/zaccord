@@ -96,6 +96,58 @@ input[type=number] {
   background-image: url('../images/prot5.jpg');
 }
 
+.fdmOrSla {
+  border-radius: 50px;
+  box-shadow: 7px 8px 15px 0 rgb(0 0 0 / 20%);
+  margin: 20px;
+}
+
+.SLASpecs {
+  display: none;
+}
+
+.fdmChoice, .slaChoice {
+  width: 50%;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.fdmChoice {
+  border-radius: 50px 0 0 50px;
+}
+
+.slaChoice {
+  border-radius: 0 50px 50px 0;
+}
+
+.techChosen {
+  color: white;
+  background-color: #4285f4;
+}
+
+.techChosen:hover {
+  background-color: #0f6aff;
+}
+
+.techOther {
+  background-color: white;
+  color: black;
+}
+
+.techOther:hover {
+  background-color: #f3f3f3;
+}
+
+.slaDisabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background-color: #e4e4e4;
+}
+
+.slaDisabled:hover {
+  background-color: #e4e4e4;
+}
+
 .wideShowcase {
   width: 100%;
   position: relative;
@@ -278,7 +330,7 @@ input[type=number] {
   height: 100%;
   top: 0;
   left: 0;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.4);
   border-radius: 30px;
 }
 
@@ -699,6 +751,14 @@ select:hover {
 
 #removeMargin {
   margin-top: 2px;
+}
+
+.font34 {
+  font-size: 34px;
+}
+
+.font28 {
+  font-size: 28px;
 }
 
 .font26 {
@@ -1152,30 +1212,21 @@ footer > div > div a:hover {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  -webkit-box-pack: center;
-      -ms-flex-pack: center;
-          justify-content: center;
-  -ms-flex-wrap: wrap;
-      flex-wrap: wrap;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
+  flex-direction: row;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
 }
 
 .specBox > div {
   width: calc(33.333% - 20px);
-  margin-right: 20px;
   margin-bottom: 20px;
 }
 
-
+/*
 .specBox > div:nth-child(3n) {
   margin-right: 0;
 }
+*/
 
 .specBox > div > select{
   width: 100%;
@@ -1753,7 +1804,11 @@ input, select {
 
 @media only screen and (max-width: 1000px) {
   .mainText {
-    font-size: 32px;
+    font-size: 34px;
+  }
+
+  .font34 {
+    font-size: 30px;
   }
 }
 
@@ -2066,7 +2121,7 @@ input, select {
     display: none;
   }
 
-  .mainText, .mainTitle, .ffprot {
+  .mainTitle, .ffprot {
     font-size: 24px;
   }
 

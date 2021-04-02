@@ -135,3 +135,10 @@ _('size').addEventListener('change', () => updateCookie('size'));
 _('color').addEventListener('change', () => updateCookie('color'));
 _('plus').addEventListener('mouseup', () => updateCookie('quantity', 1));
 _('minus').addEventListener('mouseup', () => updateCookie('quantity', -1));
+
+function goToURL(url) {
+  window.location.href = url;
+}
+
+_('toCart').addEventListener('click', (e) => goToURL('/cart'));
+_('newFile').addEventListener('click', (e) => goToURL('/print'));

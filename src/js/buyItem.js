@@ -15,11 +15,18 @@ const userRegister = require('./registerLogic.js');
 const formatOrderId = require('./includes/formatOrderId.js');
 const sendOwnerEmails = require('./includes/sendOwnerEmails.js');
 const handlePaylike = require('./includes/handlePaylike.js');
+const shouldAllowSLA = require('./includes/allowSLA.js');
+const calcSLAPrice = require('./includes/calcSLAPrice.js');
+const calcLitPrice = require('./includes/calcLitPrice.js');
+const validatePrices = require('./includes/validatePrices.js');
+const path = require('path');
 
 // Shipping and money handle prices constants are used throughout the page
 const SHIPPING_PRICE = constants.shippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
 const COUNTRIES = constants.countries;
+
+const PRINT_MATERIALS = constants.printMaterials;
 
 // Validate order on server side & push to db
 const buyItem = (conn, dDataArr, req, res, userSession) => {
@@ -151,9 +158,14 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     function movePurchase() {
       return new Promise((resolve, reject) => {
         let commonDate = new Date().toMysqlFormat();
-
+        
+        // Validate prices
         for (let d of dDataArr) {
-          localFinalPrice += d.price * d.quantity;
+          if (!validatePrices(d)) {
+            return reject('Hibás ár');
+          }
+          let p = d.price;
+          localFinalPrice += p * d.quantity;
         }
 
         // Give discount for 15000 Ft < purchases and also an extra price for 800 Ft > purchases
@@ -189,10 +201,14 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
         } else if (deliveryType == 'packetPoint' && (!packetID || !packetName || !packetZipcode
           || !packetCity || !packetAddress)) {
           reject('Hiányzó csomagpont adatok');
-          return;          
+          return; 
+        // TODO: temporarily disable packet point delivery until lockdows are resolved
+        } else if (deliveryType == 'packetPoint') {
+          reject('A COVID-19 miatt jelenleg csak házhozszállítás választható');
+          return;
         }
 
-        console.log('huuuu')
+        console.log('huuuu');
         
         let cnt = 0;
         for (let formData of dDataArr) {
@@ -207,6 +223,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           let quantity = formData.quantity;
           var orderID = formData.orderID;
           let fixProduct = Number(Boolean(formData.fixProduct));
+          let printSize = formData.printSize ? formData.printSize : null;
+          let printTech = formData.tech;
 
           // Order id formatting is currently not used: See js/buyLogic.js why
           // formatOrderId(orderID)
@@ -228,6 +246,12 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           // Check validity of order ID
           } else if (orderID.length !== 4) {
             reject('Hibás utalási azonosító');
+            return;
+          // Make sure SLA printing can be only applied to smaller models
+          } else if (!fixProduct && printTech == 'SLA' &&
+            !shouldAllowSLA(path.join(__dirname.replace(path.join('src', 'js'), ''),
+            'printUploads', formData.itemID + '.stl'))) {
+            reject('SLA nyomtatáshoz a maximális méret 115mm x 65mm x 150mm');
             return;
           // Validate lithophane parameters
           } else if (isLit) {
@@ -273,7 +297,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
               }
 
               let iQuery = `
-                INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, printMat, fvas,
+                INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, printMat,
+                  printTech, fvas,
                   lit_sphere, lit_size, lit_fname,
                   quantity, is_transfer, transfer_id, transaction_id, is_fix_prod, status, shipping_price,
                   cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
@@ -282,7 +307,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
                   order_time)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               `;
 
               // Decide if product is a custom print (attach filename) or fixed product
@@ -300,7 +325,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
 
               let valueArr = [
                 UID, itemID, price, String(rvas), String(suruseg),
-                String(scale), color, printMat, String(fvas), sphere, size, file, quantity, isTrans, 
+                String(scale), color, printMat, printTech, String(fvas), sphere, size, file, quantity, isTrans, 
                 transID, transactionID, fixProduct, 0,
                 Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
                 sameBillingAddr, normalCompname, normalCompnum, billingName, billingCountry,
@@ -408,7 +433,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
               SET name = ?, postal_code = ?, city = ?, address = ?, mobile = ?, nl_email = NULL,
               order_id = NULL, date = NOW() WHERE uid = ?
             `;
-            var deliveryArr = [name, pcode, city, address, mobile, nlEmail, UID];
+            var deliveryArr = [name, pcode, city, address, mobile, UID];
           } else {
             var dQuery = `
               INSERT INTO delivery_data (uid, name, postal_code, city, address, mobile,

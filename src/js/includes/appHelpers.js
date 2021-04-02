@@ -20,7 +20,7 @@ const fs = require('fs');
 
 function validateParams(formData) {
   // Validates prototype parameters
-  if (!formData.email || !formData.name || !formData.tel) {
+  if (!formData.email || !formData.name || !formData.tel || !formData.message) {
     return 'Kérlek tölts ki minden mezőt';
   } else if (!validateEmail.validate(formData.email)) {
     return 'Kérlek valós e-mailt adj meg';
