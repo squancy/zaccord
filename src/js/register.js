@@ -56,16 +56,17 @@ _('submitBtn').addEventListener('click', function validateForm(e) {
         // Change header to logged in
         _('register').innerText = 'Fiók';
         _('register').href = '/account';
-        _('login').innerText = 'Kijelentkezés';
-        _('login').href = '/logout';
+        _('login').innerText = 'Prototípusgyártás';
+        _('login').href = '/prototype';
 
         // Update highlighted icon color
         if (window.matchMedia("(max-width: 768px)").matches) {
-          document.querySelectorAll('.hideSeek > a > img')[2].src = '/images/icons/signup.png';
+          document.querySelectorAll('.hideSeek > a > img')[2].src =
+            '/images/icons/protBlack.svg';
         } else {
           _('register').style.color = '#000';
         }
-        fbq('track', 'CompleteRegistration');
+        //fbq('track', 'CompleteRegistration');
       }
     }).catch(err => {
       // Something unexpected happened, report error

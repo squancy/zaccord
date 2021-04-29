@@ -61,13 +61,15 @@ const buildCustomPrint = (conn, userID, filePaths) => {
     if (isMoreFiles) {
       extraMarginDown = '0px';
     }
-
     
     for (let i = 0; i < filePaths.length; i++) {
       let path = filePaths[i];
-      let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/mm^3 density
+      let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/cm^3 density
       let volume = (stl.volume).toFixed(2); // cm^3
       let weight = (stl.weight).toFixed(2); // gramm
+      console.log(weight)
+      let area = stl.area;
+      console.log(area);
       totVolume += Number(volume);
       let [W, H, D] = getCoords(path);
       let boxVolume = stl.boundingBox.reduce((a, c) => a * c);
@@ -78,7 +80,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
 
       if (allowSLA) allowSLA = shouldAllowSLA(stl.boundingBox);
 
-      let basePrice = calcCPPrice(W, H, D);
+      let basePrice = calcCPPrice(volume, area / 100);
       let subpriceText = '';
       if (isMoreFiles) {
         subpriceText = `

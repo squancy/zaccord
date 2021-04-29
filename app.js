@@ -32,6 +32,7 @@ const sendOpinion = require('./src/js/sendOpinion.js');
 const delCartFile = require('./src/js/delCartFile.js');
 const buildReferencePage = require('./src/js/referenceLogic.js');
 const buildRefImage = require('./src/js/buildRefImage.js');
+const generateInvoice = require('./src/js/includes/generateInvoice.js');
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -382,6 +383,17 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       let formData = JSON.parse(body);
       returnToClient(forgotPassword, [conn, formData.email], null, res, successReturn);
+    });
+  } else if (req.url === '/genInvoice' && req.method.toLowerCase() === 'post') {
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      returnToClient(generateInvoice, [conn, formData], null, res, successReturn);
     });
   } else if (req.url === '/moreOrders' && req.method.toLowerCase() === 'post') {
     // Make sure user is logged in

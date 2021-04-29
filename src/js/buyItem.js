@@ -1,5 +1,6 @@
 const validateEmail = require('email-validator');
 const randomstring = require('randomstring');
+const NodeStl = require('node-stl');
 const userExists = require('./includes/userExists.js');
 const itemExists = require('./includes/itemExists.js');
 const calcPrice = require('./includes/calcPrice.js');
@@ -19,13 +20,15 @@ const shouldAllowSLA = require('./includes/allowSLA.js');
 const calcSLAPrice = require('./includes/calcSLAPrice.js');
 const calcLitPrice = require('./includes/calcLitPrice.js');
 const validatePrices = require('./includes/validatePrices.js');
+const getFPVolume = require('./includes/getFPVolume.js');
+const getPackageDimensions = require('./includes/getPackageDimensions.js');
 const path = require('path');
+const ExcelJS = require('exceljs');
 
 // Shipping and money handle prices constants are used throughout the page
 const SHIPPING_PRICE = constants.shippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
 const COUNTRIES = constants.countries;
-
 const PRINT_MATERIALS = constants.printMaterials;
 
 // Validate order on server side & push to db
@@ -49,6 +52,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let emailTotPrice = dDataArr[0].emailTotPrice;
     let emailOutput = dDataArr[0].emailOutput;
     let nlEmail = dDataArr[0].nlEmail;
+    let comment = dDataArr[0].comment;
+    let itemVolumes = [];
+    let itemSizes = [];
+    let fixProdPromises = [];
 
     console.log(dDataArr);
 
@@ -179,6 +186,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           return;
         }
 
+        let priceWithoutDiscount = localFinalPrice; 
+
         if (!name || !city || !address || !mobile || !pcode || !payment) {
           reject('Hiányzó szállítási információ'); 
           return;
@@ -189,8 +198,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Hibás irányítószám'); 
           return;
         // Make sure there is a valid shipping price
-        } else if ((finalPrice <= 15000 && shippingPrice != SHIPPING_PRICE)
-          || (finalPrice > 15000 && shippingPrice != 0)) {
+        } else if ((priceWithoutDiscount <= 15000 && shippingPrice != SHIPPING_PRICE)
+          || (priceWithoutDiscount > 15000 && shippingPrice != 0)) {
           reject('Hibás szállítási ár');
           return;
         // Make sure delivery type is valid
@@ -202,10 +211,6 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           || !packetCity || !packetAddress)) {
           reject('Hiányzó csomagpont adatok');
           return; 
-        // TODO: temporarily disable packet point delivery until lockdows are resolved
-        } else if (deliveryType == 'packetPoint') {
-          reject('A COVID-19 miatt jelenleg csak házhozszállítás választható');
-          return;
         }
 
         console.log('huuuu');
@@ -225,6 +230,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           let fixProduct = Number(Boolean(formData.fixProduct));
           let printSize = formData.printSize ? formData.printSize : null;
           let printTech = formData.tech;
+          let prodType = formData.prodType;
 
           // Order id formatting is currently not used: See js/buyLogic.js why
           // formatOrderId(orderID)
@@ -234,6 +240,28 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           let sphere = formData.sphere ? formData.sphere : '';
           let size = formData.size ? formData.size : '';
           let file = formData.file ? formData.file : '';
+          
+          if (prodType == 'lit') {
+            let sizeArr = size.split('x').map(x => Number(x));
+            itemVolumes.push(sizeArr.reduce((x, y) => x * y) * quantity);
+            itemSizes.push(sizeArr); 
+          } else if (prodType == 'cp') {
+            let pathCP = path.join(__dirname.replace(path.join('src', 'js'), ''),
+              'printUploads', itemID + '.stl');
+            let stl = new NodeStl(pathCP, {density: 1.27}); // PLA has 1.27 g/mm^3 density
+            itemVolumes.push(stl.boundingBox.reduce((x, y) => x * y) * scale * quantity);
+            itemSizes.push(stl.boundingBox); 
+          } else {
+            fixProdPromises.push(new Promise((resolve, reject) => {
+              getFPVolume(conn, itemID).then(v => {
+                resolve([v[0] * scale * quantity, v[1]]);
+              }).catch(err => {
+                console.log(err);
+                reject('Hiba történt a fix termék térfogat lekérése közben', err);
+                return;
+              });
+            }));
+          }
 
           // Check the validity of parameters
           if (!validateParams(formData) && !isLit) {
@@ -305,9 +333,10 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   normal_compname, normal_compnum,
                   billing_name, billing_country, billing_city,
                   billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
+                  comment,
                   order_time)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               `;
 
               // Decide if product is a custom print (attach filename) or fixed product
@@ -329,8 +358,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 transID, transactionID, fixProduct, 0,
                 Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
                 sameBillingAddr, normalCompname, normalCompnum, billingName, billingCountry,
-                billingCity, billingPcode, billingAddress, billingCompname, billingCompnum, 
-                commonDate
+                billingCity, billingPcode, billingAddress, billingCompname, billingCompnum,
+                comment, commonDate
               ];
               
               if (payment == 'uvet') {
@@ -536,6 +565,41 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 let sj = 'Dől a zsé, jönnek a rendelők! - Azonosító: ' + uniqueID;
                 let cnt = '<p style="font-size: 18px;">Új rendelés érkezett!</p>';
                 //sendOwnerEmails(sj, cnt);
+
+                // Also record user & order credentials in an excel spreadsheet
+                Promise.all(fixProdPromises).then(v => {
+                  for (let el of v) {
+                    itemVolumes.push(el[0]);
+                    itemSizes.push(el[1]);
+                  }
+
+                  const workbook = new ExcelJS.Workbook();
+                  workbook.creator = 'Zaccord';
+                  workbook.lastModifiedBy = 'Zaccord';
+                  workbook.modified = new Date();
+                  workbook.xlsx.readFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx')).then(w => {
+                    let packageDimensions = getPackageDimensions(itemVolumes, itemSizes);
+                    let amount;
+                    if (payment == 'uvet' && priceWithoutDiscount > 15000) {
+                      amount = finalPrice + MONEY_HANDLE;
+                    } else if (payment == 'uvet') {
+                      amount = finalPrice + SHIPPING_PRICE + MONEY_HANDLE;
+                    } else {
+                      amount = 0;
+                    }
+                    let rowContent = [
+                      name, normalCompname, pcode, city, address, mobile, email, 'Alkatrészek',
+                      ...packageDimensions, 0.5, '', amount
+                    ];
+                    let worksheet = workbook.getWorksheet('Shipping');
+                    worksheet.addRow(rowContent, 'i');
+                    return workbook.xlsx.writeFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx'));
+                  });
+                }).catch(err => {
+                  console.log(err);
+                  reject('Hiba történt, kérlek próbáld újra');
+                  return;
+                });
 
                 console.log('last part')
                 

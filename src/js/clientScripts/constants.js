@@ -23,4 +23,4 @@ for (let i = 0.8; i <= 2.4; i += 0.4) {
 }
 
 const PRINT_MATERIALS = ['PLA', 'ABS', 'PETG', 'TPU'];
-const MIN_PRICE = 800;
+const MIN_PRICE = 990;

@@ -51,7 +51,7 @@ const buildBuySection = (conn, paramObj, req) => {
     // Calc parameters in connection with final price, discount, shipping...
     function calcPrices(price) {
       // Add 3% discount if order value is above 15000 Ft & free shipping
-      // If product price is below 15000 Ft there is an extra 1450Ft shipping cost
+      // If product price is below 15000 Ft there is an extra 1290 Ft shipping cost
       let discount = 1;
       let discountText = '';
 
@@ -190,8 +190,8 @@ const buildBuySection = (conn, paramObj, req) => {
           }
 
           // Get volume to calculate price
-          let [W, H, D] = getCoords(filePath);
-          let basePrice = calcCPPrice(W, H, D);
+          let [vol, area] = getCoords(filePath);
+          let basePrice = calcCPPrice(vol, area);
           let price;
           if (tech == 'SLA') {
             price = calcSLAPrice(basePrice * 2.1, rvas, suruseg, scale); 
@@ -304,11 +304,7 @@ const buildBuySection = (conn, paramObj, req) => {
             <span class="checkmark"></span>
           </label>
 
-          <p class="gotham align">
-            A jelenlegi COVID-19 korlátozások miatt csak házhozszállítás lehetséges
-          </p>
-          
-          <label class="container" id="packetPointHolder" style="display: none;">
+          <label class="container" id="packetPointHolder">
             <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
             <div class="lh sel">
             A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
@@ -336,8 +332,9 @@ const buildBuySection = (conn, paramObj, req) => {
           charge = 800 - finalPrice;
           extraCharge = `<span>(+${charge} Ft felár)</span>`;
         }
-
-        if (finalPrice < 15000) charge += SHIPPING_PRICE;
+        
+        console.log(finalPrice, discountText)
+        if (discountText != '(3% kedvezmény)') charge += SHIPPING_PRICE;
 
         genDelivery(conn, userID, !!userID).then(result => {
           output += result;
@@ -362,6 +359,10 @@ const buildBuySection = (conn, paramObj, req) => {
                 data-status="close">
               </div>
             </div>
+
+            <textarea placeholder="Megjegyzés a rendeléshez (nem kötelező)" id="comment" class="dFormField"
+              style="width: 50%; height: 80px; margin: 0 auto; display: block; margin-top:
+              10px;"></textarea>
 
             <p class="blueHead" style="font-size: 24px;">
               4. Válassz Fizetési Módot
@@ -416,7 +417,9 @@ const buildBuySection = (conn, paramObj, req) => {
             <label class="container trans" id="paylikeCont">
               <div style="padding-bottom: 0;">Bankkártyás fizetés</div>
               <div class="lh sel">
-                Visa és Mastercard bankkártyával való fizetés a Paylike rendszerén keresztül. 
+                Visa és Mastercard bankkártyával való fizetés a Paylike rendszerén
+                keresztül.
+                Az összeg csak a megrendelés után lesz levéve a kártyáról.
                 <span id="plInfoHolder">
                 </span>
               </div>
@@ -432,6 +435,8 @@ const buildBuySection = (conn, paramObj, req) => {
                 Kedvezményezett neve: <span class="blue">Turcsán Edit</span><br>
                 Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
                 <span class="blue">${orderIDDisplay}</span>
+                <br>
+                A termékek nyomtatását csak az összeg megérkezése után kezdjük el.
               </div>
               <input type="radio" name="radio" id="transfer">
               <span class="checkmark"></span>
@@ -710,13 +715,15 @@ const buildBuySection = (conn, paramObj, req) => {
      
         // Get shipping price & build delivery section
         let discount, dText, shopPrice, sText;
-        if (finalPrice > 15000) {
-          finalPrice *= 0.97;
-        }
         
         let actualShippingPrice = (finalPrice > 15000) ? 0 : SHIPPING_PRICE;
 
         [discount, dText, shopPrice, sText] = calcPrices(finalPrice);
+
+        if (finalPrice > 15000) {
+          finalPrice *= 0.97;
+        }
+
         buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
           output += lastOutput;
 

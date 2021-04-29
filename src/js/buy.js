@@ -49,6 +49,7 @@ function submitOrder() {
   let toAddr = _('toAddr').checked;
   let packetPoint = _('packetPoint').checked;
   let isCompNormal = _('compNormal').checked;
+  let comment = _('comment').value;
 
   let buyAsComp = _('buyAsComp') ? _('buyAsComp').checked : null;
   if (_('billingName')) {
@@ -155,6 +156,7 @@ function submitOrder() {
 
   data[0].normalCompname = normalCompname;
   data[0].normalCompnum = normalCompnum;
+  data[0].comment = comment;
 
   if (typeof isLit !== 'undefined') {
     data[0].isLit = true;
@@ -255,24 +257,25 @@ let compAdded = false;
 // Toggle 'different billing address' form
 _('diffBilling').addEventListener('click', function toggleForm(e) { 
   if (this.getAttribute('data-status') != 'close') {
+    console.log('up')
     _('diffBilling').innerText = 'Megegyező számlázási cím';
     _('billingForm').style.display = 'flex';
     if (_('bac')) _('bac').style.display = 'block';
     _('diffBilling').classList = `
-    btnCommon fillBtn pad centr animate__animated animate__fadeIn
+      btnCommon fillBtn pad centr animate__animated animate__fadeIn
     `;
 
     _('billingForm').innerHTML = `
-    <input type="text" class="dFormField" id="billingName" placeholder="Név"> 
+      <input type="text" class="dFormField" id="billingName" placeholder="Név"> 
     `; 
 
     _('billingHolder').classList = `animate__animated animate__fadeIn`;
 
     let res = '<select id="billingCountry" class="dFormField" style="margin-top: 0;">';
     for (let i = 0; i < countries.length; i++) {
-    let selected = '';
-    if (countries[i] === 'Magyarország') selected = 'selected';
-    res += `<option value="${countries[i]}" ${selected}>${countries[i]}</option>`;
+      let selected = '';
+      if (countries[i] === 'Magyarország') selected = 'selected';
+      res += `<option value="${countries[i]}" ${selected}>${countries[i]}</option>`;
     }
 
     res += '</section>';
@@ -281,7 +284,7 @@ _('diffBilling').addEventListener('click', function toggleForm(e) {
       <input type="text" class="dFormField" id="billingCity" placeholder="Város"> 
       <input type="text" class="dFormField" id="billingAddress"
       placeholder="Cím (hsz., em., ajtó)"> 
-      `;
+    `;
 
     if (!compAdded) {
       _('billingHolder').innerHTML += `
@@ -314,7 +317,7 @@ _('diffBilling').addEventListener('click', function toggleForm(e) {
         if (_('bac')) {
           _('bac').style.display = 'none';
           _('buyAsComp').checked = false;
-          toggleStates['billing'] = !toggleStates['billing'];
+          toggleStates['billing'] = false;
         }
       }
     });
@@ -366,14 +369,12 @@ let isUvetAdded = false;
 // If payment option is not transfer then count an extra price
 function handleUvet(e, isUvet) {
   // Avoid click propagation on label
-  if (e.target.tagName === 'DIV') {
-    if (isUvet && !isUvetAdded) {
-      _('fPrice').innerHTML = Number(_('fPrice').innerHTML) + MONEY_HANDLE;
-      isUvetAdded = true;
-    } else if (isUvetAdded) {
-      _('fPrice').innerHTML = Number(_('fPrice').innerHTML) - MONEY_HANDLE;
-      isUvetAdded = false;
-    }
+  if (isUvet && !isUvetAdded) {
+    _('fPrice').innerHTML = Number(_('fPrice').innerHTML) + MONEY_HANDLE;
+    isUvetAdded = true;
+  } else if (isUvetAdded && !isUvet) {
+    _('fPrice').innerHTML = Number(_('fPrice').innerHTML) - MONEY_HANDLE;
+    isUvetAdded = false;
   }
 }
 

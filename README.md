@@ -53,11 +53,11 @@ chance to join our team and work with us.
 
 ## Setting up the project
 After cloning the repository & installing Node.js create the database by importing `database.sql` to MySQL.<br>
-In `src/js/connectDb.js` configure the parameters for connecting to the database.<br>
+In `src/js/includes/connConstants.js` configure the parameters for connecting to the database.<br>
+If you want to use all features you should configure `src/js/includes/constants.js` according
+to your needs.<br>
 To install the dependencies run `npm install`.<br>
 To start the project run `node app.js` and the site should be up on port 5000.<br>
-If you also want to make the e-mail sending service work you will need to edit the connection parameters to your server in `src/js/includes/sendEmail.js`.<br>
-You may also want to edit the secret for sessions in `src/js/includes/createSession.js`.
 
 ## Contact
 If you have any questions drop me with an e-mail at <a href="mailto:mark@pearscom.com">mark@pearscom.com</a>.

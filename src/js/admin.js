@@ -163,3 +163,33 @@ function jumpToOrder() {
   if (CURRENT_URL.includes('#')) hashtag = '';
   window.location.href = CURRENT_URL + hashtag + searchValue;
 }
+
+function generateInvoice(ID) {
+  let data = {
+    uniqueID: ID
+  };
+
+  fetch('/genInvoice', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(msg => {
+    if (msg.success) {
+      _('invGen_' + ID).innerHTML = 'siker';
+    } else {
+      _('invGen_' + ID).innerHTML = 'úú ezt nagyon elbasztam';
+    }
+  });
+}
+
+function markAll() {
+  let i = 0;
+  while (_('ch_' + i)) {
+    if (!_('ch_' + i).checked) {
+      $("#ch_" + i).click(); 
+    }
+    i++;
+  }
+}

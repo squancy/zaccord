@@ -211,11 +211,11 @@ function calculatePrice(price, id = '', isLit, isCP) {
         multiplier = 1.814;
       } 
       let fp = Math.round(nPrice * multiplier); 
-      return fp < 1000 ? MIN_PRICE : fp;
+      return fp < MIN_PRICE ? MIN_PRICE : fp;
     }
 
     let fp = Math.round(nPrice); 
-    return fp < 1000 ? MIN_PRICE : fp;
+    return fp < MIN_PRICE ? MIN_PRICE : fp;
   } else {
     return calcLitPrice(_('size' + id).value); 
   }
@@ -246,7 +246,7 @@ function updatePrice(isInCart, price, domElement, isLit, isCP = false, isSLA = f
 function calcSLAPrice(p, lw, infill, scale) {
   let multiplier = infill == 'Tömör' ? 1 : 0.8;
   let fp = Math.round(p * (1 / (lw * 70) + 0.7142857142857143) * multiplier * scale);
-  return fp < 1000 ? MIN_PRICE : fp;
+  return fp < MIN_PRICE ? MIN_PRICE : fp;
 }
 
 function manageDiscountTxt(newPrice) {

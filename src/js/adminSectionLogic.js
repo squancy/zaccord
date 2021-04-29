@@ -31,6 +31,12 @@ const buildAdminSection = (conn) => {
           <input type="text" autocomplete="off" class="searchBox" id="searchOrder"
             placeholder="Keresés az adatbázisban (utalási azonosító alapján)"
             style="width: 100%; margin-bottom: 20px;" onkeyup="jumpToOrder()">
+          <p class="align">
+            <a download href="/spreadsheets/shippingCredentials.xlsx" class="blueLink">Szállitás xlsx</a>
+            <button id="markAll" class="fillBtn btnCommon" onclick="markAll()">
+              Megbassza az összeset
+            </button>
+          </p>
       `;
       let sprices = {};
       for (let i = 0; i < result.length; i++) {
@@ -55,6 +61,7 @@ const buildAdminSection = (conn) => {
         let orderTime = EUDateFormat(addHours(result[i].order_time, 2));
         let uid = result[i].uid;
         let printTech = result[i].printTech;
+        let comment = result[i].comment;
 
         let name = result[i].customerName;
         let postalCode = result[i].postal_code;
@@ -82,9 +89,9 @@ const buildAdminSection = (conn) => {
         let nlEmail = result[i].nl_email;
 
         let printMat = result[i].printMat ? result[i].printMat : 'PLA';
-        
+
         let isTransfer = 'utánvét';
-        if (Number(result[0].is_transfer)) {
+        if (Number(result[i].is_transfer)) {
           isTransfer = 'előre utalás';
         } else if (transactionID) {
           isTransfer = 'bankkártyás fizetés';
@@ -119,6 +126,9 @@ const buildAdminSection = (conn) => {
               <input type="text" id="glsCode_${uniqueID}" class="dFormField"
                 placeholder="GLS csomagkövető kód"
                 style="background-color: #fff; border: 1px solid #c3c3c3; width: auto;">
+              <p id="invGen_${uniqueID}">
+                <a class="blueLink" onclick="generateInvoice(${uniqueID})">Számla generálás</a>
+              </p>
             </span>
           `;
         }
@@ -144,18 +154,28 @@ const buildAdminSection = (conn) => {
         }
 
         let cpText = '';
+        let lastName = name ? name.split(' ')[0] : '';
         if (cpFname) {
+          let pm = printMat;
+          let fv = fvas;
+          if (printTech == 'SLA') {
+            pm = fv = 'X';
+          }
           cpText = `
             <div class="inBox">
               <b>Forrás:</b>
-              <a download href="/printUploads/${cpFname}.stl" class="blueLink">STL fájl</a>
+              <a
+              download="${lastName}_${color}_${quantity}_${pm}_${suruseg}_${rvas}_${printTech}_${fv}_${scale}.stl"
+                href="/printUploads/${cpFname}.stl" class="blueLink">STL fájl</a>
             </div>
           `;
         } else if (litFname) {
+          let x = litFname.split('.');
+          let ext = x[x.length - 1];
           var litLink = `
             <div class="inBox">
               <b>Forrás:</b>
-              <a download href="/printUploads/lithophanes/${litFname}" class="blueLink">
+              <a download="${lastName}_${litSize}_${color}_${litSphere}.${ext}" href="/printUploads/lithophanes/${litFname}" class="blueLink">
                 Kép
               </a>
             </div>
@@ -185,6 +205,12 @@ const buildAdminSection = (conn) => {
             <b>Számlázási cím = szállítási cím</b>
           </div>
         `;
+
+        if (comment) {
+          bInfo += `
+            <div class="inBox"><b>Megjegyzés:</b> ${comment}</div>
+          `;
+        }
 
         if (billingName) {
           bInfo = `

@@ -3,7 +3,6 @@ const buildMainSection = (conn, formData) => {
     let oid = formData.oid;
     let val = formData.val;
     let uQuery = 'UPDATE orders SET status = ? WHERE id = ? LIMIT 1';
-    console.log(oid, val)
     conn.query(uQuery, [val, oid], (err, result, field) => {
       if (err) {
         reject('hiba történt');

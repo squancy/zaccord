@@ -31,7 +31,7 @@ function calcPrice(price, rvasVal, surusegVal, scaleVal, fvasVal, filamentMateri
   }
 
   let fp = Math.round(nPrice * multiplier); 
-  return fp < 1000 ? MIN_PRICE : fp;
+  return fp < MIN_PRICE ? MIN_PRICE : fp;
 }
 
 module.exports = calcPrice;
