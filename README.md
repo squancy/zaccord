@@ -18,13 +18,13 @@ The site is mostly written in JS (Node.js on server side) and the
 <a href="https://github.com/squancy/stl-parser">price calculation algorithm</a> is implemented in C.
 The price is solely determined by the uploaded STL file and no slicing or g-code generation occurs on the
 server side. Despite that it makes the calculation less precise it also eliminates the need to create a
-request to ther server side and return it to the client, making the process faster and easier. 
+request to the server side and return it to the client, making the process faster and easier. 
 
 ## Price calculation formula
 First an estimated price is calculated from the STL file which can change later
 if the user modifies some of the parameters. The base price is determined by an
 algorithm you can find
-<a href="https://github.com/squancy/stl-parser">here.</a>.
+<a href="https://github.com/squancy/stl-parser">here.</a>
 
 ## TODOs
 Implementing one or more of the following features would be nice & you may also get a reward:
