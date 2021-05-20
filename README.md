@@ -4,7 +4,8 @@ A webshop for selling 3D printed products.
 
 Zaccord is a Hungary-based e-commerce website where users can order a variety of 3D-printed
 products or upload their STL files for custom printing & creating lithophanes.<br>
-We tried to create a great customer experience by simplifying the process of shopping & eliminating the need to ask for a bid when using our custom print service. This all makes shopping fun and instant.<br><br>
+We tried to create a great customer experience by allowing users to upload their own STL files, give
+them an instant quote and provide the possibility to order their uploaded products immediately.<br><br>
 
 ## Target audience
 We aim to make Zaccord available for as many people as we can but currently we are limited
@@ -13,21 +14,17 @@ able to use the service and buy products since shipping is restricted to inland.
 Also note that Zaccord is currently only available in Hungarian.
 
 ## Technical
-The site is written in vanilla Node.js & SQL (MySQL) for managing the database. It uses a handful of libraries for user authentication & security and managing STL files.
+The site is mostly written in JS (Node.js on server side) and the 
+<a href="https://github.com/squancy/stl-parser">price calculation algorithm</a> is implemented in C.
+The price is solely determined by the uploaded STL file and no slicing or g-code generation occurs on the
+server side. Despite that it makes the calculation less precise it also eliminates the need to create a
+request to ther server side and return it to the client, making the process faster and easier. 
 
 ## Price calculation formula
-It calculates the price of a given product when knowing the base price with the following
-default paramaters:
-  - 0.20mm layer height
-  - 20% infill
-  - x1 scale
-  - 1.2mm infill thickness
-where the pure value of these parameters are substituted into variables in degrees.
-<img src="https://www.zaccord.com/images/finalFormula.png">
-Eventually, it provides the desired price intervals for us. You can refine it to your needs by
-changing the <i>sine</i> expressions and decimal constants.<br>
-Note that due to the nature of the <i>sine</i> function 90% infill provides the highest
-price and any infill value above that will produce a smaller price, returning an undesirable outcome at the end. You may need to correct it if you want to use a 91%-100% infill.
+First an estimated price is calculated from the STL file which can change later
+if the user modifies some of the parameters. The base price is determined by an
+algorithm you can find
+<a href="https://github.com/squancy/stl-parser">here.</a>.
 
 ## TODOs
 Implementing one or more of the following features would be nice & you may also get a reward:
