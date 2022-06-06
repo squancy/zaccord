@@ -1,9 +1,8 @@
 .wideDynamicShowcase, .wideDynamicShowcaseLit, .wideDynamicShowcaseFdm {
-  width: calc(100% - 40px);
+  width: 100%;
   -webkit-box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
           box-shadow: 7px 8px 15px 0 rgba(0,0,0,.2);
   border-radius: 30px;
-  margin: 0 20px 0 20px;
   height: 500px;
   position: relative;
 }
@@ -35,7 +34,7 @@
   object-fit: cover;
 }
 
-#cp_0, #fdm_0, #lit_0, #mat_0 {
+#cp_0, #fdm_0, #lit_0, #mat_0, #sla_0 {
   opacity: 1;
 }
 
@@ -61,11 +60,11 @@
   background-color: #e2e2e2;
 }
 
-#cpRightButton, #litRightButton, #fdmRightButton, #matRightButton {
+#cpRightButton, #litRightButton, #fdmRightButton, #matRightButton, #slaRightButton {
   right: 40px;
 }
 
-#cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton {
+#cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton, #slaLeftButton {
   left: 40px;
   letter-spacing: -5px;
 }
@@ -75,7 +74,7 @@
   letter-spacing: 0.9px;
 }
 
-#litFadeHolder, #fdmFadeHolder, #matFadeHolder {
+#litFadeHolder, #fdmFadeHolder, #matFadeHolder, #slaFadeHolder, .mtsix {
   margin-top: 60px;
 }
 
@@ -90,12 +89,12 @@
 }
 
 @media only screen and (max-width: 768px) {
-  #cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton {
+  #cpLeftButton, #litLeftButton, #fdmLeftButton, #matLeftButton, #slaLeftButton {
     left: -15px;
   }
 
   
-  #cpRightButton, #litRightButton, #fdmRightButton, #matRightButton {
+  #cpRightButton, #litRightButton, #fdmRightButton, #matRightButton, #slaRightButton {
     right: -15px;
   }
 }

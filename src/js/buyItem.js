@@ -22,14 +22,25 @@ const calcLitPrice = require('./includes/calcLitPrice.js');
 const validatePrices = require('./includes/validatePrices.js');
 const getFPVolume = require('./includes/getFPVolume.js');
 const getPackageDimensions = require('./includes/getPackageDimensions.js');
+const getMaterials = require('./includes/getMaterials.js');
 const path = require('path');
 const ExcelJS = require('exceljs');
+const sliceModel = require('./includes/slice.js');
+const generateInvoice = require('./includes/generateInvoice.js');
 
 // Shipping and money handle prices constants are used throughout the page
-const SHIPPING_PRICE = constants.shippingPrice;
+const SHIPPING_PRICE_GLS_H = constants.shippingPriceGLSH;
+const SHIPPING_PRICE_GLS_P = constants.shippingPriceGLSP;
+const SHIPPING_PRICE_PACKETA_H = constants.shippingPricePacketaH;
+const SHIPPING_PRICE_PACKETA_P = constants.shippingPricePacketaP;
+const SHIPPING_PRICE_POSTA_H = constants.shippingPricePostaH;
+const getShippingPrice = constants.getShippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
+const DELIVERY_TYPES = constants.deliveryTypes;
 const COUNTRIES = constants.countries;
-const PRINT_MATERIALS = constants.printMaterials;
+
+const BA_NUM = constants.baNum;
+const BA_NAME = constants.baName;
 
 // Validate order on server side & push to db
 const buyItem = (conn, dDataArr, req, res, userSession) => {
@@ -56,6 +67,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let itemVolumes = [];
     let itemSizes = [];
     let fixProdPromises = [];
+    let stlToSlice = [];
 
     console.log(dDataArr);
 
@@ -80,6 +92,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     // Because of async queries a track variable is needed for packet point checking in db
     let ppUpdated = false;
 
+    const SHIPPING_PRICE = getShippingPrice(deliveryType);
+
     // Validate billing info & credentials
     let billingType = dDataArr[0].billingType;
     let billingName = dDataArr[0].billingName;
@@ -93,6 +107,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     // Buy as a company but not with a different invoice address
     let normalCompname = dDataArr[0].normalCompname;
     let normalCompnum = dDataArr[0].normalCompnum;
+
+    let eInvoice = dDataArr[0].eInvoice;
 
     // Make sure both fields are set and valid
     if ((!normalCompname && normalCompnum) || (normalCompname && !normalCompnum)) {
@@ -151,8 +167,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
       order
     */
 
-    function runPurchase() {
-      movePurchase().then(data => {
+    function runPurchase(PRINT_MULTS) {
+      movePurchase(PRINT_MULTS).then(data => {
         resolve('success');
       }).catch(err => {
         reject(err);
@@ -160,15 +176,18 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
       });
     }
     
-    runPurchase();
+    getMaterials(conn).then(mults => {
+      const PRINT_MULTS = mults;
+      runPurchase(PRINT_MULTS);
+    });
 
-    function movePurchase() {
+    function movePurchase(PRINT_MULTS) {
       return new Promise((resolve, reject) => {
         let commonDate = new Date().toMysqlFormat();
         
         // Validate prices
         for (let d of dDataArr) {
-          if (!validatePrices(d)) {
+          if (!validatePrices(PRINT_MULTS, d)) {
             return reject('Hibás ár');
           }
           let p = d.price;
@@ -203,12 +222,12 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Hibás szállítási ár');
           return;
         // Make sure delivery type is valid
-        } else if (deliveryType != 'toAddr' && deliveryType != 'packetPoint') {
+        } else if (DELIVERY_TYPES.indexOf(deliveryType) < 0) {
           reject('Válassz szállítási módot');
           return;
         // Make sure that the necessary packet point fields are set
-        } else if (deliveryType == 'packetPoint' && (!packetID || !packetName || !packetZipcode
-          || !packetCity || !packetAddress)) {
+        } else if ((deliveryType == 'gls_p' || deliveryType == 'packeta_p')
+          && (!packetID || !packetName || !packetZipcode || !packetCity || !packetAddress)) {
           reject('Hiányzó csomagpont adatok');
           return; 
         }
@@ -231,6 +250,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           let printSize = formData.printSize ? formData.printSize : null;
           let printTech = formData.tech;
           let prodType = formData.prodType;
+          let isProdLit = prodType == 'lit';
 
           // Order id formatting is currently not used: See js/buyLogic.js why
           // formatOrderId(orderID)
@@ -248,6 +268,18 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           } else if (prodType == 'cp') {
             let pathCP = path.join(__dirname.replace(path.join('src', 'js'), ''),
               'printUploads', itemID + '.stl');
+            let stlObj = {
+              'filename': pathCP,
+              'layerHeight': rvas,
+              'infill': suruseg,
+              'scale': scale,
+              'wallWidth': fvas,
+              'material': printMat,
+              'fname': itemID
+            };
+            if (printTech != 'SLA' && printMat.toLowerCase() == 'pla') {
+              stlToSlice.push(stlObj);
+            }
             let stl = new NodeStl(pathCP, {density: 1.27}); // PLA has 1.27 g/mm^3 density
             itemVolumes.push(stl.boundingBox.reduce((x, y) => x * y) * scale * quantity);
             itemSizes.push(stl.boundingBox); 
@@ -264,194 +296,199 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           }
 
           // Check the validity of parameters
-          if (!validateParams(formData) && !isLit) {
-            reject('Hibás paraméterek');
-            return;
-          // Make sure payment option is valid
-          } else if (payment != 'uvet' && payment != 'transfer' && payment != 'credit') {
-            reject('Hibás fizetési mód');
-            return;
-          // Check validity of order ID
-          } else if (orderID.length !== 4) {
-            reject('Hibás utalási azonosító');
-            return;
-          // Make sure SLA printing can be only applied to smaller models
-          } else if (!fixProduct && printTech == 'SLA' &&
-            !shouldAllowSLA(path.join(__dirname.replace(path.join('src', 'js'), ''),
-            'printUploads', formData.itemID + '.stl'))) {
-            reject('SLA nyomtatáshoz a maximális méret 115mm x 65mm x 150mm');
-            return;
-          // Validate lithophane parameters
-          } else if (isLit) {
-            let paramObj = {
-              'sphere': sphere,
-              'color': color,
-              'quantity': quantity,
-              'size': size,
-              'file': file
-            };
-
-            if (!validateLitParams(paramObj)) {
-              reject('Hibás paraméter érték');
+          let normalValidate = !isProdLit ? validateParams(conn, formData) : null;
+          let litValidate = isProdLit ? validateLitParams(conn, formData) : null;
+          Promise.all([normalValidate, litValidate]).then(vals => {
+            let [validNormal, validLit] = vals;
+            if (!isProdLit && !validNormal) {
+              reject('Hibás paraméterek');
               return;
             }
-          }
 
-          // Make sure item exists with the given ID  
-          let process = new Promise((resolve, reject) => {
-            // When ordering a custom print we do not check the existance of item in db
-            let handler = itemExists(conn, itemID, true);
-            if (fixProduct) {
-              handler = itemExists(conn, itemID);
+            if (payment != 'uvet' && payment != 'transfer' && payment != 'credit') {
+              reject('Hibás fizetési mód');
+              return;
+            // Check validity of order ID
+            } else if (orderID.length !== 4) {
+              reject('Hibás utalási azonosító');
+              return;
+            // Make sure SLA printing can be only applied to smaller models
+            } else if (!fixProduct && printTech == 'SLA' &&
+              !shouldAllowSLA(path.join(__dirname.replace(path.join('src', 'js'), ''),
+              'printUploads', formData.itemID + '.stl'))) {
+              reject('SLA nyomtatáshoz a maximális méret 115mm x 65mm x 150mm');
+              return;
+            // Validate lithophane parameters
+            } else if (isProdLit) {
+              let paramObj = {
+                'sphere': sphere,
+                'color': color,
+                'quantity': quantity,
+                'size': size,
+                'file': file
+              };
+
+              if (!validLit) {
+                reject('Hibás paraméter érték');
+                return;
+              }
             }
 
-            handler.then(data => {
-              if (data != 'success') {
-                let originalPrice = data[0].price;
-                if (calcPrice(originalPrice, rvas, suruseg, scale, fvas) != price) {
-                  // Check if price is correct with the given parameters
-                  reject('Hibás ár'); 
-                  return;
-                }
+            // Make sure item exists with the given ID  
+            let process = new Promise((resolve, reject) => {
+              // When ordering a custom print we do not check the existance of item in db
+              let handler = itemExists(conn, itemID, true);
+              if (fixProduct) {
+                handler = itemExists(conn, itemID);
               }
 
-              // Request is valid, push data to db
-              let isTrans = payment == 'transfer' ? 1 : 0;
-              let transID = isTrans ? orderID : '';
-
-              // If cash on delivery add extra price
-              if (payment == 'uvet') {
-                shippingPrice += MONEY_HANDLE;
-              }
-
-              let iQuery = `
-                INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, printMat,
-                  printTech, fvas,
-                  lit_sphere, lit_size, lit_fname,
-                  quantity, is_transfer, transfer_id, transaction_id, is_fix_prod, status, shipping_price,
-                  cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
-                  normal_compname, normal_compnum,
-                  billing_name, billing_country, billing_city,
-                  billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
-                  comment,
-                  order_time)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `;
-
-              // Decide if product is a custom print (attach filename) or fixed product
-              if (!fixProduct) {
-                itemID = 0;
-                var cpFname = formData.itemID;
-              } else {
-                var cpFname = '';
-              }
-            
-              price *= discount;
-              let sameBillingAddr = billingType == 'same' ? 1 : 0;
-              let isCashOnDel = deliveryType == 'toAddr' ? 1: 0;
-              let packetDbID = deliveryType == 'packetPoint' ? packetID : '';
-
-              let valueArr = [
-                UID, itemID, price, String(rvas), String(suruseg),
-                String(scale), color, printMat, printTech, String(fvas), sphere, size, file, quantity, isTrans, 
-                transID, transactionID, fixProduct, 0,
-                Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
-                sameBillingAddr, normalCompname, normalCompnum, billingName, billingCountry,
-                billingCity, billingPcode, billingAddress, billingCompname, billingCompnum,
-                comment, commonDate
-              ];
-              
-              if (payment == 'uvet') {
-                shippingPrice -= MONEY_HANDLE;
-              }
-
-              conn.query(iQuery, valueArr, (err, result, field) => {
-                if (err) {
-                  console.log(err, 'asd');
-                  reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                  return;
+              handler.then(data => {
+                if (data != 'success') {
+                  let originalPrice = data[0].price;
+                  if (calcPrice(PRINT_MULTS, originalPrice, rvas, suruseg, scale, fvas) != price) {
+                    // Check if price is correct with the given parameters
+                    reject('Hibás ár'); 
+                    return;
+                  }
                 }
 
-                // If delivery type if packet point insert contact info to db
-                if (deliveryType == 'packetPoint') {
-                  // First check if the packet point is already in the db
-                  // If it is, just update the existing row
-                  // Otherwise insert the packet point as a new row
+                // Request is valid, push data to db
+                let isTrans = payment == 'transfer' ? 1 : 0;
+                let transID = isTrans ? orderID : '';
 
-                  let mQuery = `
-                    SELECT id FROM packet_points WHERE packet_id = ? LIMIT 1
-                  `;
+                // If cash on delivery add extra price
+                if (payment == 'uvet') {
+                  shippingPrice += MONEY_HANDLE;
+                }
 
-                  conn.query(mQuery, [packetID], (err, result, fields) => {
-                    if (err) {
-                      reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                      return;
-                    } 
+                let iQuery = `
+                  INSERT INTO orders (uid, item_id, price, rvas, suruseg, scale, color, printMat,
+                    printTech, fvas,
+                    lit_sphere, lit_size, lit_fname,
+                    quantity, is_transfer, transfer_id, transaction_id, is_fix_prod, status, shipping_price,
+                    cp_fname, is_cash_on_del, packet_id, unique_id, same_billing_addr, 
+                    normal_compname, normal_compnum,
+                    billing_name, billing_country, billing_city,
+                    billing_pcode, billing_address, billing_compname, billing_comp_tax_num,
+                    comment, del_type, e_invoice, order_time)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
 
-                    // Check existance in db
-                    if (result.length > 0) {
-                      // Update data in db
-                      let updateQuery = `
-                        UPDATE packet_points SET name = ?, zipcode = ?,
-                        city = ?, contact = ?, phone = ?, email = ?, lat = ?, lon = ?
-                        WHERE packet_id = ?
-                      `;
-
-                      let updateParams = [
-                        packetName, packetZipcode, packetCity, packetContact, packetPhone,
-                        packetEmail, packetLat, packetLon, packetID
-                      ];
-
-                      conn.query(updateQuery, updateParams, (err, result, fields) => {
-                        if (err) {
-                          reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                          return;
-                        }                    
-
-                        resolve('success');
-                      });
-
-                    // Only insert to db for the 1st time (because of async)
-                    } else if (!ppUpdated) {
-                      let pQuery = `
-                        INSERT INTO packet_points (
-                          packet_id, name, zipcode, city, contact, phone, email, lat, lon
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                      `;
-
-                      // Insert packet point data as a new row
-                      let pValues = [
-                        packetID, packetName, Number(packetZipcode), packetCity,
-                        packetContact,
-                        packetPhone, packetEmail, packetLat, packetLon
-                      ];
-
-                      ppUpdated = true;
-                      conn.query(pQuery, pValues, function packetInsert(err, result, field) {
-                        if (err) {
-                          reject('Egy nem várt hiba történt, kérlek próbáld újra');
-                          return;
-                        }                    
-                        
-                        resolve('success');
-                      });
-                    } else {
-                      // Packet point is being inserted asynchronously into the db
-                      resolve('success');
-                    }
-                  });
+                // Decide if product is a custom print (attach filename) or fixed product
+                if (!fixProduct) {
+                  itemID = 0;
+                  var cpFname = formData.itemID;
                 } else {
-                  resolve('success');
+                  var cpFname = '';
                 }
-              });
-            });
-          }).catch(err => {
-            console.log(err);
-            reject('Nincs ilyen termék');
-          });
+              
+                price *= discount;
+                let sameBillingAddr = billingType == 'same' ? 1 : 0;
+                let isCashOnDel = (deliveryType == 'gls_h' || deliveryType == 'packeta_h') ? 1: 0;
+                let packetDbID = (deliveryType == 'gls_p' || deliveryType == 'packeta_p') ? packetID : '';
 
-          promises.push(process);
+                let valueArr = [
+                  UID, itemID, price, String(rvas), String(suruseg),
+                  String(scale), color, printMat, printTech, String(fvas), sphere, size, file, quantity, isTrans, 
+                  transID, transactionID, fixProduct, 0,
+                  Number(shippingPrice), cpFname, isCashOnDel, packetDbID, uniqueID,
+                  sameBillingAddr, normalCompname, normalCompnum, billingName, billingCountry,
+                  billingCity, billingPcode, billingAddress, billingCompname, billingCompnum,
+                  comment, deliveryType, eInvoice, commonDate
+                ];
+                
+                if (payment == 'uvet') {
+                  shippingPrice -= MONEY_HANDLE;
+                }
+
+                conn.query(iQuery, valueArr, (err, result, field) => {
+                  if (err) {
+                    console.log(err, 'asd');
+                    reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                    return;
+                  }
+
+                  // If delivery type if packet point insert contact info to db
+                  if (deliveryType == 'gls_p' || deliveryType == 'packeta_p') {
+                    // First check if the packet point is already in the db
+                    // If it is, just update the existing row
+                    // Otherwise insert the packet point as a new row
+
+                    let mQuery = `
+                      SELECT id FROM packet_points WHERE packet_id = ? LIMIT 1
+                    `;
+
+                    conn.query(mQuery, [packetID], (err, result, fields) => {
+                      if (err) {
+                        reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                        return;
+                      } 
+
+                      // Check existance in db
+                      if (result.length > 0) {
+                        // Update data in db
+                        let updateQuery = `
+                          UPDATE packet_points SET name = ?, zipcode = ?,
+                          city = ?, contact = ?, phone = ?, email = ?, lat = ?, lon = ?
+                          WHERE packet_id = ?
+                        `;
+
+                        let updateParams = [
+                          packetName, packetZipcode, packetCity, packetContact, packetPhone,
+                          packetEmail, packetLat, packetLon, packetID
+                        ];
+
+                        conn.query(updateQuery, updateParams, (err, result, fields) => {
+                          if (err) {
+                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                            return;
+                          }                    
+
+                          resolve('success');
+                        });
+
+                      // Only insert to db for the 1st time (because of async)
+                      } else if (!ppUpdated) {
+                        let pQuery = `
+                          INSERT INTO packet_points (
+                            packet_id, name, zipcode, city, contact, phone, email, lat, lon
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        `;
+
+                        // Insert packet point data as a new row
+                        let pValues = [
+                          packetID, packetName, Number(packetZipcode), packetCity,
+                          packetContact,
+                          packetPhone, packetEmail, packetLat, packetLon
+                        ];
+
+                        ppUpdated = true;
+                        conn.query(pQuery, pValues, function packetInsert(err, result, field) {
+                          if (err) {
+                            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                            return;
+                          }                    
+                          
+                          resolve('success');
+                        });
+                      } else {
+                        // Packet point is being inserted asynchronously into the db
+                        resolve('success');
+                      }
+                    });
+                  } else {
+                    resolve('success');
+                  }
+                });
+              });
+            }).catch(err => {
+              console.log(err);
+              reject('Nincs ilyen termék');
+            });
+
+            promises.push(process);
+          });
         }
 
         Promise.all(promises).then(data => {
@@ -516,16 +553,23 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                         ${payment == 'transfer' ? 'előre utalás' : (payment == 'credit' ?
                         'bankkártyás fizetés' : 'utánvét')}
                         ${
-                          payment == 'transfer' ? `(a közelményben tüntetsd fel az alábbi
-                                                   utalási azonosítót:
-                                                   <span style="color:
-                                                   #4285f4;">${orderIDDisplay}</span>)
+                          payment == 'transfer' ? `<div>
+                                                      <div><b>Számlaszám:</b> ${BA_NUM}</div>
+                                                      <div>
+                                                        <b>Kedvezményezett neve:</b> ${BA_NAME}
+                                                      </div>
+                                                      <div>
+                                                        <b>
+                                                          Közleményben feltűntetendő azonosító:
+                                                        </b> ${orderIDDisplay}
+                                                      </div>
+                                                   </div>
                                                    `
                                                  : ''
                         }
                       </div>
                       <div>
-                        <b>Átvétel: </b> ${deliveryType == 'toAddr'
+                        <b>Átvétel: </b> ${(deliveryType == 'gls_h' || deliveryType == 'packeta_h')
                           ? 'házhozszállítás' : 'csomagpont átvétel'}
                       </div>
                       ${compInfo}
@@ -559,12 +603,36 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 `;
 
                 let subject = 'Megkaptuk a rendelésed! - Azonosító: ' + uniqueID;
-                sendEmail('info@zaccord.com', emailContent, email, subject);
+                
+                // If customer selects the e-invoice option generate the invoice first
+                // Then download it from the server and send it as an attachment
+                // E-invoice is saved under /e-invoices/{order id}.pdf
+                if (eInvoice) {
+                  let formData = {
+                    uniqueID: uniqueID,
+                    shippingPrice: SHIPPING_PRICE,
+                    isElectronic: true
+                  };
+
+                  generateInvoice(conn, formData).then(resp => {
+                    console.log(resp);
+                    let attachmentOptions = {
+                      filename: `E-számla - Zaccord 3D nyomtatás (${uniqueID}).pdf`,
+                      path: path.join(__dirname, '..', '..', 'e-invoices', uniqueID + '.pdf')
+                    };
+                    sendEmail('info@zaccord.com', emailContent, email, subject, attachmentOptions);
+                  }).catch(err => {
+                    console.log(err);
+                    reject('Egy nem várt hiba történt, kérlek próbáld újra');
+                  }); 
+                } else {
+                  sendEmail('info@zaccord.com', emailContent, email, subject);
+                }
 
                 // Send a notification email to us about every new order
                 let sj = 'Dől a zsé, jönnek a rendelők! - Azonosító: ' + uniqueID;
                 let cnt = '<p style="font-size: 18px;">Új rendelés érkezett!</p>';
-                //sendOwnerEmails(sj, cnt);
+                sendOwnerEmails(sj, cnt);
 
                 // Also record user & order credentials in an excel spreadsheet
                 Promise.all(fixProdPromises).then(v => {
@@ -600,6 +668,21 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   reject('Hiba történt, kérlek próbáld újra');
                   return;
                 });
+
+                // Lastly, try to generate the gcode of the ordered STL files
+                // It's irrelevant whether the gcode generation succeeds or not
+                // Since it may take minutes thus making the client-side wait for a long time
+                // Most of the gcodes are manually checked anyways
+
+                for (let stlObj of stlToSlice) {
+                  let layerHeight = stlObj.layerHeight;
+                  let infill = stlObj.infill;
+                  let scale = stlObj.scale;
+                  let wallWidth = stlObj.wallWidth;
+                  let material = stlObj.material;
+                  let fname = stlObj.fname;
+                  sliceModel(layerHeight, infill, scale, wallWidth, material, fname);
+                }
 
                 console.log('last part')
                 

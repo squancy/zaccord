@@ -10,6 +10,8 @@ const validateEmail = require('email-validator');
 const errorFormResponse = helpers.errorFormResponse;
 const litDimensions = helpers.litDimensions;
 const imgError = helpers.imgError;
+const returnPageWithData = helpers.returnPageWithData;
+const pageCouldNotLoad = helpers.pageCouldNotLoad;
 const conn = require('../connectDb.js');
 const resizeImg = require('resize-img');
 const sendPrototype = require('../sendPrototype.js');
@@ -17,6 +19,15 @@ const userRegister = require('../registerLogic.js');
 const path = require('path');
 const mv = require('mv');
 const fs = require('fs');
+
+function buildPage(req, res, conn, userID, buildFunc, htmlPath) {
+  buildFunc(conn).then(data => {
+    returnPageWithData(htmlPath, data, userID, res);
+  }).catch(err => {
+    console.log(err);
+    pageCouldNotLoad(res, userID);
+  });
+}
 
 function validateParams(formData) {
   // Validates prototype parameters
@@ -51,7 +62,7 @@ function toClientPrototype(res, stat, req, formData) {
   } else {
     sendPrototype(conn, formData, req).then(data => {
       // Auto log in user after successful registration
-      responseData.success = 'Sikeres kapcsolatfelvétel';
+      responseData.success = 'Sikeres kapcsolatfelvétel<br>Hamarosan részletes árajánlattal jelentkezünk számodra';
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(JSON.stringify(responseData));
     }).catch(err => {
@@ -331,6 +342,16 @@ function setDynamicMeta(data, content) {
   return root.toString();
 }
 
+function urlRedirect(host, res, pattern, redirect) {
+  if (host == pattern || (pattern instanceof RegExp && host.match(pattern))) {
+    console.log("Redirected " + host);
+    res.writeHead(302, {
+      'location': redirect
+    });
+    res.end();
+  }
+}
+
 module.exports = {
   'validateParams': validateParams,
   'toClientPrototype': toClientPrototype,
@@ -339,5 +360,7 @@ module.exports = {
   'validatePcode': validatePcode,
   'parseUploadFiles': parseUploadFiles,
   'setDynamicMeta': setDynamicMeta,
-  'isProtectedFile': isProtectedFile
+  'isProtectedFile': isProtectedFile,
+  'urlRedirect': urlRedirect,
+  'buildPage': buildPage
 };

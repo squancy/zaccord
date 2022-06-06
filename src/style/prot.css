@@ -55,10 +55,6 @@
   width: 100%;
 }
 
-#p5Holder {
-  padding-right: 20px;
-}
-
 .protContItem:not(:first-child) > p {
   margin-bottom: 5px;
 }

@@ -1,6 +1,31 @@
 const produceShowcaseOutput = require('./includes/itemGenerator.js');
 const buildCategory = require('./buildCategory.js');
 
+const CONTACT_FORM = `
+  <div class="mtsix" style="width: calc(100% - 40px); max-width: 1300px; margin: 0 auto;">
+    <hr class="hrStyle">
+    <h2 class="gotham font26 align fontNorm" id="getQuote">
+      Kapcsolatfelvétel
+    </h2>
+    <h2 class="align font18 lh fontNorm gothamNormal">
+      Egyedi nyomtatás, kérdés vagy speciális igény esetén bátran vedd fel velünk a kapcsolatot!
+    </h2>
+    <div class="flexDiv" style="flex-wrap: wrap;" id="normalDiv">
+      <input type="text" class="dFormField" id="name" placeholder="Név" value="">
+      <input type="email" class="dFormField" id="email" placeholder="Email">
+      <input type="text" class="dFormField protmob" id="mobile"
+        placeholder="Telefonszám" value="">
+      <textarea placeholder="CAD modell URL, termékkel szembeni elvárások: anyag, szín, technológia stb."
+        id="message" class="dFormField" style="width: 100%; height: 100px;"></textarea>
+    </div>
+    <button class="fillBtn btnCommon" id="submitBtn" style="display: block; margin: 0 auto;">
+      Küldés
+    </button>
+    <div id="pstatus" class="align errorBox gothamNormal lh" style="margin-top: 20px;"></div>
+    <div id="succstat" class="align successBox gothamNormal lh" style="margin-top: 20px;"></div>
+  </div>
+`;
+
 // Build the index page from fixed products 
 // TODO: use an async library to reduce the callback hell and better deal w. async queries
 const buildMainSection = (conn, cat) => {
@@ -42,10 +67,12 @@ const buildMainSection = (conn, cat) => {
                   <img src="/images/larr.png" width="25" height="25">
                 </div>
                 <div class="catBox" id="catBox">
-                  <div onclick="sortByCat('Legnépszerűbb', 0)" class="scat"
-                    style="background-color: #ececec; color: #4285f4; border-color: #4285f4;">
-                    Legnépszerűbb
-                  </div>
+                  <a href="/?cat=Legnépszerűbb" class="pseudoLink">
+                    <div onclick="sortByCat('Legnépszerűbb', 0)" class="scat"
+                      style="background-color: #ececec; color: #4285f4; border-color: #4285f4;">
+                      Legnépszerűbb
+                    </div>
+                  </a>
         `;
 
         for (let i = 0; i < res.length; i++) {
@@ -53,16 +80,20 @@ const buildMainSection = (conn, cat) => {
           catToNum[res[i].category] = (i + 1);
 
           output += `
-            <div onclick="sortByCat('${res[i].category}', ${i + 1})" class="scat">
-              ${res[i].category}
-            </div>
+            <a href="/?cat=${res[i].category}" class="pseudoLink">
+              <div onclick="sortByCat('${res[i].category}', ${i + 1})" class="scat">
+                ${res[i].category}
+              </div>
+            </a>
           `; 
         }
 
         output += `
-                  <div onclick="sortByCat('Összes', ${res.length + 1})" class="scat">
-                    Összes
-                  </div>
+                  <a href="/?cat=Összes" class="pseudoLink">
+                    <div onclick="sortByCat('Összes', ${res.length + 1})" class="scat">
+                      Összes
+                    </div>
+                  </a>
                 </div>
                 <div class="arrows trans" id="rarr" onclick="scrollHor('right')">
                   <img src="/images/rarr.png" width="25" height="25">
@@ -93,9 +124,9 @@ const buildMainSection = (conn, cat) => {
             <div class="bgShowcase bgCommon">
               <div class="darken"></div>
               <div class="textCenter">
-                <p class="mainText lh gotham align" style="padding: 10px;">
+                <h1 class="mainText lh gotham align fontNorm" style="padding: 10px;">
                   Precíz 3D nyomtatás a Zaccordon
-                </p>
+                </h1>
               </div>
             </div>
           </div>
@@ -104,12 +135,12 @@ const buildMainSection = (conn, cat) => {
             <div class="bgService bgCommon" id="cprintService">
               <div class="darken keepRounded"></div>
               <div class="textCenter pad lh">
-                <p class="serviceTxt align font34 gotham servMain servMain">Bérnyomtatás</p>
-                <p class="serviceTxt align gotham">
+                <h2 class="serviceTxt align font34 gotham servMain servMain fontNorm">Bérnyomtatás</h2>
+                <h3 class="serviceTxt align gotham fontNorm font16">
                   FDM és SLA nyomtatás számos színnel és anyaggal. Az intelligens algoritmus
                   segítségével azonnal láthatod az árat és megrendelheted a feltöltött
                   termékeket.
-                </p>
+                </h3>
                 <div class="flexDiv btnAlign">
                   <button class="whiteBtn gotham font18 trans" onclick="redirect('/print')">További információ</button>
                   <button class="whiteBtn gotham font18 trans" onclick="redirect('/printHelp')">Segítség</button>
@@ -120,12 +151,12 @@ const buildMainSection = (conn, cat) => {
             <div class="bgService bgCommon" id="protService">
               <div class="darken keepRounded"></div>
               <div class="textCenter pad lh">
-                <p class="serviceTxt align font34 gotham servMain">Prototípusgyártás</p>
-                <p class="serviceTxt align gotham">
+                <h2 class="serviceTxt align font34 gotham servMain fontNorm">Prototípusgyártás</h2>
+                <h3 class="serviceTxt align gotham fontNorm font16">
                   A 3D nyomtatott kisszériás prototípusgyártás egy sokkal költséghatékonyabb és gyorsabb
                   módja a nullsorozatok gyártásának. Egyedi rendelésekhez bátran vedd fel
                   felünk a kapcsolatot.
-                </p>
+                </h3>
                 <div class="flexDiv btnAlign">
                   <button class="whiteBtn gotham font18 trans" onclick="redirect('/prototype')">
                     További információ
@@ -138,20 +169,20 @@ const buildMainSection = (conn, cat) => {
             </div>
           </div>
 
-          <p class="gotham align font34 printTech" id="printTech" style="${popProdsStyle}">
+          <h2 class="gotham align font34 printTech fontNorm" id="printTech" style="${popProdsStyle}">
             Nyomtatási Technológiák
-          </p>
+          </h2>
 
           <div class="flexProtCont" style="${furtherShow}">
             <div class="bgService bgCommon" id="fdmService">
               <div class="darken keepRounded"></div>
               <div class="textCenter pad lh">
-                <p class="serviceTxt align font34 gotham servMain">FDM</p>
-                <p class="serviceTxt align gotham">
+                <h2 class="serviceTxt align font34 gotham servMain fontNorm">FDM</h2>
+                <h3 class="serviceTxt align gotham fontNorm font16">
                   Az FDM nyomtatási technológia kiváló a rapid prototypinghoz és
                   költséghatékony modellezéshez. Ez esetben a nyomtató olvadt filamentből
                   készíti el a terméket rétegről-rétegre.
-                </p>
+                </h3>
                 <div class="flexDiv btnAlign">
                   <button class="whiteBtn gotham font18 trans" onclick="redirect('/mitjelent')">További információ</button>
                 </div>
@@ -160,19 +191,140 @@ const buildMainSection = (conn, cat) => {
             <div class="bgService bgCommon" id="slaService">
               <div class="darken keepRounded"></div>
               <div class="textCenter pad lh">
-                <p class="serviceTxt align font34 gotham servMain">SLA</p>
-                <p class="serviceTxt align gotham">
+                <h2 class="serviceTxt align font34 gotham servMain fontNorm">SLA</h2>
+                <h3 class="serviceTxt align gotham fontNorm font16">
                   Kiváló választás lehet apróbb vagy nagyobb pontosságot igénylő modellekhez,
                   hiszen minősége a fröccsöntött műanyagéval vetekszik. Ilyenkor a nyomtató
                   műgyantából állítja elő a terméket, ami utána UV-fénnyel lesz kezelve.
-                </p>
+                </h3>
                 <div class="flexDiv btnAlign">
                   <button class="whiteBtn gotham font18 trans" onclick="redirect('/mitjelent')">További információ</button>
                 </div>
               </div>
             </div>
-          </div>
 
+            <div class="greyBoxCont">
+              <div class="indexGreyBox">
+                <p class="gotham boxTitle">Bérnyomtatás</p>
+                <div class="greyBoxText">
+                  <p class="gothamNormal lh">
+                    Ha szeretnél nyomtatni, de nem férsz hozzá egy saját 3D nyomtatóhoz, akkor bátran
+                    vedd igénybe a teljesen automatizált <a class="blueLink" href="/print">bérnyomtatás</a> szolgáltatásunkat.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Nincs más dolgod, mint feltölteni a modellről készült STL fájlt és azonnal meg is rendelheted
+                    azt. Szabd teljesen személyre a modelled a színtől kezdve egészen a rétegvastagságig!
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Nem kell várnod hosszú napokat egy egyedileg adott árajánlatért, hiszen ezt a terhet
+                    teljesen levesszük a válladról. Az algoritmus azonnal megmondja mennyibe kerül a termék,
+                    így magad döntheted el, hogy megvásárolod vagy nem.
+                  </p>
+                </div>
+              </div>
+              <div class="greyBoxImg bgCommon" id="gbi_1"></div>
+            </div>
+
+            <div class="greyBoxCont">
+              <div class="indexGreyBoxLeft">
+                <p class="gotham boxTitleLeft">Modellezés</p>
+                <div class="greyBoxTextLeft">
+                  <p class="gothamNormal lh">
+                    Amennyiben csak egy elképzeléssel rendelkezel, modellel viszont nem, akkor vedd igénybe egy
+                    3D modellező munkatársunk segítségét a kidolgozásban.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Tervrajzok, képek, leírások, vagy mindössze egy ötlet alapján végezzük el a 3D modellezést
+                    egy részletes konzultáció után.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Gyakori alkalmazás lehet törött eszközök, alkatrészek modellezése képek és egy mérettáblázat
+                    alapján, amiket utána kinyomtatunk és elküldünk a megrendelőnek.
+                  </p>
+                </div>
+              </div>
+              <div class="greyBoxImgLeft bgCommon" id="gbi_2"></div>
+            </div>
+
+            <div class="greyBoxCont">
+              <div class="indexGreyBox">
+                <p class="gotham boxTitle">Gyártás</p>
+                <div class="greyBoxText">
+                  <p class="gothamNormal lh">
+                    Termékfejlesztés, <a href="/prototype" class="blueLink">prototípus- és sorozatgyártás</a> esetén
+                    fordulj bizalommal több éves tapasztalattal rendelkező csapatunkhoz.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Egy termék piacra dobása előtti legfontosabb mérföldkő a prototípus elkészítése, esetleg annak
+                    kisszériás gyártása.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    A 3D nyomtatás erre egy kiváló technológia, gyorsaságából és költséghatékonyságából adódóan.
+                    Emellett a kész termék elkészülte előtt kulcsfontosságú a potenciális vásárlók kezébe adni valami kézzel
+                    foghatót.
+                  </p>
+                </div>
+              </div>
+              <div class="greyBoxImg bgCommon" id="gbi_5"></div>
+            </div>
+
+            <div class="greyBoxCont">
+              <div class="indexGreyBoxLeft">
+                <p class="gotham boxTitleLeft">Termékek</p>
+                <div class="greyBoxTextLeft">
+                  <p class="gothamNormal lh">
+                    A Zaccordon számos előre kinyomtatott termék közül válogathatsz, rengeteg kategóriában.
+                    Sokszor olyan termékekkel is találkozhatsz, amiket nem lehet kapni hétköznapi boltokban
+                    vagy csak sokkal drágábban, mint az oldalon.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Minden terméket biológiailag lebomló PLA filamentből nyomtatunk, így nincsen akkora ökológiai
+                    lábnyoma, mint a hagyományos műanyagnak.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    A szobroktól és vázáktól kezdődően a szappantartóig szinte minden hétköznapi tárgyat megtalálsz
+                    a webshopban. Minden terméket egy külön modellező tervezett, így vásárlásoddal az ő munkájukat is támogatod.
+                  </p>
+                </div>
+              </div>
+              <div class="greyBoxImgLeft bgCommon" id="gbi_4"></div>
+            </div>
+
+
+            <div class="greyBoxCont">
+              <div class="indexGreyBox">
+                <p class="gotham boxTitle">Litofánia</p>
+                <div class="greyBoxText">
+                  <p class="gothamNormal lh">
+                    A <a href="/print" class="blueLink">litofánia</a> egy tökéletes személyes ajándék lehet szinte
+                    bármilyen alkalomra.
+                    Lepd meg szeretteidet egyedi, dombornyomott ajándékkal, amit azonnal megrendelhetsz az oldalon
+                    keresztül.
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    A nyomtató egy sík vagy görbe felületre készíti el a dombornyomott képet, ami háttérvilágítás
+                    után tisztán látható lesz. 
+                  </p>
+                  <br>
+                  <p class="gothamNormal lh">
+                    Gyakran használják lámpák vagy egyéb fényforrások búrájaként, így amikor felkapcsoljuk a lámpát
+                    a különböző rétegvastagságú felületek különböző mértékben engedik át a fényt, és előtűnik a monokróm kép.
+                  </p>
+                </div>
+              </div>
+              <div class="greyBoxImg bgCommon" id="gbi_3"></div>
+            </div>
+          </div>
+          
           <p class="gotham align font34" style="margin-top: 60px; margin-bottom: 0; ${popProdsStyle}"
             id="popProds">
             Legnépszerűbb Termékek
@@ -279,6 +431,7 @@ const buildMainSection = (conn, cat) => {
                     if (!innerRes.length) {
                       resolve('');
                     }
+
                     output += `
                       <div style="width: 100%; justify-content: center; margin-bottom: 10px;"
                         class="flexDiv">
@@ -287,7 +440,8 @@ const buildMainSection = (conn, cat) => {
                         </div>
                         <div class="seeMore trans"
                           onclick="sortByCat('${currentCat}', ${catToNum[currentCat]}, true)">
-                          <img src="/images/icons/eye.svg" width="24" height="24">
+                          <img src="/images/icons/eye.svg" width="24" height="24"
+                            alt="További termékek a(z) ${currentCat} kategóriában">
                         </div>
                       </div>
                     `;
@@ -312,6 +466,8 @@ const buildMainSection = (conn, cat) => {
                   </section>
                 `;
 
+                output += CONTACT_FORM;
+
                 // Add lazy load of images
                 output += `
                   <script src="/js/includes/lazyLoad.js"></script>
@@ -320,6 +476,12 @@ const buildMainSection = (conn, cat) => {
                       elements_selector: ".lazy",
                       callback_loaded: (el) => el.style.backgroundColor = 'white'
                     });
+
+                    for (let el of Array.from(document.getElementsByClassName('pseudoLink'))) {
+                      el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                      });
+                    }
                   </script>
                 `;
 

@@ -18,7 +18,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
       _('installPrompt').style.display = 'block';
     }
   }
-  setInterval(() => showAfterTime(e, 180), 2000);
+  setInterval(() => showAfterTime(e, 480), 2000);
 });
 
 _('exitPwa').addEventListener('click', (e) => {

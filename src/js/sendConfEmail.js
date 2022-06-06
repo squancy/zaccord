@@ -38,7 +38,7 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
 
               // Make sure there is a non-empty email field
               if (result[0].nl_email) resolve(result[0].nl_email);
-              else reject('unvalid email');
+              else reject('invalid email');
             });
           });
         } else {
@@ -47,11 +47,26 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
 
         checkPromise.then(email => {
           let emailAddr = email;
-
-          if (delType === 'háztól házig') {
-            delType = 'Házhozszállítás GLS futárszolgálattal';
+          
+          let trackURL;
+          if (delType == 'gls_h' || delType == 'gls_p') {
+            trackURL = 'https://gls-group.eu/HU/hu/csomagkovetes';
+          } else if (delType == 'posta_h') {
+            trackURL = 'https://www.posta.hu/nyomkovetes/nyitooldal';
           } else {
+            trackURL = 'https://tracking.packeta.com/hu/tracking/search';
+          }
+
+          if (delType == 'gls_h') {
+            delType = 'Házhozszállítás GLS futárszolgálattal';
+          } else if (delType == 'gls_p') {
             delType = 'Átvétel GLS csomagponton';
+          } else if (delType == 'packeta_h') {
+            delType = 'Házhozszállítás Packeta futárszolgálattal';
+          } else if (delType == 'packeta_p') {
+            delType = 'Átvétel Packeta csomagponton';
+          } else {
+            delType = 'Házhozszállítás MPL futárszolgálattal';
           }
 
           // Now send email to the customer
@@ -71,8 +86,8 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
               </p>
               <p style="font-size: 16px;">
                 A csomag státuszát a
-                <a href="https://gls-group.eu/HU/hu/csomagkovetes"
-                  style="color: #4285f4; text-decoration: none;">GLS rendszerében</a>
+                <a href="${trackURL}"
+                  style="color: #4285f4; text-decoration: none;">futárszolgálat rendszerében</a>
                 tudod megtekinteni az alábbi azonosítóval:
                 <span style="color: #4285f4;">${glsCode}</span>
               </p>

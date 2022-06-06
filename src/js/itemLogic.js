@@ -1,5 +1,6 @@
 const genSpecs = require('./includes/genSpecs.js');
 const escapeVars = require('./includes/escapeVars.js');
+const getColors = require('./includes/getColors.js');
 
 // Build page for a specific item
 const buildItemSection = (conn, itemId, req) => {
@@ -160,88 +161,96 @@ const buildItemSection = (conn, itemId, req) => {
             </p>
           </div>
           <div id="specsHS" class="specsHS trans">
-      `;          
+      `;  
 
-      output += genSpecs(price, size);
+      let specsPromise = genSpecs(conn, price, size);
+      let colorPromise = getColors(conn);
 
-      output += `
-        <div class="clear"></div> 
+      Promise.all([specsPromise, colorPromise]).then(vals => {
+        let specs = vals[0];
+        const PCOLORS = vals[1][0];
+        output += specs;
+        output += `
+          <div class="clear"></div> 
 
-        <p class="align">
-          <a href="/mitjelent" class="blueLink">Segítség a specifikációkhoz</a>
-        </p>
+          <p class="align">
+            <a href="/mitjelent" class="blueLink">Segítség a specifikációkhoz</a>
+          </p>
 
-        <p class="align note ddgray">
-          A specifikációk megváltoztatása árváltozást vonhat maga után!
-        </p>
+          <p class="align note ddgray">
+            A specifikációk megváltoztatása árváltozást vonhat maga után!
+          </p>
 
-        <p class="align note ddgray">
-          Ha nem szeretnél bajlódni a paraméterekkel, hagyd az alapbeállításokon!
-        </p>
-      </div>
-      `;
+          <p class="align note ddgray">
+            Ha nem szeretnél bajlódni a paraméterekkel, hagyd az alapbeállításokon!
+          </p>
+        </div>
+        `;
 
-      // Give product suggestion from the same category
-      let sQuery = `SELECT * FROM fix_products WHERE category = ? AND id != ? ORDER BY RAND()
-        LIMIT 6`;
-      conn.query(sQuery, [category, itemId], (err, result, fields) => {
-        if (err) {
-          reject('Egy nem várt hiba történt, kérlek próbáld újra');
-          return;
-        }
+        // Give product suggestion from the same category
+        let sQuery = `SELECT * FROM fix_products WHERE category = ? AND id != ? ORDER BY RAND()
+          LIMIT 6`;
+        conn.query(sQuery, [category, itemId], (err, result, fields) => {
+          if (err) {
+            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+            return;
+          }
 
-        // If there are no more items in the category do not display suggestions at all
-        if (result.length === 0) {
-          output += `
-            </section>
-          `;
-          resolve(output);
-        } else {
-          // Provide suggestions
-          output += `
-            <hr class="hrStyle">
-              <p id="spec" class="align gotham" style="font-weight: 500;">
-                Ezek is érdekelhetnek
-              </p>
-              <div class="flexDiv" style="flex-wrap: wrap;">   
-          `;
+          // If there are no more items in the category do not display suggestions at all
+          if (result.length === 0) {
+            output += `
+              </section>
+            `;
+            resolve(output);
+          } else {
+            // Provide suggestions
+            output += `
+              <hr class="hrStyle">
+                <p id="spec" class="align gotham" style="font-weight: 500;">
+                  Ezek is érdekelhetnek
+                </p>
+                <div class="flexDiv" style="flex-wrap: wrap;">   
+            `;
 
-          for (let i = 0; i < result.length; i++) {
-            let url = result[i].url;
-            let imgUrl = result[i].img_url;
+            for (let i = 0; i < result.length; i++) {
+              let url = result[i].url;
+              let imgUrl = result[i].img_url;
+
+              output += `
+                <div class="cartImgHolder bgCommon suggItem" 
+                  style="background-image: url('/${imgUrl}')"
+                  onclick="window.location.href='/${url}'">
+                </div>
+              `;           
+            }
 
             output += `
-              <div class="cartImgHolder bgCommon suggItem" 
-                style="background-image: url('/${imgUrl}')"
-                onclick="window.location.href='/${url}'">
-              </div>
-            `;           
+                </div>
+              </section>
+            `;
           }
 
           output += `
-              </div>
-            </section>
-          `;
-        }
-
-        output += `
-          <script type="text/javascript">
-            let isLoggedIn = ${req.user.id ? true : false};
-            _('galleria').style.height = _('galleria').clientWidth + 'px';
-            window.onresize = function resizeShowcase() {
+            <script type="text/javascript">
+              let isLoggedIn = ${req.user.id ? true : false};
               _('galleria').style.height = _('galleria').clientWidth + 'px';
-            }
+              window.onresize = function resizeShowcase() {
+                _('galleria').style.height = _('galleria').clientWidth + 'px';
+              }
 
-            _('view3D').addEventListener('click', function showModels(e) {
-              viewIn3D(${pathArg});
-            });
-          </script>
-        `;
-        let descToTag = description.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, '')
-        descToTag = descToTag.replace(/<a .*?>/, '').replace(/<\/a>/, '')
-          .replace(/<br>/g, '');
-        resolve([output, productName, descToTag]);
-      });      
+              _('view3D').addEventListener('click', function showModels(e) {
+                viewIn3D(${pathArg});
+              });
+
+              const PCOLORS = ${JSON.stringify(PCOLORS)};
+            </script>
+          `;
+          let descToTag = description.split('Tulajdons')[0].replace(/(\r\n|\n|\r)/gm, '')
+          descToTag = descToTag.replace(/<a .*?>/, '').replace(/<\/a>/, '')
+            .replace(/<br>/g, '');
+          resolve([output, productName, descToTag]);
+        });  
+      });    
     });
   });
 }

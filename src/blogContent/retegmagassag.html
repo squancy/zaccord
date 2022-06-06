@@ -1,0 +1,108 @@
+<h2 class="gothamNormal fontNorm font22">Bevezető</h2>
+<p class="font18">
+  Ismerd meg a
+  nyomtatási folyamatokat befolyásoló rétegmagasság alapjait.
+  A 3D nyomtatás rétegmagassága egy egyszerű beállítás, amely befolyásolja a nyomtatási sebességet és a nyomtatni kívánt modell részletességét, annak tartósságát, trapabírását és látványosságát. 
+  <br><br>
+</p>
+  
+<h2 class="gothamNormal fontNorm font22">Mi az a rétegvastagság és miért fontos?</h2>
+    <p class="font18">
+        A rétegmagasság pontosan az, aminek hangzik: a 3D nyomtató által extrudált vagy kikeményített műanyag minden egyes rétegének pontos magassága. Ezt a beállítást egy szeletelőprogramon keresztül állítjuk be, és sokkal több hatása van a végső nyomtatásra, mint azt elsőre gondolnánk. Megfelelően használva ez a beállítás növeli a nyomtatás sebességét, felbontását és simaságát is.<br><br>
+        A 3D nyomtatóval készült nyomatok rétegmagasságát általában mikronokban mérik, ahol egy mikron 0,001 mm-nek felel meg. Egy másik fontos dolog lehet, hogy amikor a rétegmagasságot állítjuk be az FDM nyomtatókon: A kisebb rétegmagassággal megemelkedik a vízszintes síkban a pontosság, különösen a kis mozgó alkatrészeknél, amelyeket néha a print-in-place mechanizmusok használnak.<br><br>
+        A különböző nyomtatók különböző maximális felbontással rendelkeznek a rétegmagasság tekintetében. A szabványos legkisebb magasság általában 50 és 100 mikron (0,05 és 0,1 mm) között van. <br><br>
+        Most, hogy már egy kicsit többet tudunk arról, hogy mi a rétegmagasság, nézzük meg, hogyan állíthatod be a megfelelő rétegmagasságot a sebesség, a felbontás és a simaság tekintetében.<br><br>
+</p>
+
+<div class="blogImgCont blogImg1">
+  <div>
+    <div class="bgCommon bimg lazy" data-bg="/blogContent/images/layer4.jpg"
+      style="background-color: rgb(53, 54, 58);"></div>
+    <div class="imageWriteup font14 align notoSans">
+      Közeli ábrázolás egy FDM nyomtatóval készült modell felületéről
+    </div>
+  </div>
+</div>
+<br>
+
+<h2 class="gothamNormal fontNorm font22">A nyomtatási sebesség optimalizálása</h2>
+<p class="font18">
+        A 3D nyomtató rétegmagasság-beállításainak megváltoztatásának egyik leggyakoribb oka a nyomtatási sebesség növelése. A nagyobb rétegmagasság azt jelenti, hogy a nyomtatónak nem kell annyi réteget nyomtatnia ugyanannak a teljes magasságnak az eléréséhez, ami sokkal gyorsabb nyomtatást eredményez, ezáltal a rendelt modellek ára is csökkenthetővé válik.<br><br>
+Általában a rétegmagasság növelése csökkenti a nyomtatás felbontását és minőségét. Ez a megoldás jobb a nagyméretű nyomatoknál, ahol a közeli részleteket vagy figyelmen kívül hagyjuk, vagy az utólagos feldolgozás során javítjuk.<br><br>
+A rétegmagasság minden egyes nyomtatáshoz optimalizálható a leggyorsabb nyomtatási sebesség elérése érdekében, egy bizonyos felbontás megtartása mellett. Ezt azonban modellenként is egyedileg kell értékelni, mivel a hatékony nyomtatáshoz sok finomhangolásra van szükség.
+<br><br>
+</p>
+
+<h2 class="gothamNormal fontNorm font22">A felbontás növelése</h2>
+<p class="font18">
+Egy kevéssé ismert tény a 3D nyomtatási közösségen belül: A legtöbb 3D nyomtatónak nagyobb a függőleges felbontása, mint a vízszintesé. Hogy miért? Az ólomcsavarok, mivel hosszabb ideig tart a mozgásuk, sokkal pontosabb függőleges pozíciót biztosítanak a nyomtatónak, mint a többi tengelyhez használt vezérműszíjak. Így a nyomtató jobb részleteket tud létrehozni függőleges felületen, mint vízszintesen. Ebből fakadóan vagyunk képesek nagy részletességű litofánok nyomtatására is.<br><br>
+Ez az egyik oka annak, hogy az aaskedall által készített <a href="https://www.thingiverse.com/thing:919475" target="_blank" class="blueLink font18">Fillenium Malcon</a> dizájn olyan népszerű a Star Wars rajongók körében; a legkülönbözőbb gépeken nyomtatva is elképesztő részletességű marad. Más tervezők is elkezdték felismerni és kihasználni ezt a tényt, és most már sok modell létezik mely a nyomtatók ezen tulajdonságát használják ki.<br><br>
+Az alacsonyabb 3D nyomtató rétegmagasság természetesen lelassítja a nyomtatást, így a szolgáltatótól rendelt modellek ára magasabb is lesz, de a nyomtató több réteget rak le egy adott magasságra, ami sokkal nagyobb részletességet tesz lehetővé, emellett látványosabb is lehet az.<br><br>
+
+<div class="blogImgCont blogImg1">
+  <div>
+    <div class="bgCommon bimg lazy" data-bg="/blogContent/images/layer3.jpg"
+      style="background-color: rgb(53, 54, 58);"></div>
+    <div class="imageWriteup font14 align notoSans">
+      FDM nyomtatóval készült rétegmagasságot szemléltető kockák 0.8mm-től egészen 0.1mm-ig
+    </div>
+  </div>
+</div>
+<br>
+
+<h2 class="gothamNormal fontNorm font22">A felület simítása</h2>
+<p class="font18">
+A kisebb rétegmagassággal elérhető extrém részletesség másik felhasználási módja a nyomatok simítása. Alacsonyabb rétegmagasság esetén a rétegek kevésbé lesznek nyilvánvalóak, és a nyomatok simábbak lesznek. Nagyobb rétegmagasság esetén a nyomat felülete barázdásabb lesz, és a rétegek jobban láthatóvá válnak kisebb rétegmagasságú társaikkal szemben.<br><br>
+Ennek ismeretében a 3D nyomtató rétegmagasságának csökkentésével biztosítani lehet, hogy a nagyon sima felületet igénylő nyomatok, pl. tengelyek vagy print-in-place mechanizmusok a lehető legsimábbak legyenek. Ez növeli a részletességet, de csökkenti a nyomtatási sebességet, ezért  a nagyméretű alkatrészek kis rétegmagasságú nyomtatása hosszú nyomtatási időt eredményeznek amely növelheti a nyomtató hibázási lehetőségeit.<br><br>
+</p>
+
+<h2 class="gothamNormal fontNorm font22">Melyik rétegmagasság a legjobb 3D nyomtatáshoz?</h2>
+<p class="font18">
+Ha gyors nyomtatásra van szükséged, hogy minél előbb megkapd a választott modelled akkor válassz nagyobb rétegmagasságot.
+Művészi darabot szeretnél, rendkívül részletes részekkel és páratlan pontossággal? Akkor válasszd a kisebb rétegmagasságot.<br>
+Egy jó rétegmagasság, amely a legtöbb helyzetben működik: 0,2 mm. Ez a tipikus rétegvastagság a 3D nyomtatásban, mivel az alapértelmezett fúvóka 0,4 mm, és jó szabály, hogy a fúvóka átmérőjének körülbelül 50%-át használjuk rétegmagasságként.
+<br><br>
+</p>
+
+
+<div class="blogImgCont blogImg1">
+  <div>
+    <div class="bgCommon bimg lazy" data-bg="/blogContent/images/slafdm.jpg"
+      style="background-color: rgb(53, 54, 58);"></div>
+    <div class="imageWriteup font14 align notoSans">
+      SLA és FDM nyomtatóval készült modellek összehasonlítása
+    </div>
+  </div>
+</div>
+<br> 
+
+
+<h3 class="gothamNormal fontNorm font20">Miért jó és rossz a nagyobb rétegmagasság?</h3>
+<p class="font18">
+  <ul class="font18 dul">
+    <li>
+      Kevesebb időbe kerül az általunk választott modell kinyomtatása, ezáltal rendelés szempontjából kedvezőbb áron kínálják
+    </li>
+    <li>
+      Nagyobb, nem látványos modellek nyomtatására tökéletesen megfelel időmegtakarítás céljából
+    </li>
+    <li>
+      A kinyomtatott modell felülete érdesebb, durvább és jobban láthatóbb leszkisebb rétegmagasságú társaival szemben
+    </li>
+  </ul>
+</p>
+
+<h3 class="gothamNormal fontNorm font20">Miért jó és rossz a kisebb rétegmagasság?</h3>
+<p class="font18">
+  <ul class="font18 dul">
+    <li>
+      A kisebb rétegmagasságot választva modelljeink részletesebbek, pontosabbak lesznek
+    </li>
+    <li>
+      A modell felületén kevésbé fognak megjelenni a rétegek látványa
+    </li>
+    <li>
+      Minél alacsonyabb a rétegmagasság annnál több időbe kerül annak kinyomtatása, ezzel növelve a nyomtatási hibák lehetőségét
+    </li>
+  </ul>
+</p>

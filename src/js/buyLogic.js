@@ -7,20 +7,27 @@ const validateParams = require('./includes/validateParams.js');
 const validateLitParams = require('./includes/validateLitParams.js');
 const parseCookies = require('./includes/parseCookies.js');
 const formatOrderId = require('./includes/formatOrderId.js');
-const getPrice = require('./includes/modelPriceCalc/getPrice.js');
 const constants = require('./includes/constants.js');
 const shouldAllowSLA = require('./includes/allowSLA.js');
 const calcSLAPrice = require('./includes/calcSLAPrice.js');
+const getMaterials = require('./includes/getMaterials.js');
 const NodeStl = require('node-stl');
 const fs = require('fs');
 const path = require('path');
 
 // Shipping and money handle prices constants are used throughout the page
 const SHIPPING_PRICE = constants.shippingPrice;
+const SHIPPING_PRICE_GLS_H = constants.shippingPriceGLSH;
+const SHIPPING_PRICE_GLS_P = constants.shippingPriceGLSP;
+const SHIPPING_PRICE_PACKETA_H = constants.shippingPricePacketaH;
+const SHIPPING_PRICE_PACKETA_P = constants.shippingPricePacketaP;
+const SHIPPING_PRICE_POSTA_H = constants.shippingPricePostaH;
+const getShippingPrice = constants.getShippingPrice;
 const MONEY_HANDLE = constants.moneyHandle;
 
 const calcCPPrice = constants.calcCPPrice;
 const getCoords = constants.getCoords;
+const SLA_MULTIPLIER = constants.slaMultiplier;
 
 // Build page where the customer can buy the products/custom print
 const buildBuySection = (conn, paramObj, req) => {
@@ -41,6 +48,12 @@ const buildBuySection = (conn, paramObj, req) => {
     let output = `
       <script type="text/javascript">
         const MONEY_HANDLE = ${MONEY_HANDLE};
+        const SHIPPING_PRICE_GLS_H = ${SHIPPING_PRICE_GLS_H};
+        const SHIPPING_PRICE_GLS_P = ${SHIPPING_PRICE_GLS_P};
+        const SHIPPING_PRICE_PACKETA_H = ${SHIPPING_PRICE_PACKETA_H};
+        const SHIPPING_PRICE_PACKETA_P = ${SHIPPING_PRICE_PACKETA_P};
+        const SHIPPING_PRICE_POSTA_H = ${SHIPPING_PRICE_POSTA_H};
+
       </script>
       <section class="keepBottom">
         <span id="main">
@@ -66,12 +79,12 @@ const buildBuySection = (conn, paramObj, req) => {
         discountText = '(3% kedvezmény)';
       }
 
-      let actualShippingPrice = (price > 15000) ? 0 : SHIPPING_PRICE;
+      let actualShippingPrice = (price > 15000) ? 0 : SHIPPING_PRICE_PACKETA_H;
       return [discount, discountText, actualShippingPrice, shippingText];
     }
 
     // Reusable promise for generating a single item for output
-    function buildItemOutput(isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas,
+    function buildItemOutput(PRINT_MULTS, isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas,
         quantity) {
       return new Promise((resolve, reject) => {
         // Get the product with that id from database & validate parameters
@@ -89,169 +102,174 @@ const buildBuySection = (conn, paramObj, req) => {
           }
 
           // Product exists, now validate params
-          if (!validateParams(paramObj)) {
-            reject('Hibás paraméter érték');
-            return;
-          }
+          validateParams(conn, paramObj).then(res => {
+            if (!res) {
+              reject('Hibás paraméter érték');
+              return;
+            }
 
-          let prodURL = result[0]['url'];
-          let itemID = result[0]['id'];
-          let imgURL = result[0]['img_url'];
-          let price = result[0]['price'];
-          let name = result[0]['name'];
+            let prodURL = result[0]['url'];
+            let itemID = result[0]['id'];
+            let imgURL = result[0]['img_url'];
+            let price = result[0]['price'];
+            let name = result[0]['name'];
 
-          let data = {
-            'orderID': orderID,
-            'itemID': itemID,
-            'prodURL': prodURL,
-            'imgURL': imgURL,
-            'price': calcPrice(price, rvas, suruseg, scale, fvas),
-            'name': name,
-            'rvas': rvas,
-            'suruseg': suruseg,
-            'scale': scale,
-            'color': color,
-            'fvas': fvas,
-            'printMat': 'PLA',
-            'quantity': quantity,
-            'basePrice': price,
-            'prodType': 'fp',
-            'tech': 'FDM',
-            'fixProduct': true
-          };
+            let data = {
+              'orderID': orderID,
+              'itemID': itemID,
+              'prodURL': prodURL,
+              'imgURL': imgURL,
+              'price': calcPrice(PRINT_MULTS, price, rvas, suruseg, scale, fvas),
+              'name': name,
+              'rvas': rvas,
+              'suruseg': suruseg,
+              'scale': scale,
+              'color': color,
+              'fvas': fvas,
+              'printMat': 'PLA',
+              'quantity': quantity,
+              'basePrice': price,
+              'prodType': 'fp',
+              'tech': 'FDM',
+              'fixProduct': true
+            };
 
-          // Calculate shipping price & final price
-          let total = data.price * quantity;
-          let discount, discountText, shippingPrice, shippingText;
-          [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
+            // Calculate shipping price & final price
+            let total = data.price * quantity;
+            let discount, discountText, shippingPrice, shippingText;
+            [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
 
-          let finalPrice = data.price * quantity * discount;
-          if (isCrt) {
-            finalPrice *= 1 / discount
-          }
+            let finalPrice = data.price * quantity * discount;
+            if (isCrt) {
+              finalPrice *= 1 / discount
+            }
 
-          // Generate html output
-          let output = genItem(false, false, false, data);
+            // Generate html output
+            let output = genItem(false, false, false, data);
 
-          if (!isCrt) {
-            resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
-          } else {
-            resolve([output, data, finalPrice]);
-          }
+            if (!isCrt) {
+              resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
+            } else {
+              resolve([output, data, finalPrice]);
+            }
+          });
         });
       });
     }
 
-    function buildCPOutput(rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
+    function buildCPOutput(PRINT_MULTS, rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
       tech, isFromCrt = false, fname = false) {
       return new Promise((resolve, reject) => {
         // Validate params
-        if (!validateParams(paramObj)) {
-          reject('Hibás paraméter érték');
-          return;
-        }
-
-        // Validate files
-        if (!isFromCrt) {
-          var files = paramObj.files.split(',');
-        } else {
-          var files = [fname];
-        }
-        let finalPrice = 0;
-        let output = '';
-        let dataAll = [];
-        for (let i = 0; i < files.length; i++) {
-          let file = files[i];
-          let uid = Number(file.split('_')[0]);
-
-          // Make sure file belongs to user TODO: check id
-          /*
-          if (userID && id != userID && Number.isInteger(uid)) {
-            console.log(userID, id, uid);
-            reject('Hibás felhasználó');
+        validateParams(conn, paramObj).then(res => {
+          if (!res) {
+            reject('Hibás paraméter érték');
             return;
           }
-          */
-
-          // Now make sure that file & its thumbnail exist in directory if prefix is uid
-          let filePath = path.join(__dirname.replace(path.join('src', 'js'), ''),
-            'printUploads', file + '.stl');
-          let thPath = path.join(__dirname.replace(path.join('src', 'js'), ''),
-            'printUploads', 'thumbnails', file + '.png');
-          if (!fs.existsSync(filePath) || !fs.existsSync(thPath)) {
-            reject('Nincs ilyen fájl');
-            return;
-          }
-
-          // If model is printed with SLA make sure that it's not too large
-          if (tech == 'SLA' && !shouldAllowSLA(filePath, scale)) {
-            reject('Az STL file túl nagy az SLA nyomtatáshoz'); 
-            return;
-          }
-
-          // Get volume to calculate price
-          let [vol, area] = getCoords(filePath);
-          let basePrice = calcCPPrice(vol, area);
-          let price;
-          if (tech == 'SLA') {
-            price = calcSLAPrice(basePrice * 2.1, rvas, suruseg, scale); 
+          
+          // Validate files
+          if (!isFromCrt) {
+            var files = paramObj.files.split(',');
           } else {
-            price = calcPrice(basePrice, rvas, suruseg, scale, fvas, printMat);
+            var files = [fname];
           }
-          finalPrice += price * quantity;
+          let finalPrice = 0;
+          let output = '';
+          let dataAll = [];
+          for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            let uid = Number(file.split('_')[0]);
 
-          // Build image path for thumbnail
-          thPath = thPath.split('/');
-          thPath = (thPath[thPath.length - 3] + '/' + thPath[thPath.length - 2] + '/' +
-              thPath[thPath.length - 1]); 
+            // Make sure file belongs to user TODO: check id
+            /*
+            if (userID && id != userID && Number.isInteger(uid)) {
+              console.log(userID, id, uid);
+              reject('Hibás felhasználó');
+              return;
+            }
+            */
 
-          let pName = 'Bérnyomtatott Termék #' + (i + 1);
-          if (isFromCrt) pName = 'Bérnyomtatott Termék';
+            // Now make sure that file & its thumbnail exist in directory if prefix is uid
+            let filePath = path.join(__dirname.replace(path.join('src', 'js'), ''),
+              'printUploads', file + '.stl');
+            let thPath = path.join(__dirname.replace(path.join('src', 'js'), ''),
+              'printUploads', 'thumbnails', file + '.png');
+            if (!fs.existsSync(filePath) || !fs.existsSync(thPath)) {
+              reject('Nincs ilyen fájl');
+              return;
+            }
 
-          var data = {
-            'orderID': orderID,
-            'itemID': file,
-            'prodURL': 'uploadPrint?file=' + file,
-            'imgURL': thPath,
-            'price': price,
-            'name': pName,
-            'rvas': rvas,
-            'suruseg': suruseg,
-            'scale': scale,
-            'color': color,
-            'fvas': fvas,
-            'quantity': quantity,
-            'printMat': tech != 'SLA' ? printMat : 'UV resin',
-            'tech': tech,
-            'printSize': printSize,
-            'basePrice': basePrice,
-            'prodType': 'cp',
-            'fixProduct': false
-          };
+            // If model is printed with SLA make sure that it's not too large
+            if (tech == 'SLA' && !shouldAllowSLA(filePath, scale)) {
+              reject('Az STL file túl nagy az SLA nyomtatáshoz'); 
+              return;
+            }
 
-          output += genItem(false, false, false, data, false, false, true);
-          dataAll.push(data);
-        }
-        if (isFromCrt) dataAll = data;
-        resolve([output, finalPrice, dataAll]);
+            // Get volume to calculate price
+            let [vol, area] = getCoords(filePath);
+            let basePrice = calcCPPrice(vol, area);
+            let price;
+            if (tech == 'SLA') {
+              price = calcSLAPrice(basePrice * SLA_MULTIPLIER, rvas, suruseg, scale); 
+            } else {
+              price = calcPrice(PRINT_MULTS, basePrice, rvas, suruseg, scale, fvas, printMat);
+            }
+            finalPrice += price * quantity;
+
+            // Build image path for thumbnail
+            thPath = thPath.split('/');
+            thPath = (thPath[thPath.length - 3] + '/' + thPath[thPath.length - 2] + '/' +
+                thPath[thPath.length - 1]); 
+
+            let pName = 'Bérnyomtatott Termék #' + (i + 1);
+            if (isFromCrt) pName = 'Bérnyomtatott Termék';
+
+            var data = {
+              'orderID': orderID,
+              'itemID': file,
+              'prodURL': 'uploadPrint?file=' + file,
+              'imgURL': thPath,
+              'price': price,
+              'name': pName,
+              'rvas': rvas,
+              'suruseg': suruseg,
+              'scale': scale,
+              'color': color,
+              'fvas': fvas,
+              'quantity': quantity,
+              'printMat': tech != 'SLA' ? printMat : 'Gyanta (Resin)',
+              'tech': tech,
+              'printSize': printSize,
+              'basePrice': basePrice,
+              'prodType': 'cp',
+              'fixProduct': false
+            };
+
+            output += genItem(false, false, false, data, false, false, true);
+            dataAll.push(data);
+          }
+          if (isFromCrt) dataAll = data;
+          resolve([output, finalPrice, dataAll]);
+        });
       });
     }
 
     // Build output for lithophanes
     function buildLitOutput(sphere, color, size, quantity, file) {
       return new Promise((resolve, reject) => {
-          let output = '';
-          let params = {
-          'sphere': sphere,
-          'color': color,
-          'size': size,
-          'quantity': quantity,
-          'file': file
-          };
-
-          if (!validateLitParams(params))  {
-          reject('Hibás paraméter érték heheheh');
-          return;
+        let output = '';
+        let params = {
+        'sphere': sphere,
+        'color': color,
+        'size': size,
+        'quantity': quantity,
+        'file': file
+        };
+        
+        validateLitParams(conn, params).then(res => {
+          if (!res) {
+            reject('Hibás paraméter érték heheheh');
+            return;
           }
 
           let prodURL = '';
@@ -279,42 +297,80 @@ const buildBuySection = (conn, paramObj, req) => {
           output += genItem(false, false, false, data, true);
 
           resolve([output, finalPrice, data]);
+        });
       }).catch(err => {
         console.log(err);
         reject('Egy nem várt hiba történt, kérlek próbáld újra');
         return;
-        });
+      });
     }
 
     // Build the delivery info section
     // NOTE: temporarily disable packet point shipping until lockdowns are resolved
     function buildLastSection(userID, shippingText, finalPrice, discountText) {
       return new Promise((resolve, reject) => {
+        // Currently we do not ship with GLS
         let output = `
           </div>
           <p class="blueHead" style="font-size: 24px;">2. Szállítás Módja</p>
-          <label class="container" id="toAddrHolder">
-            <div style="padding-bottom: 0;">GLS házhozszállítás</div>
+          <label class="container" id="packetaToAddr" style="border-color: #c1c1c1;">
+            <div style="padding-bottom: 0;">Packeta házhozszállítás</div>
             <div class="lh sel">
-            A futárszolgálat ilyenkor a megadott címre fogja szállítani a rendelt
-            terméket/termékeket.<br>
-            Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE} Ft, felette ingyenes.
+              A Packetával partnerségben lévő futárszolgálat a megadott címre fogja szállítani a rendelt
+              terméket/termékeket.<br>
+              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_PACKETA_H} Ft, felette ingyenes.
             </div>
-            <input type="radio" name="radio2" id="toAddr">
+            <input type="radio" name="radio2" id="toAddrPacketa" checked>
             <span class="checkmark"></span>
           </label>
 
-          <label class="container" id="packetPointHolder">
-            <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
+          <label class="container" id="packetaPacketPoint">
+            <div style="padding-bottom: 0;">Packeta csomagpont átvétel</div>
             <div class="lh sel">
-            A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
-            csomagot ami ezután lesz átvehető.<br>
-            Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE} Ft, felette ingyenes.
+              A Packetával partnerségben lévő futárszolgálat a megadott csomagpontra fogja szállítani a rendelt
+              terméket/termékeket.<br>
+              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_PACKETA_P} Ft, felette ingyenes.
             </div>
-            <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
-            <input type="radio" name="radio2" id="packetPoint">
+            <div class="lh sel" id="selectedPacketaPoint" style="color: #4285f4; display: none;"></div>
+            <input type="radio" name="radio2" id="packetPointPacketa">
             <span class="checkmark"></span>
           </label>
+
+          <label class="container" id="toAddrHolderPosta">
+            <div style="padding-bottom: 0;">MPL házhozszállítás</div>
+            <div class="lh sel">
+              A Magyar Posta a megadott címre fogja szállítani a rendelt
+              terméket/termékeket.<br>
+              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_POSTA_H} Ft, felette ingyenes.
+            </div>
+            <input type="radio" name="radio2" id="toAddrPosta">
+            <span class="checkmark"></span>
+          </label>
+          
+          <div style="display: none">
+            <label class="container" id="toAddrHolder">
+              <div style="padding-bottom: 0;">GLS házhozszállítás</div>
+              <div class="lh sel">
+                A futárszolgálat a megadott címre fogja szállítani a rendelt
+                terméket/termékeket.<br>
+                Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_GLS_H} Ft, felette ingyenes.
+              </div>
+              <input type="radio" name="radio2" id="toAddr">
+              <span class="checkmark"></span>
+            </label>
+
+            <label class="container" id="packetPointHolder">
+              <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
+              <div class="lh sel">
+                A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
+                csomagot ami ezután lesz átvehető.<br>
+                Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_GLS_P} Ft, felette ingyenes.
+              </div>
+              <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
+              <input type="radio" name="radio2" id="packetPoint">
+              <span class="checkmark"></span>
+            </label>
+          </div>
 
           <div id="glsBigBox"></div>
           <div class="overlay" id="overlay"></div>
@@ -333,8 +389,7 @@ const buildBuySection = (conn, paramObj, req) => {
           extraCharge = `<span>(+${charge} Ft felár)</span>`;
         }
         
-        console.log(finalPrice, discountText)
-        if (discountText != '(3% kedvezmény)') charge += SHIPPING_PRICE;
+        if (discountText != '(3% kedvezmény)') charge += SHIPPING_PRICE_PACKETA_H;
 
         genDelivery(conn, userID, !!userID).then(result => {
           output += result;
@@ -360,9 +415,13 @@ const buildBuySection = (conn, paramObj, req) => {
               </div>
             </div>
 
-            <textarea placeholder="Megjegyzés a rendeléshez (nem kötelező)" id="comment" class="dFormField"
-              style="width: 50%; height: 80px; margin: 0 auto; display: block; margin-top:
-              10px;"></textarea>
+            <textarea placeholder="Megjegyzés a rendeléshez (nem kötelező)" id="comment" class="dFormField"></textarea>
+            
+            <p class="align" style="color: #676767">
+              Ha szeretnéd követni a rendelésed státuszát, akkor <a href="/register" class="blueLink font16">regisztrálj</a>
+              egy fiókot.
+              Ellenkező esetben csak emailen keresztül fogunk értesíteni a csomag állapotáról.
+            </p>
 
             <p class="blueHead" style="font-size: 24px;">
               4. Válassz Fizetési Módot
@@ -471,6 +530,14 @@ const buildBuySection = (conn, paramObj, req) => {
                   <span class="cbMark"></span>
                 </label>
               </p>
+              <p class="align">
+                <label class="chCont note ddgray"
+                  style="font-family: 'Roboto', sans-serif; font-size: 14px;">
+                  Elektronikus számlát kérek
+                  <input type="checkbox" id="einvoice" checked>
+                  <span class="cbMark"></span>
+                </label>
+              </p>
               <p class="align bold" id="finalPrice">
                 <span style="color: #4285f4;">
                   Végösszeg:
@@ -497,261 +564,264 @@ const buildBuySection = (conn, paramObj, req) => {
     }
 
     // User buys a single product from items page or orders a custom print / lithophane
-    if (Number.isInteger(Number(paramObj.product)) ||
-      ['cp', 'lit'].indexOf(paramObj.product) > -1) {
-      let product = Number.isInteger(paramObj.product) ? Number(paramObj.product) :
-        paramObj.product;
-      if (product != 'lit') {
-        var tech = paramObj.tech;
-        var rvas = Number(paramObj.rvas);
-        var suruseg = tech != 'SLA' ? Number(paramObj.suruseg) : paramObj.suruseg;
-        var color = paramObj.color;
-        var scale = Number(paramObj.scale);
-        var fvas = Number(paramObj.fvas);
-        var quantity = Number(paramObj.q);
-        var printMat = paramObj.printMat;
-        var printSize = paramObj.size.split(',').map(x => Number(x));
-        var paramArr = [
-          rvas, suruseg, color, scale, fvas, quantity, printMat, printSize, tech
-        ];
-      } else {
-        var sphere = paramObj.sphere;
-        var color = paramObj.color;
-        var size = paramObj.size;
-        var quantity = paramObj.q;
-        var file = paramObj.file;
-        var paramArr = [sphere, color, size, quantity, file];
-      }
+    getMaterials(conn).then(mults => {
+      const PRINT_MULTS = mults;
+      if (Number.isInteger(Number(paramObj.product)) ||
+        ['cp', 'lit'].indexOf(paramObj.product) > -1) {
+        let product = Number.isInteger(paramObj.product) ? Number(paramObj.product) :
+          paramObj.product;
+        if (product != 'lit') {
+          var tech = paramObj.tech;
+          var rvas = Number(paramObj.rvas);
+          var suruseg = tech != 'SLA' ? Number(paramObj.suruseg) : paramObj.suruseg;
+          var color = paramObj.color;
+          var scale = Number(paramObj.scale);
+          var fvas = Number(paramObj.fvas);
+          var quantity = Number(paramObj.q);
+          var printMat = paramObj.printMat;
+          var printSize = paramObj.size.split(',').map(x => Number(x));
+          var paramArr = [
+            rvas, suruseg, color, scale, fvas, quantity, printMat, printSize, tech
+          ];
+        } else {
+          var sphere = paramObj.sphere;
+          var color = paramObj.color;
+          var size = paramObj.size;
+          var quantity = paramObj.q;
+          var file = paramObj.file;
+          var paramArr = [sphere, color, size, quantity, file];
+        }
 
-      if (product === 'cp') {
-        // Build product output
-        buildCPOutput(...paramArr).then(data => {
-          output += data[0];
-          let finalPrice = data[1];
-          let discount, discountText, shippingPrice, shippingText;
-          [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
+        if (product === 'cp') {
+          // Build product output
+          buildCPOutput(PRINT_MULTS, ...paramArr).then(data => {
+            output += data[0];
+            let finalPrice = data[1];
+            let discount, discountText, shippingPrice, shippingText;
+            [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
 
-          // Check if customer gets a discount 
-          if (finalPrice > 15000) {
-            finalPrice *= 0.97;
-          } 
+            // Check if customer gets a discount 
+            if (finalPrice > 15000) {
+              finalPrice *= 0.97;
+            } 
 
-          buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
-            output += lastOutput;
+            buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
+              output += lastOutput;
 
-            // Extra charge below 800Ft
-            if (finalPrice < 800) finalPrice += 800 - finalPrice;
+              // Extra charge below 800Ft
+              if (finalPrice < 800) finalPrice += 800 - finalPrice;
 
-            output += `
-              </section>
-              <script type="text/javascript">
-                let data = ${JSON.stringify(data[2])};
-                data[0].finalPrice = Math.round(${finalPrice});
-                data[0].shippingPrice = ${shippingPrice};
-                let isFromCart = true;
-                let isFromCP = true;
-                let isLoggedIn = ${userID ? true : false};
-              </script>
-            `;
-            resolve(output);
+              output += `
+                </section>
+                <script type="text/javascript">
+                  let data = ${JSON.stringify(data[2])};
+                  data[0].finalPrice = Math.round(${finalPrice});
+                  data[0].shippingPrice = ${shippingPrice};
+                  let isFromCart = true;
+                  let isFromCP = true;
+                  let isLoggedIn = ${userID ? true : false};
+                </script>
+              `;
+              resolve(output);
+            }).catch(err => {
+              console.log(err);
+              reject('Egy nem várt hiba történt, kérlek próbáld újra');
+              return;
+            });
           }).catch(err => {
             console.log(err);
             reject('Egy nem várt hiba történt, kérlek próbáld újra');
             return;
           });
-        }).catch(err => {
-          console.log(err);
-          reject('Egy nem várt hiba történt, kérlek próbáld újra');
           return;
-        });
-        return;
-      }
-     
-      if (product != 'lit') {
-        paramArr = [product, rvas, suruseg, color, scale, fvas, quantity];
-        buildItemOutput(false, userID, orderID, ...paramArr).then(data => {
-          output += data[0]; 
-          buildLastSection(userID, data[2], data[3], data[4]).then(lastOutput => {
-            output += lastOutput;
-            let finalPrice = data[3];
+        }
+       
+        if (product != 'lit') {
+          paramArr = [product, rvas, suruseg, color, scale, fvas, quantity];
+          buildItemOutput(PRINT_MULTS, false, userID, orderID, ...paramArr).then(data => {
+            output += data[0]; 
+            buildLastSection(userID, data[2], data[3], data[4]).then(lastOutput => {
+              output += lastOutput;
+              let finalPrice = data[3];
 
-            // Extra charge below 800Ft
-            if (finalPrice < 800) finalPrice += 800 - finalPrice;
+              // Extra charge below 800Ft
+              if (finalPrice < 800) finalPrice += 800 - finalPrice;
 
-            output += `
-              </section>
-              <script type="text/javascript">
-                let data = [${JSON.stringify(data[1])}];
-                data[0].finalPrice = Math.round(${finalPrice});
-                data[0].shippingPrice = ${data[5]};
-                let isFromCart = false;
-                let isFromCP = false;
-                let isLoggedIn = ${userID ? true : false};
-              </script>
-            `;
-            resolve(output);
+              output += `
+                </section>
+                <script type="text/javascript">
+                  let data = [${JSON.stringify(data[1])}];
+                  data[0].finalPrice = Math.round(${finalPrice});
+                  data[0].shippingPrice = ${data[5]};
+                  let isFromCart = false;
+                  let isFromCP = false;
+                  let isLoggedIn = ${userID ? true : false};
+                </script>
+              `;
+              resolve(output);
+            }).catch(err => {
+              console.log(err);
+              reject('Egy nem várt hiba történt, kérlek próbáld újra');
+              return;
+            });
           }).catch(err => {
             console.log(err);
             reject('Egy nem várt hiba történt, kérlek próbáld újra');
             return;
           });
-        }).catch(err => {
-          console.log(err);
-          reject('Egy nem várt hiba történt, kérlek próbáld újra');
-          return;
-        });
-      } else {
-        buildLitOutput(...paramArr).then(data => {
-          output += data[0];
-          let finalPrice = data[1];
+        } else {
+          buildLitOutput(...paramArr).then(data => {
+            output += data[0];
+            let finalPrice = data[1];
 
-          let discount, discountText, shippingPrice, shippingText;
-          [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
+            let discount, discountText, shippingPrice, shippingText;
+            [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
 
-          // Check if customer gets a discount 
-          if (finalPrice > 15000) {
-            finalPrice *= 0.97;
-          } 
+            // Check if customer gets a discount 
+            if (finalPrice > 15000) {
+              finalPrice *= 0.97;
+            } 
 
-          buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
-            output += lastOutput;
-            output += `
-              <script type="text/javascript">
-                let data = [${JSON.stringify(data[2])}];
-                data[0].finalPrice = Math.round(${finalPrice});
-                data[0].shippingPrice = ${shippingPrice};
-                let isFromCart = false;
-                let isFromCP = false;
-                let isLit = true;
-                let isLoggedIn = ${userID ? true : false};
-              </script>
-            `;
-            output += '</section>';
-            resolve(output);
+            buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
+              output += lastOutput;
+              output += `
+                <script type="text/javascript">
+                  let data = [${JSON.stringify(data[2])}];
+                  data[0].finalPrice = Math.round(${finalPrice});
+                  data[0].shippingPrice = ${shippingPrice};
+                  let isFromCart = false;
+                  let isFromCP = false;
+                  let isLit = true;
+                  let isLoggedIn = ${userID ? true : false};
+                </script>
+              `;
+              output += '</section>';
+              resolve(output);
+            }).catch(err => {
+              reject('Egy nem várt hiba történt, kérlek próbáld újra');
+              return;
+            });
           }).catch(err => {
             reject('Egy nem várt hiba történt, kérlek próbáld újra');
             return;
-          });
-        }).catch(err => {
-          reject('Egy nem várt hiba történt, kérlek próbáld újra');
+          });        
+        }
+
+      // Second case is when user buys the whole cart and data is fetched from cookies
+      } else {
+        // Make sure cookie is not empty
+        let cItems = parseCookies(req).cartItems;
+        if (!cItems) {
+          cItems = '{}';
+        }
+
+        if (!Object.keys(JSON.parse(cItems)).length) {
+          reject('Üres a kosarad');
           return;
-        });        
-      }
-
-    // Second case is when user buys the whole cart and data is fetched from cookies
-    } else {
-      // Make sure cookie is not empty
-      let cItems = parseCookies(req).cartItems;
-      if (!cItems) {
-        cItems = '{}';
-      }
-
-      if (!Object.keys(JSON.parse(cItems)).length) {
-        reject('Üres a kosarad');
-        return;
-      }
-
-      // Get data from cookies and validate on server side
-      let cartItems = JSON.parse(parseCookies(req).cartItems);
-
-      // Iterate over all items & build a promise array
-      let promises = [];
-      let isfcp = false;
-      for (let key of Object.keys(cartItems).filter(el => el[0] != 'i')) {
-        let currentItem = cartItems[key];
-        var id = key.replace('content_', '');
-        let itemID = Number(id.split('_')[1]);
-
-        if (currentItem['sphere_' + id]) {
-          var isLit = true;
-          var sphere = currentItem['sphere_' + id];
-          var size = currentItem['size_' + id];
-          var file = currentItem['file_' + id];
-        } else {
-          var isLit = false;
-          var tech = currentItem['tech_' + id];
-          var rvas = Number(currentItem['rvas_' + id]);
-          var suruseg = tech != 'SLA' ? Number(currentItem['suruseg_' + id]) : currentItem['suruseg_' + id];
-          var scale = Number(currentItem['scale_' + id]);
-          var fvas = Number(currentItem['fvas_' + id]);
-          var printMat = currentItem['printMat_' + id];
-          var printSize = currentItem['printMat_' + id].split(',').map(x => Number(x));
         }
 
-        let color = decodeURIComponent(currentItem['color_' + id]);
-        let quantity = Number(currentItem['quantity_' + id]);
+        // Get data from cookies and validate on server side
+        let cartItems = JSON.parse(parseCookies(req).cartItems);
 
-        // Check if current item in cart is a custom printed or a fixed product or a lithophane
-        let paramArr = [itemID, rvas, suruseg, color, scale, fvas, quantity];
-        if (id.split('_').length > 2 && !isLit) {
-          isfcp = true;
-          let paramArr = [rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
-            tech];
-          var itemQuery = buildCPOutput(...paramArr, true, id);
-        } else if (isLit) {
-          let paramArr = [sphere, color, size, quantity, file];
-          var itemQuery = buildLitOutput(...paramArr);
-        } else {
-          let paramArr = [itemID, rvas, suruseg, color, scale, fvas, quantity];
-          var itemQuery = buildItemOutput(true, userID, orderID, ...paramArr);
-        }
-        promises.push(itemQuery);
-      }
+        // Iterate over all items & build a promise array
+        let promises = [];
+        let isfcp = false;
+        for (let key of Object.keys(cartItems).filter(el => el[0] != 'i')) {
+          let currentItem = cartItems[key];
+          var id = key.replace('content_', '');
+          let itemID = Number(id.split('_')[1]);
 
-      // Implement a gate and wait for all promises to finish
-      Promise.all(promises).then(values => {
-        let finalPrice = 0;
-        let pData = [];
-        for (let v of values) {
-          output += v[0];
-          if (typeof v[2] === 'object') {
-            finalPrice += v[1];
-            pData.push(v[2]);
+          if (currentItem['sphere_' + id]) {
+            var isLit = true;
+            var sphere = currentItem['sphere_' + id];
+            var size = currentItem['size_' + id];
+            var file = currentItem['file_' + id];
           } else {
-            finalPrice += v[2];
-            pData.push(v[1]);
+            var isLit = false;
+            var tech = currentItem['tech_' + id];
+            var rvas = Number(currentItem['rvas_' + id]);
+            var suruseg = tech != 'SLA' ? Number(currentItem['suruseg_' + id]) : currentItem['suruseg_' + id];
+            var scale = Number(currentItem['scale_' + id]);
+            var fvas = Number(currentItem['fvas_' + id]);
+            var printMat = currentItem['printMat_' + id];
+            var printSize = currentItem['printMat_' + id].split(',').map(x => Number(x));
           }
+
+          let color = decodeURIComponent(currentItem['color_' + id]);
+          let quantity = Number(currentItem['quantity_' + id]);
+
+          // Check if current item in cart is a custom printed or a fixed product or a lithophane
+          let paramArr = [itemID, rvas, suruseg, color, scale, fvas, quantity];
+          if (id.split('_').length > 2 && !isLit) {
+            isfcp = true;
+            let paramArr = [rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
+              tech];
+            var itemQuery = buildCPOutput(PRINT_MULTS, ...paramArr, true, id);
+          } else if (isLit) {
+            let paramArr = [sphere, color, size, quantity, file];
+            var itemQuery = buildLitOutput(...paramArr);
+          } else {
+            let paramArr = [itemID, rvas, suruseg, color, scale, fvas, quantity];
+            var itemQuery = buildItemOutput(PRINT_MULTS, true, userID, orderID, ...paramArr);
+          }
+          promises.push(itemQuery);
         }
-     
-        // Get shipping price & build delivery section
-        let discount, dText, shopPrice, sText;
-        
-        let actualShippingPrice = (finalPrice > 15000) ? 0 : SHIPPING_PRICE;
 
-        [discount, dText, shopPrice, sText] = calcPrices(finalPrice);
+        // Implement a gate and wait for all promises to finish
+        Promise.all(promises).then(values => {
+          let finalPrice = 0;
+          let pData = [];
+          for (let v of values) {
+            output += v[0];
+            if (typeof v[2] === 'object') {
+              finalPrice += v[1];
+              pData.push(v[2]);
+            } else {
+              finalPrice += v[2];
+              pData.push(v[1]);
+            }
+          }
+       
+          // Get shipping price & build delivery section
+          let discount, dText, shopPrice, sText;
+          
+          let actualShippingPrice = (finalPrice > 15000) ? 0 : SHIPPING_PRICE_PACKETA_H;
 
-        if (finalPrice > 15000) {
-          finalPrice *= 0.97;
-        }
+          [discount, dText, shopPrice, sText] = calcPrices(finalPrice);
 
-        buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
-          output += lastOutput;
+          if (finalPrice > 15000) {
+            finalPrice *= 0.97;
+          }
 
-          // Order with a total value of less than 800Ft will get a 800 - price extra charge
-          if (finalPrice < 800) finalPrice += 800 - finalPrice;
-          output += `
-            </section>
-            <script type="text/javascript">
-              let data = ${JSON.stringify(pData)};
-              data[0].finalPrice = Math.round(${finalPrice});
-              data[0].shippingPrice = ${actualShippingPrice};
-              let isFromCart = true;
-              let isFromCP = false;
-              let isLoggedIn = ${userID ? true : false};
-            </script>
-          `;
-          resolve(output);
+          buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
+            output += lastOutput;
+
+            // Order with a total value of less than 800Ft will get a 800 - price extra charge
+            if (finalPrice < 800) finalPrice += 800 - finalPrice;
+            output += `
+              </section>
+              <script type="text/javascript">
+                let data = ${JSON.stringify(pData)};
+                data[0].finalPrice = Math.round(${finalPrice});
+                data[0].shippingPrice = ${actualShippingPrice};
+                let isFromCart = true;
+                let isFromCP = false;
+                let isLoggedIn = ${userID ? true : false};
+              </script>
+            `;
+            resolve(output);
+          }).catch(err => {
+            console.log(err);
+            reject('Egy nem várt hiba történt, kérlek próbáld újra');
+            return;
+          });
         }).catch(err => {
           console.log(err);
           reject('Egy nem várt hiba történt, kérlek próbáld újra');
           return;
         });
-      }).catch(err => {
-        console.log(err);
-        reject('Egy nem várt hiba történt, kérlek próbáld újra');
-        return;
-      });
-    }
+      }
+    });
   });
 }
 

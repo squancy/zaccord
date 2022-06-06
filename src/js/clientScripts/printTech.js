@@ -15,9 +15,11 @@ function changeTech(techBefore, tid, price) {
     cookieVals['content_' + tid]['suruseg_' + tid] = '20';
     cookieVals['content_' + tid]['fvas_' + tid] = '1.2';
     cookieVals['content_' + tid]['printMat_' + tid] = 'PLA';
+    cookieVals['content_' + tid]['color_' + tid] = encodeURIComponent(PCOLORS['pla'][0]);
   } else {
     cookieVals['content_' + tid]['rvas_' + tid] = '0.05';
     cookieVals['content_' + tid]['suruseg_' + tid] = encodeURIComponent('Tömör');
+    cookieVals['content_' + tid]['color_' + tid] = encodeURIComponent(PCOLORS['gyanta (resin)'][0]);
   }
   setCookie('cartItems', JSON.stringify(cookieVals), 365);
   let originalPrice = Number(cookieVals['content_' + tid]['price_' + tid]);
@@ -38,7 +40,7 @@ function changeTech(techBefore, tid, price) {
   `;
   
   for (let lw of lwValues) {
-    let selected;
+    let selected = '';
     if ((!isSLA && lw == 0.2) || (isSLA && lw == 0.05)) selected = 'selected';
     content += `<option value="${lw.toFixed(2)}" ${selected}>${lw.toFixed(2)}mm</option>`;
   } 
@@ -56,7 +58,7 @@ function changeTech(techBefore, tid, price) {
   
   let postfix = isSLA ? '' : '%';
   for (let inf of infillValues) {
-    let selected;
+    let selected = '';
     if ((!isSLA && inf == 20) || (isSLA && inf == 'Tömör')) selected = 'selected';
     content += `
       <option value="${inf}" ${selected}>${inf}${postfix}</option>
@@ -102,7 +104,7 @@ function changeTech(techBefore, tid, price) {
             onchange="updateSpecs(this, ${price}, '${tid}', false, true, ${isSLA})">
     `;
 
-    for (let pm of PRINT_MATERIALS) {
+    for (let pm of Object.keys(PCOLORS).filter(e => e != 'gyanta (resin)').map(e => e.toUpperCase())) {
       content += `<option value="${pm}">${pm}</option>`;
     }
     
@@ -112,10 +114,23 @@ function changeTech(techBefore, tid, price) {
       </div>
     `; 
   }
+  
+  let colorContent = '';
+  let ind = isSLA ? 'gyanta (resin)' : 'pla';
+  for (let i = 0; i < PCOLORS[ind].length; i++) {
+    let color = PCOLORS[ind][i];
+    let selected = i == 0 ? 'selected' : '';
+    colorContent += `<option value="${color}" ${selected}>${color}</option>`;
+  }
 
   content += `
     <div id="colorDiv_${tid}">
-      ${_('colorDiv_' + tid).innerHTML}
+      <p>
+        Szín:
+        <select class="specSelect chItem" id="color${tid}" onchange="chColor(this, '${tid}')">
+          ${colorContent}
+        </select>
+      </p>
     </div>
   `;
 
@@ -138,7 +153,7 @@ function changeTech(techBefore, tid, price) {
 
   let newPrice;
   if (isSLA) {
-    newPrice = calcSLAPrice(Math.round(originalPrice * 2.1), 0.05, 'Tömör', scaleVal);
+    newPrice = calcSLAPrice(Math.round(originalPrice * SLA_MULTIPLIER), 0.05, 'Tömör', scaleVal);
   } else {
     _('fvas' + tid).value = '1.2';
     newPrice = calculatePrice(originalPrice, tid, false, true);

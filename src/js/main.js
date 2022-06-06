@@ -287,3 +287,13 @@ let clinks = document.getElementsByClassName('contactLinks');
 for (let clink of clinks) {
   clink.addEventListener('click', (e) => fbq('track', 'Contact'));
 }
+
+let vmen = document.getElementsByClassName('mainMenuCont')[0];
+vmen.style.maxHeight = window.innerHeight - 120 + 'px';
+
+if (_('goToColor')) {
+  _('goToColor').addEventListener('click', (e) => {
+    let printMat = _('printMat') ? _('printMat').value : 'PLA';
+    window.location.href = '/colors#' + encodeURIComponent(_('color').value) + '_' + encodeURIComponent(printMat); 
+  });
+}

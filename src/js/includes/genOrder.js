@@ -7,7 +7,7 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
   return new Promise((resolve, reject) => {
     let sQuery = `
       SELECT o.price AS fprice, o.*, i.* FROM orders AS o LEFT JOIN fix_products AS i
-      ON o.item_id = i.id WHERE o.uid = ? ORDER BY o.order_time DESC LIMIT ${limit}
+      ON o.item_id = i.id WHERE o.uid = ? ORDER BY o.order_time DESC
     `;
 
     let output = '';
@@ -24,10 +24,13 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
       }
 
       let lim = result.length;
+      let startVal = 0;
       if (threeLimit) lim = result.length > 3 ? 3 : result.length;
+      else startVal = 3;
 
       // Loop through items and build UI
-      for (let i = 0; i < lim; i++) {
+      let orderNum = 1;
+      for (let i = startVal; i < lim; i++) {
         let itemID = result[i].item_id;
         let orderTime = EUDateFormat(addHours(result[i].order_time, 2));
         let prodURL = result[i].url;
@@ -98,6 +101,18 @@ const genOrder = (conn, userID, limit = '3, 2147483647', threeLimit = false) => 
           'tech': tech
         };
         
+        if ((i == 0) || result[i].unique_id != result[i - 1].unique_id) {
+          let invoiceLink = '';
+          if (result[i].e_invoice) {
+            invoiceLink = `
+              - <a class="blueLink font20" href="/e-invoices/${uniqueID}.pdf" target="_blank">E-számla letöltés</a>
+            `;
+          }
+          output += `
+            <p class="gotham font20 group">Rendelés (${orderTime.substring(0, 10)}) ${invoiceLink}</p>
+          `;
+        }
+
         output += genItem(true, true, true, data, isLit, true);
       }
       resolve(output);

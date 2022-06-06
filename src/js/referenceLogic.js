@@ -28,7 +28,6 @@ const buildReferencePage = (conn) => {
         }
 
         for (let j = initial; j < upperLimit; j++) {
-          console.log(j);
           let id = result[j].id;
           let imgUrl = result[j].img_url;
           let title = result[j].title;

@@ -1,1 +1,3 @@
-document.getElementById('yearHolder').innerHTML = new Date().getFullYear();
+for (let holder of document.getElementsByClassName('yearHolder')) {
+  holder.innerHTML = new Date().getFullYear();
+}

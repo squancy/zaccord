@@ -44,7 +44,6 @@ function toggleShowcase(status) {
       _('ms').style.marginTop = '110px';
     }
     toggleService('hide');
-    console.log('skm');
   }
 }
 
@@ -90,6 +89,7 @@ function searchForItem() {
     toggleShowcase('show');
     showedEmpty = true;
     _('ms').style.marginTop = '0px';
+    window.history.pushState('home', 'Zaccord - 3D Nyomtatás', '/');
   } else {
     toggleShowcase('hide');
     showedEmpty = false;

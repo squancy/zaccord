@@ -12,15 +12,23 @@ const path = require('path');
 */
 
 // Response with optional caching options
-function responseCache(contentType, res, isCache, cacheType = 'no-cache') {
+function responseCache(contentType, res, isCache, cacheType = 'no-cache', forceReload = false) {
   if (!isCache) {
     res.writeHead(200, {'Content-Type': contentType});
   } else {
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': 'max-age=31536000, ' + cacheType,
-      'Vary': 'ETag, Content-Encoding'
-    });
+    if (!forceReload) {
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Cache-Control': 'max-age=31536000, ' + cacheType,
+        'Vary': 'ETag, Content-Encoding'
+      });
+    } else {
+      res.writeHead(200, {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+    }
   }
 }
 
@@ -86,7 +94,7 @@ function fileResponse(contentType, url, res) {
   try {
     var content = fs.readFileSync(path);
   } catch (e) {
-    console.log(e)
+    console.log(e);
     if (typeof userID === 'undefined') var userID;
     imgError(res, userID, '404error');
   }
@@ -102,8 +110,6 @@ function getContentType(extension) {
       return 'text/css';
     case '.json':
       return 'application/json';
-    case '.png':
-      return 'image/png';
     case '.jpg':
       return 'image/jpg';
     case '.stl':
@@ -120,6 +126,10 @@ function getContentType(extension) {
       return 'image/svg+xml';
     case '.txt':
       return 'text/plain';
+    case '.gcode':
+      return 'text/plain';
+    case '.zip':
+      return 'application/zip';
   }
   return 'text/html';
 }
@@ -146,10 +156,10 @@ function pageCouldNotLoad(res, userID) {
   commonData(content, userID, '', res);
 }
 
-function commonData(content, userID, data, res) {
+function commonData(content, userID, data, res, forceReload = false) {
   content += data;
   content += addTemplate(userID);
-  responseCache('text/html', res, true);
+  responseCache('text/html', res, true, undefined, true);
   res.end(content, 'utf8');
 }
 
@@ -191,20 +201,23 @@ function fileServerResponse(extension, req, res, fileResponse) {
   }
 }
 
-function loadStaticPage(callback, paramArr, content, userID, res, conn) {
+function loadStaticPage(callback, paramArr, content, userID, res, conn, forceReload = false) {
   callback(...paramArr).then(data => {
-    commonData(content, userID, data, res);
+    commonData(content, userID, data, res, forceReload);
   }).catch(err => {
     console.log(err)
     pageCouldNotLoad(res, userID);
   }); 
 }
 
-function returnPageWithData(src, data, userID, res) {
+function returnPageWithData(src, data, userID, res, redirect = false) {
   let content = fs.readFileSync(src);
   content += data;
   content += addTemplate(userID);
   responseCache('text/html', res, true);
+  if (redirect) {
+    res.writeHead(301, {Location: redirect});
+  }
   res.end(content);
 }
 

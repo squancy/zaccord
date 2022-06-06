@@ -39,7 +39,7 @@ function addToCart(id) {
   } else if (INFILL_VALUES.indexOf(suruseg) < 0) {
     displayErrorMsg('A sűrűség értéke nem megfelelő');
     return 
-  } else if (PRINT_COLORS.indexOf(color) < 0) {
+  } else if (PCOLORS['pla'].indexOf(color) < 0) {
     displayErrorMsg('A szín értéke nem megfelelő');
     return 
   } else if (SCALE_VALUES.indexOf(scale) < 0) {
@@ -125,7 +125,13 @@ function addToCart(id) {
   _('broHolder').style.marginBottom = "20px";
 
   // Add fb tracking for ads
-  //fbq('track', 'AddToCart');
+  // fbq('track', 'AddToCart');
+}
+
+if (document.getElementsByClassName('bros').length > 0) {
+  document.getElementsByClassName('bros')[1].addEventListener('click', function callback(e) {
+    recordConversion(undefined, Number(_('priceHolder').innerHTML, 'g100CPHx9KUDEMDJxZMC'));
+  });
 }
 
 // Update price in the DOM, in real-time
@@ -199,18 +205,8 @@ function calculatePrice(price, id = '', isLit, isCP) {
 
     // When calculating the price of a custom printed model also consider the filament material
     if (isCP) {
-      let filamentMaterial = _('printMat' + id).value;
-      let multiplier;
-
-      if (filamentMaterial == PRINT_MATERIALS[0]) {
-        multiplier = 1;
-      } else if (filamentMaterial == PRINT_MATERIALS[1]
-        || filamentMaterial == PRINT_MATERIALS[2]) {
-        multiplier = 1.36;
-      } else {
-        multiplier = 1.814;
-      } 
-      let fp = Math.round(nPrice * multiplier); 
+      let filamentMaterial = _('printMat' + id).value.toLowerCase();
+      let fp = Math.round(nPrice * PRINT_MULTS[filamentMaterial]);
       return fp < MIN_PRICE ? MIN_PRICE : fp;
     }
 
@@ -235,7 +231,7 @@ function updatePrice(isInCart, price, domElement, isLit, isCP = false, isSLA = f
     let lw = Number(_('rvas' + id).value);
     let infill = _('suruseg' + id).value;
     let scale = Number(_('scale' + id).value);
-    var newPrice = calcSLAPrice(Math.round(price * 2.1), lw, infill, scale);
+    var newPrice = calcSLAPrice(Math.round(price * SLA_MULTIPLIER), lw, infill, scale);
   } else {
     var newPrice = calculatePrice(price, id, isLit, isCP); 
   }

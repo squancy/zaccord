@@ -1,3 +1,44 @@
+const PACKETA_API_KEY = '5a2b7d86fd0b5ae5';
+let packetaArr = null;
+
+function getDeliveryMethod(gls_h, gls_p, packeta_h, packeta_p, posta_h) {
+  if (gls_h) {
+    return 'gls_h';
+  } else if (gls_p) {
+    return 'gls_p';
+  } else if (packeta_h) {
+    return 'packeta_h';
+  } else if (posta_h) {
+    return 'posta_h';
+  }
+
+  return 'packeta_p';
+}
+
+function getPPAttr(attr, type) {
+  if (attr == 'id') {
+    return type == 'gls' ? infoArr.pclshopid : packetaArr.id;
+  } else if (attr == 'name') {
+    return type == 'gls' ? infoArr.name : packetaArr.place;
+  } else if (attr == 'zip') {
+    return type == 'gls' ? infoArr.zipcode : packetaArr.zip;
+  } else if (attr == 'city') {
+    return type == 'gls' ? infoArr.city : packetaArr.city;
+  } else if (attr == 'address') {
+    return type == 'gls' ? infoArr.address : packetaArr.street;
+  } else if (attr == 'contact') {
+    return type == 'gls' ? infoArr.contact : '';
+  } else if (attr == 'phone') {
+    return type == 'gls' ? infoArr.phone : '';
+  } else if (attr == 'email') {
+    return type == 'gls' ? infoArr.email : '';
+  } else if (attr == 'lat') {
+    return type == 'gls' ? infoArr.geolat : packetaArr.gps.lat;
+  } else if (attr == 'lon') {
+    return type == 'gls' ? infoArr.geolon : packetaArr.gps.lon;
+  }
+}
+
 // Countries for billing
 // Currently facebook pixel is not used, fbq is commented out
 let countries = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria", "Azerbajdzsán",
@@ -50,6 +91,9 @@ function submitOrder() {
   let packetPoint = _('packetPoint').checked;
   let isCompNormal = _('compNormal').checked;
   let comment = _('comment').value;
+  let packetaToAddr = _('toAddrPacketa').checked;
+  let packetaPacketPoint = _('packetPointPacketa').checked;
+  let postaToAddr = _('toAddrPosta').checked;
 
   let buyAsComp = _('buyAsComp') ? _('buyAsComp').checked : null;
   if (_('billingName')) {
@@ -73,6 +117,7 @@ function submitOrder() {
   let billingType = 'same';
   let isAgree = _('agree').checked;
   let isAgree2 = _('agree2').checked;
+  let eInvoice = _('einvoice').checked;
   if (!uvet && !transfer && !creditCard) {
     statusFill('errStatus', 'Kérlek válassz egy fizetési módot');
     return;
@@ -105,29 +150,28 @@ function submitOrder() {
     if (!validateComp(isComp)) return;
     else if (!isComp) billingType = 'diffNo';
     else billingType = 'diffYes';
-  } else if (!toAddr && !packetPoint) {
+  } else if (!toAddr && !packetPoint && !toAddrPacketa && !packetaPacketPoint) {
     statusFill('errStatus', 'Válassz szállítási módot');
     return;
-  } else if (packetPoint && !infoArr) {
+  } else if ((packetPoint && !infoArr) || (packetaPacketPoint && !packetaArr)) {
     statusFill('errStatus', 'Válassz egy csomagpontot');
     return;
   }
 
   // Handle delivery to address & delivery to packet point
-  if (toAddr) {
-    data[0].delivery = 'toAddr';  
-  } else {
-    data[0].delivery = 'packetPoint';
-    data[0].ppID = infoArr.pclshopid;
-    data[0].ppName = infoArr.name;
-    data[0].ppZipcode = infoArr.zipcode;
-    data[0].ppCity = infoArr.city;
-    data[0].ppAddress = infoArr.address;
-    data[0].ppContact = infoArr.contact;
-    data[0].ppPhone = infoArr.phone;
-    data[0].ppEmail = infoArr.email;
-    data[0].ppLat = infoArr.geolat;
-    data[0].ppLon = infoArr.geolng;
+  data[0].delivery = getDeliveryMethod(toAddr, packetPoint, packetaToAddr, packetaPacketPoint, postaToAddr);
+  if (packetPoint || packetaPacketPoint) {
+    let type = packetPoint ? 'gls' : 'packeta';
+    data[0].ppID = getPPAttr('id', type); 
+    data[0].ppName = getPPAttr('name', type); 
+    data[0].ppZipcode = getPPAttr('zip', type); 
+    data[0].ppCity = getPPAttr('city', type);
+    data[0].ppAddress = getPPAttr('address', type);
+    data[0].ppContact = getPPAttr('contact', type);
+    data[0].ppPhone = getPPAttr('phone', type);
+    data[0].ppEmail = getPPAttr('email', type);
+    data[0].ppLat = getPPAttr('lat', type);
+    data[0].ppLon = getPPAttr('lon', type);
   }
 
   /*
@@ -158,6 +202,8 @@ function submitOrder() {
   data[0].normalCompnum = normalCompnum;
   data[0].comment = comment;
 
+  data[0].eInvoice = eInvoice;
+
   if (typeof isLit !== 'undefined') {
     data[0].isLit = true;
   } else {
@@ -179,6 +225,8 @@ function submitOrder() {
     }).then(response => response.json()).then(data => {
       if (data.success) {
         // On successful order remove items from the cookies (if order was not a single item)
+        let price = Number(_('fPrice').innerHTML);
+        recordConversion(undefined, price, 'I_w4CK-q6-ABEMDJxZMC');
         window.scrollTo(0, 0);
         if (isFromCart && !isFromCP) setCookie('cartItems', '', 365);
 
@@ -203,7 +251,7 @@ function submitOrder() {
 
           <p class="gotham font24" style="color: #4285f4;">Sikeres rendelés!</p>
           <p class="align dgray lh">
-            A termékek legkésőbb a rendelés napjától számított 5. munkanapon házhoz lesznek
+            A termékek legkésőbb a rendelés napjától számított 10. munkanapon házhoz lesznek
             szállítva.<br>
             Köszönjük, hogy a Zaccordot választottad!
           </p>
@@ -213,6 +261,7 @@ function submitOrder() {
           </button>
         `;
         updateCartNum();
+        window.history.replaceState('home', 'Zaccord - 3D Nyomtatás', '/');
         // fbq('track', 'AddPaymentInfo');
         /*
         fbq('track', 'Purchase', {
@@ -220,7 +269,6 @@ function submitOrder() {
         });
         */
     } else {
-      console.log('adadsd');
       _('errStatus').innerHTML = '<p>Egy nem várt hiba történt, kérlek próbáld újra</p>';
     }
   }).catch(err => {
@@ -411,6 +459,23 @@ window.addEventListener('resize', e => {
   }
 });
 
+_('packetaPacketPoint').addEventListener('click', (e) => {
+  Packeta.Widget.pick(PACKETA_API_KEY, packetaSelectPoint, {webUrl: 'zaccord.com', country: 'hu', language: 'hu'}, null);
+});
+
+function packetaSelectPoint(point) {
+  if (point && point.error !== null) {
+    _('selectedPacketaPoint').style.display = 'block';
+    _('selectedPacketaPoint').style.color = 'red';
+    _('selectedPacketaPoint').innerHTML = 'Ez a csomagpont jelenleg nem elérhető';  
+  } else if (point !== null) {
+    _('selectedPacketaPoint').style.display = 'block';
+    _('selectedPacketaPoint').innerHTML = point.place;
+    _('selectedPacketaPoint').innerHTML += '<br>' + point.name;
+    packetaArr = point;
+  }
+}
+
 let isInit = false;
 function showMap(e) {
   _('overlay').style.opacity = '1';
@@ -512,20 +577,44 @@ function testclick(obj) {
   glsMap.initAddress($('#testinput').val());
 }
 
+let deliveryToMoney = {
+  toAddrHolder: SHIPPING_PRICE_GLS_H, 
+  packetPointHolder: SHIPPING_PRICE_GLS_P, 
+  packetaToAddr: SHIPPING_PRICE_PACKETA_H, 
+  packetaPacketPoint: SHIPPING_PRICE_PACKETA_P,
+  toAddrHolderPosta: SHIPPING_PRICE_POSTA_H
+}
+
+function getShippingPrice(price, show) {
+  if (price < 15000) {
+    return deliveryToMoney[show];
+  }
+
+  return 0;
+}
+
 function highlightLabel(show, all) {
   _(show).style.borderColor = '#c1c1c1';
   for (let el of all) {
     if (el != show) {
       _(el).style.borderColor = '#dfdfdf';
     }
+
     if (show == 'btransfer' || show == 'uvetCont') {
       _('plInfoHolder').innerHTML = '';
     }
   }
+
+  if (show != 'btransfer' && show != 'uvetCont' && show != 'paylikeCont') {
+    _('fPrice').innerHTML = data[0].finalPrice + getShippingPrice(data[0].finalPrice, show);
+    data[0].shippingPrice = getShippingPrice(data[0].finalPrice, show);
+  }
+
+  _('plAmountDyn').innerText = _('fPrice').innerText + ' Ft';
 }
 
 const paymentOptions = ['btransfer', 'uvetCont', 'paylikeCont']
-const shippingOptions = ['packetPointHolder', 'toAddrHolder'];
+const shippingOptions = ['packetPointHolder', 'toAddrHolder', 'packetaToAddr', 'packetaPacketPoint', 'toAddrHolderPosta'];
 
 for (let po of paymentOptions) {
   _(po).addEventListener('click', (e) => highlightLabel(po, paymentOptions));

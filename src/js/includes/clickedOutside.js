@@ -1,7 +1,6 @@
 function hideOnClickOutside(element, callback) {
   const outsideClickListener = event => {
     if (!element.contains(event.target) && isVisible(element)) { 
-      console.log(event.target)
       callback();
       removeClickListener()
     }

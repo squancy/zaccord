@@ -1,24 +1,28 @@
 const NodeStl = require('node-stl');
 const genSpecs = require('./includes/genSpecs.js');
 const checkStlSize = require('./includes/checkStlSize.js');
-const calcPrice = require('./includes/calcPrice.js');
 const cookieFuncs = require('./includes/cookieFuncs.js');
 const isVisited = require('./includes/isVisited.js');
 const genQuan = require('./includes/genQuan.js');
 const randomstring = require('randomstring');
-const getPrice = require('./includes/modelPriceCalc/getPrice.js');
 const constants = require('./includes/constants.js');
+const getColors = require('./includes/getColors.js');
+const getMaterials = require('./includes/getMaterials.js');
 const calcCPPrice = constants.calcCPPrice;
 const getPrintTime = constants.getPrintTime;
 const getCoords = constants.getCoords;
+const SLA_MULTIPLIER = constants.slaMultiplier;
+const PRINT_SIZES_PLA = constants.printSizesPLA;
+const PRINT_SIZES_SLA = constants.printSizesSLA;
 
 // Check if model fits the size of SLA printing (115 x 65 x 150)
 function shouldAllowSLA(box) {
-  return (box[0] > 115 || box[1] > 65 || box[2] > 150) ? false : true
+  let boxSorted = box.sort((a, b) => a - b);
+  return (box[0] > PRINT_SIZES_SLA[0] || box[1] > PRINT_SIZES_SLA[1] || box[2] > PRINT_SIZES_SLA[3]) ? false : true
 }
 
 // In this version of the code there is no extra price for products below 800 Ft
-// Since the minimum price of a model is 1K Ft
+// Since the minimum price of a model is 1990 Ft
 
 // Build custom print page; add interactive .stl file viewer + customization
 const buildCustomPrint = (conn, userID, filePaths) => {
@@ -67,9 +71,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
       let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/cm^3 density
       let volume = (stl.volume).toFixed(2); // cm^3
       let weight = (stl.weight).toFixed(2); // gramm
-      console.log(weight)
       let area = stl.area;
-      console.log(area);
       totVolume += Number(volume);
       let [W, H, D] = getCoords(path);
       let boxVolume = stl.boundingBox.reduce((a, c) => a * c);
@@ -86,7 +88,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         subpriceText = `
           <p class="gotham align">
             <span class="blue gotham">Ár:</span>
-            <span id="subprice_${i}">${basePrice}</span> Ft
+            <span id="subprice_${i}">${Math.round(basePrice)}</span> Ft
           </p>
         `;
       }
@@ -100,9 +102,9 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         </div>
       `;
       
-      // Make sure size max 220mm
+      // Make sure that model is not too large 
       if (!checkStlSize(stl.boundingBox)) {
-        reject('A maximális méret 220mm x 220mm x 220mm lehet');
+        reject(`A maximális méret ${PRINT_SIZES_PLA[0]}mm x ${PRINT_SIZES_PLA[1]}mm x ${PRINT_SIZES_PLA[2]}mm lehet`);
         return;
       }
 
@@ -183,7 +185,7 @@ const buildCustomPrint = (conn, userID, filePaths) => {
           <div>
             <p>
               <span class="blue gotham">Végösszeg:</span>
-              <span id="priceHolder">${totalPrice}</span> Ft ${chargeText}
+              <span id="priceHolder">${Math.round(totalPrice)}</span> Ft ${chargeText}
             </p>
           </div>
           <div>
@@ -229,223 +231,279 @@ const buildCustomPrint = (conn, userID, filePaths) => {
         </div>
       </div>
     `;
+    
+    let matPromise = getMaterials(conn);
+    let specsPromise = genSpecs(conn, totalPrice, sizeMM, false, true);
 
-    content += genSpecs(totalPrice, sizeMM, false, true);
+    Promise.all([specsPromise, matPromise]).then(vals => {
+      let specs = vals[0];
+      const PRINT_MATS = vals[1];
 
-    content += `
-        <div class="specBox" style="justify-content: center;">
-          <button class="fillBtn btnCommon threeBros" id="buyCP">
-            Vásárlás
-          </button> 
-          <button class="fillBtn btnCommon threeBros" id="toCart">
-            Tovább a kosárhoz
-          </button>
-          <button class="fillBtn btnCommon threeBros" id="newFile">
-            Új fájl feltöltése 
-          </button>
-        </div>
-        <div id="infoStat" class="infoBox"></div>
+      content += specs;
+      content += `
+          <div class="specBox" style="justify-content: center;">
+            <button class="fillBtn btnCommon threeBros" id="buyCP">
+              Vásárlás
+            </button> 
+            <button class="fillBtn btnCommon threeBros" id="toCart">
+              Tovább a kosárhoz
+            </button>
+            <button class="fillBtn btnCommon threeBros" id="newFile">
+              Új fájl feltöltése 
+            </button>
+          </div>
+          <div id="infoStat" class="infoBox"></div>
 
-        <p class="align">
-          <a href="/mitjelent" target="_blank" class="blueLink">Segítség a specifikációkhoz</a>
-        </p>
+          <p class="align">
+            <a href="/mitjelent" target="_blank" class="blueLink">Segítség a specifikációkhoz</a>
+          </p>
 
-        <p class="align note ddgray">
-          A specifikációk megváltoztatása árváltozást vonhat maga után és
-          több termék esetén ezek változtatása minden egyes termékre értendő!
-        </p>
+          <p class="align note ddgray">
+            A specifikációk megváltoztatása árváltozást vonhat maga után és
+            több termék esetén ezek változtatása minden egyes termékre értendő!
+          </p>
 
-        <p class="align note ddgray">
-          FDM és SLA nyomtatáshoz a maximum méretek rendre 220mm x 220mm x 220mm és 115mm x 65mm x
-          150mm.
-        </p>
-      </section>
-    `;
-      
-    // JS content for displaying the interactive stl viewer
-    content += `
-      <script type="text/javascript">
-    `;
+          <p class="align note ddgray">
+            FDM és SLA nyomtatáshoz a maximum méretek rendre
+            ${PRINT_SIZES_PLA[0]}mm x ${PRINT_SIZES_PLA[1]}mm x ${PRINT_SIZES_PLA[2]}mm és
+            ${PRINT_SIZES_SLA[0]}mm x ${PRINT_SIZES_SLA[1]}mm x ${PRINT_SIZES_SLA[2]}mm lehetnek.
+          </p>
 
-    // TODO: set isFirstVisit on cart page as well
+          <p class="align note ddgray">
+            Ha a kiválasztott nyomtatási anyag TPU, akkor az alapesetben A95-ös Shore-keménységű.
+            Amennyiben ettől eltérő keménységgel szeretnél nyomtatni, akkor kérjük jelezd a rendelés
+            leadásakor a 'megjegyzés' résznél.
+          </p>
+        </section>
+      `;
+        
+      // JS content for displaying the interactive stl viewer
+      content += `
+        <script type="text/javascript">
+      `;
 
-    content += cookieFuncs();
-    content += isVisited();
-    content += `
-        // Initialize vars used globally
-        let data = [];
-        let arr = [];
-        let subPriceRatios = Array.from('${subPriceRatios}'.split(','));
-        let subPrices = Array.from('${subPrices}'.split(','));
-        let subSizes = Array.from('${subSizes}'.split(','));
-        let subPricesSLA = subPrices.map(x => Math.round(x * 2.1));
-        let basePriceSLA = subPricesSLA.reduce((acc, val) => acc + val);
-        let thumbs = [];
-        let sizeCnt = 0;
-        let modelIDs = [];
+      // TODO: set isFirstVisit on cart page as well
 
-        // Loop over file paths and extract file names used for thumbnails & .stl
-        for (let f of Array.from('${filePaths}'.split(','))) {
-          let x = f.split('/');
-          arr.push('/' + x[x.length - 2] + '/' + x[x.length - 1])
-          thumbs.push('/' + x[x.length - 2] + '/thumbnails/' +
-            x[x.length - 1].replace('.stl', '') + '.png');
-        }
+      content += cookieFuncs();
+      content += isVisited();
 
-        function _(el) {
-          return document.getElementById(el);
-        }
-
-        // Make sure the num of items in cookies do not exceed 15
-        let canGo = true;
-        if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + arr.length > 15
-          || !isFirstVisit) {
-          canGo = false;
-        }
-
-        let models = [];
-
-        // Go through the files and push them to cookies for later display in the cart
-        for (let i = 0; i < arr.length; i++) {
-          let path = arr[i];
-          
-          // Unique id
-          let id = arr[i].split('/')[2].replace('.stl', '');
-          modelIDs.push(id);
-          if ((!getCookie('cartItems') ||
-            !Object.keys(JSON.parse(getCookie('cartItems'))).length ||
-            !JSON.parse(getCookie('cartItems'))['content_' + id]) && canGo) {
+      getColors(conn).then(([colors, hex_codes]) => {
+        content += `
+            // Initialize vars used globally
+            let data = [];
+            let arr = [];
+            let subPriceRatios = Array.from('${subPriceRatios}'.split(','));
+            let subPrices = Array.from('${subPrices}'.split(','));
+            let subSizes = Array.from('${subSizes}'.split(','));
+            let subPricesSLA = subPrices.map(x => Math.round(x * ${SLA_MULTIPLIER}));
+            let basePriceSLA = subPricesSLA.reduce((acc, val) => acc + val);
+            let thumbs = [];
+            let sizeCnt = 0;
+            let modelIDs = [];
+            let recordConversion = false;
             
-            let modelSize = subSizes[sizeCnt] + ',' + subSizes[sizeCnt + 1] + ',' +
-              subSizes[sizeCnt + 2];
+            const PCOLORS = ${JSON.stringify(colors)};
+            const HEX_COLORS = ${JSON.stringify(hex_codes)};
+            const PRINT_MULTS = ${JSON.stringify(PRINT_MATS)};
 
-            // Build cookie object (later converted to str)
-            let value = {
-              ['content_' + id]: {
-                ['rvas_' + id]: _('rvas').value,
-                ['suruseg_' + id]: _('suruseg').value,
-                ['color_' + id]: encodeURIComponent(_('color').value),
-                ['scale_' + id]: _('scale').value,
-                ['fvas_' + id]: _('fvas').value,
-                ['quantity_' + id]: _('quantity').value,
-                ['price_' + id]: subPrices[i],
-                ['printMat_' + id]: _('printMat').value,
-                ['size_' + id]: modelSize,
-                ['tech_' + id]: 'FDM'
-              }
-            };
-
-            sizeCnt += 3;
-            
-            // Set value in cookies
-            let itemsSoFar = getCookie('cartItems');
-            if (!itemsSoFar) itemsSoFar = '{}';
-            itemsSoFar = JSON.parse(itemsSoFar);
-            setCookie('cartItems', JSON.stringify(Object.assign(itemsSoFar, value)), 365);
-          }
-
-          // Also build .stl file name array used for displaying them interactively
-          let obj = {
-            id: 0,
-            filename: path,
-            color: "#ffffff"
-          };
-
-          // Use a 3rd party library for viewing .stl files
-          let stlView = new StlViewer(document.getElementById("stlCont_" + i), {
-            all_loaded_callback: () => stlFinished(i),
-            models: [obj]
-          });
-
-          data.push(obj);
-          models.push(stlView);
-        }
-
-        function getID(i) {
-          if (window.location.href.includes('?file=')) {
-            return window.location.href.split('?file=')[1];
-          } else {
-            return localStorage.getItem('refresh').split('|||')[i];
-          }
-        }
-
-        document.getElementsByClassName('hrStyle')[0].style.margin = 0;
-
-        function stlFinished(i) {
-          document.getElementById('status').innerHTML = '';
-          document.getElementById('colorPicker').style.display = 'flex';
-
-          // Set color of model
-          let soFar = JSON.parse(getCookie('cartItems'));
-          let id = getID(i);
-          let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
-          chooseColor(colorMaps[colorVal]);
-          // if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
-        }
-
-        function chooseDisplay(display, id) {
-          for (let i = 0; i < models.length; i++) {
-            models[i].set_display(0, display);
-          }          
-          highlightBtn(id);
-        }
-
-        function chooseColor(color, id, isRev = false) {
-          for (let i = 0; i < models.length; i++) {
-            models[i].set_color(0, color);
-          }
-
-          let hexToName = {
-            '#ffffff': 'Fehér',
-            '#ff0000': 'Piros',
-            '#0089ff': 'Kék'
-          };
-
-          if (isRev) {
-            _('color').value = hexToName[color];
-            highlightBtn(id);
-            updateCookie('color');
-          } else {
-            let hexToNum = {
-              '#0089ff': 0,
-              '#ffffff': 1,
-              '#ff0000': 2
-            };
-            highlightBtn(hexToNum[color]);
-          }
-        }
-
-        function highlightBtn(id) {
-          let btns = document.getElementsByClassName('colorPick');
-          for (let i = 0; i < btns.length; i++) {
-            if (i === id) {
-              btns[i].style.border = '2px solid #4285F4';
-            } else {
-              btns[i].style.border = '2px solid #dfdfdf';
+            // Loop over file paths and extract file names used for thumbnails & .stl
+            for (let f of Array.from('${filePaths}'.split(','))) {
+              let x = f.split('/');
+              arr.push('/' + x[x.length - 2] + '/' + x[x.length - 1]);
+              thumbs.push('/' + x[x.length - 2] + '/thumbnails/' +
+                x[x.length - 1].replace('.stl', '') + '.png');
             }
-          }
-        }
-      
-        function allowSLAUI(shouldSkip) {
-          if (!shouldSkip) {
-            _('slaChoice').classList.remove('slaDisabled');
-          } else {
-            _('slaChoice').classList.add('slaDisabled');
-          }
-        }
 
-        function toggleAllowance(e) {
-          let cookieIDs = localStorage.getItem('refresh').split('|||'); 
-          let freshIDs = arr.map(path => {
-            return path.split('printUploads')[1].replace('/', '').replace('.stl', '');
-          });
-          toggleSLAAllowance('scale', cookieIDs[0].length == 0 ? freshIDs : cookieIDs, allowSLAUI);
-        }
+            function _(el) {
+              return document.getElementById(el);
+            }
 
-        window.addEventListener('DOMContentLoaded', toggleAllowance);
-      </script>
-    `;
-    resolve(content);
+            // Make sure the num of items in cookies do not exceed 15
+            let canGo = true;
+            if (Object.keys(JSON.parse(getCookie('cartItems') || '{}')).length + arr.length > 15
+              || !isFirstVisit) {
+              canGo = false;
+            }
+
+            let models = [];
+
+            // Go through the files and push them to cookies for later display in the cart
+            for (let i = 0; i < arr.length; i++) {
+              let path = arr[i];
+              
+              // Unique id
+              let id = arr[i].split('/')[2].replace('.stl', '');
+              modelIDs.push(id);
+              if ((!getCookie('cartItems') ||
+                !Object.keys(JSON.parse(getCookie('cartItems'))).length ||
+                !JSON.parse(getCookie('cartItems'))['content_' + id]) && canGo) {
+                
+                let modelSize = subSizes[sizeCnt] + ',' + subSizes[sizeCnt + 1] + ',' +
+                  subSizes[sizeCnt + 2];
+
+                // Build cookie object (later converted to str)
+                let value = {
+                  ['content_' + id]: {
+                    ['rvas_' + id]: _('rvas').value,
+                    ['suruseg_' + id]: _('suruseg').value,
+                    ['color_' + id]: encodeURIComponent(_('color').value),
+                    ['scale_' + id]: _('scale').value,
+                    ['fvas_' + id]: _('fvas').value,
+                    ['quantity_' + id]: _('quantity').value,
+                    ['price_' + id]: subPrices[i],
+                    ['printMat_' + id]: _('printMat').value,
+                    ['size_' + id]: modelSize,
+                    ['tech_' + id]: 'FDM'
+                  }
+                };
+
+                sizeCnt += 3;
+                
+                // Set value in cookies
+                let itemsSoFar = getCookie('cartItems');
+                if (!itemsSoFar) itemsSoFar = '{}';
+                itemsSoFar = JSON.parse(itemsSoFar);
+                setCookie('cartItems', JSON.stringify(Object.assign(itemsSoFar, value)), 365);
+                recordConversion = true;
+              }
+
+              // Also build .stl file name array used for displaying them interactively
+              let obj = {
+                id: 0,
+                filename: path,
+                color: "#ffffff"
+              };
+
+              // Use a 3rd party library for viewing .stl files
+              let stlView = new StlViewer(document.getElementById("stlCont_" + i), {
+                all_loaded_callback: () => stlFinished(i),
+                models: [obj]
+              });
+
+              data.push(obj);
+              models.push(stlView);
+            }
+
+            function getID(i) {
+              if (window.location.href.includes('?file=')) {
+                return window.location.href.split('?file=')[1].split(',')[i];
+              } else {
+                return localStorage.getItem('refresh').split('|||')[i];
+              }
+            }
+
+            document.getElementsByClassName('hrStyle')[0].style.margin = 0;
+
+            function stlFinished(i) {
+              document.getElementById('status').innerHTML = '';
+              document.getElementById('colorPicker').style.display = 'flex';
+
+              // Set color of model
+              let soFar = JSON.parse(getCookie('cartItems'));
+              let id = getID(i);
+              let colorVal = decodeURIComponent(soFar['content_' + id]['color_' + id]);
+              if (_('color').value.toLowerCase().includes('átlátszó')) {
+                models[i].set_opacity(0, 0.5);
+              } 
+              chooseColor('#' + colorMaps[colorVal]);
+              // if (typeof fbq !== 'undefined') fbq('track', 'AddToCart');
+            }
+
+            function setOpacity(opacity) {
+              for (let i = 0; i < models.length; i++) {
+                models[i].set_opacity(0, opacity);
+              }
+            }
+
+            function setOpacityAll() {
+              if (_('color').value.toLowerCase().includes('átlátszó')) {
+                setOpacity(0.5);
+              } else {
+                setOpacity(1);
+              }
+            }
+
+            function chooseDisplay(display, id) {
+              for (let i = 0; i < models.length; i++) {
+                models[i].set_display(0, display);
+              }
+              highlightBtn(id);
+            }
+
+            function chooseColor(color, id, isRev = false) {
+              for (let i = 0; i < models.length; i++) {
+                models[i].set_color(0, color);
+              }
+
+              let hexToName = {
+                '#ffffff': 'Fehér',
+                '#ff0000': 'Piros',
+                '#0089ff': 'Kék'
+              };
+
+              if (isRev) {
+                _('color').value = hexToName[color];
+                highlightBtn(id);
+
+                if (_('fdmChoice').classList.value.includes('techChosen')) {
+                  _('printMat').value = 'PLA';
+                  chgMat(hexToName[color]);
+                  updateCookie('printMat');
+                } else {
+                  updateCookie('color');
+                }
+              } else {
+                let hexToNum = {
+                  '#0089ff': 0,
+                  '#ffffff': 1,
+                  '#ff0000': 2
+                };
+                highlightBtn(hexToNum[color]);
+              }
+            }
+
+            function highlightBtn(id) {
+              let btns = document.getElementsByClassName('colorPick');
+              for (let i = 0; i < btns.length; i++) {
+                if (i === id) {
+                  btns[i].style.border = '2px solid #4285F4';
+                } else {
+                  btns[i].style.border = '2px solid #dfdfdf';
+                }
+              }
+            }
+          
+            function allowSLAUI(shouldSkip) {
+              if (!shouldSkip) {
+                _('slaChoice').classList.remove('slaDisabled');
+              } else {
+                _('slaChoice').classList.add('slaDisabled');
+              }
+            }
+
+            function toggleAllowance(e) {
+              let cookieIDs = localStorage.getItem('refresh').split('|||')[0].split(','); 
+              let freshIDs = arr.map(path => {
+                return path.split('printUploads')[1].replace('/', '').replace('.stl', '');
+              });
+              toggleSLAAllowance('scale', cookieIDs[0].length == 0 ? freshIDs : cookieIDs, allowSLAUI);
+            }
+
+            window.addEventListener('DOMContentLoaded', toggleAllowance);
+
+            // Make sure all file IDs exist in cookies: if not redirect to another page
+            const FILE_IDS = window.location.href.split('?file=')[1].split(',');
+            const COOKIE_IDS = Object.keys(JSON.parse(getCookie('cartItems'))).map(e => e.replace('content_', ''));
+            for (let fid of FILE_IDS) {
+              if (COOKIE_IDS.indexOf(fid) < 0) {
+                window.location.replace('/print');
+              }
+            }
+          </script>
+        `;
+        resolve(content);
+      });
+    });
   });
 }
 

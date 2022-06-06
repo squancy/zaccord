@@ -21,3 +21,7 @@ function getCookie(cname) {
   }
   return "";
 }
+
+if (getCookie('cartItems').length == 0) {
+  setCookie('cartItems', '{}', 365);
+}

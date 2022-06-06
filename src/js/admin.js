@@ -164,9 +164,11 @@ function jumpToOrder() {
   window.location.href = CURRENT_URL + hashtag + searchValue;
 }
 
-function generateInvoice(ID) {
+function generateInvoice(ID, p) {
   let data = {
-    uniqueID: ID
+    uniqueID: ID,
+    shippingPrice: p,
+    isElectronic: false
   };
 
   fetch('/genInvoice', {
@@ -192,4 +194,152 @@ function markAll() {
     }
     i++;
   }
+}
+
+function delFromExcel(id) {
+  let name = _('customerName_' + id).innerText;
+  let pcode = _('postalCode_' + id).innerText;
+  let city = _('city_' + id).innerText;
+  let address = _('address_' + id).innerText;
+  let mobile = _('mobile_' + id).innerText;
+  let email = _('email_' + id).innerText;
+  
+  let data = {
+    name, pcode, city, address, mobile, email 
+  };
+
+  _('excelDel_' + id).innerHTML = 'Folyamatban...';
+  
+  fetch('/delFromExcel', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(msg => {
+    if (msg.status == 'success') {
+      _('excelDel_' + id).innerHTML = 'Siker';
+    } else {
+      _('excelDel_' + id).innerHTML = 'Hiba';
+    }
+  }).catch(err => {
+    console.log(err);
+    _('excelDel_' + id).innerHTML = 'Hiba';
+  });
+}
+
+function downloadSTLs() {
+  _('downloadStatus').innerHTML = 'Várjál mert csomagol';
+  fetch('/downloadSTLs', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST'
+  }).then(response => response.json()).then(msg => {
+    _('downloadStatus').innerHTML = '';
+    if (msg.success) {
+      let el = document.createElement('a');
+      el.setAttribute('href', '/tmpZips/tmp.zip');
+      el.setAttribute('download', 'zaccord_stl.zip');
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      el.click();
+      //document.body.removeChild(el);
+    } else {
+      console.log(e);
+    }
+  }).catch(e => {
+    console.log(e);
+  });
+}
+
+function roundHUF(val) {
+  if (val % 10 != 0 && val % 5 != 0) {
+    let lastDigit = val % 10;
+    if ([1, 2].indexOf(lastDigit) > -1) {
+      val -= lastDigit;
+    } else if ([3, 4, 6, 7].indexOf(lastDigit) > -1) {
+      val += 5 - lastDigit;
+    } else {
+      val += 10 - lastDigit;
+    }
+  }
+
+  return val;
+}
+
+function createPacket(id, n, ppID, isPP, dt) {
+  // Round price in HUF
+  let cont = document.getElementsByClassName('totalPrice_' + id);
+  if (cont[cont.length - 1] === undefined || !cont[cont.length - 1].innerText) {
+    var val = roundHUF(Number(_('allp_' + n).innerText));
+  } else {
+    var val = roundHUF(Number(cont[cont.length - 1].innerText));
+  }
+  console.log(val, 'totalPrice_' + id);
+  let fullname = String(_('customerName_' + id).innerText);
+  let splitFullname = fullname.split(' ');
+  let surname = splitFullname[0];
+  let name = '';
+  for (let i = 1; i < splitFullname.length; i++) {
+    if (i == splitFullname.length - 1) {
+      name += splitFullname[i];
+    } else {
+      name += splitFullname[i] + ' ';
+    }
+  }
+  
+  let data = {
+    number: String(_('id_' + id).innerText), 
+    name: name,
+    surname: surname,
+    email: String(_('email_' + id).innerText),
+    phone: String(_('mobile_' + id).innerText),
+    currency: 'HUF',
+    value: val,
+    weight: 0.5,
+    eshop: 'Zaccord'
+  };
+
+  if (_('paymentType_' + id).innerText == 'utánvét') {
+    data['cod'] = val;
+  }
+
+  if (isPP) {
+    data['addressId'] = ppID;
+  } else {
+    // Try to separate house number from street name
+    const regex = /^([^\d]*[^\d\s]) *(\d.*)$/g;
+    const found = regex.exec(_('address_' + id).innerText);
+    let streetName = found[1];
+    let houseNumber = '';
+    for (let i = 2; i < found.length; i++) {
+      houseNumber += found[i]; 
+      houseNumber += i == found - 1 ? '' : ' ';
+    }
+
+    data['street'] = streetName;
+    data['city'] = String(_('city_' + id).innerText);
+    data['zip'] = String(_('postalCode_' + id).innerText);
+    data['houseNumber'] = houseNumber;
+    data['addressId'] = dt == 'MPL' ? 763 : 4159;
+  }
+
+  _('plink_' + id).innerHTML = 'Feldolgozás';
+
+  fetch('/createPacket', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(resp => resp.json()).then(data => {
+    if (data.success) {
+      _('plink_' + id).innerHTML = 'Elküldve';
+      alert('Sikeresen elküldve');
+    } else {
+      alert('Hiba történt');
+      console.log(data);
+    }
+  });
 }

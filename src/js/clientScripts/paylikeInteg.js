@@ -1,4 +1,5 @@
-let paylike = Paylike('6fbb909f-0183-4d0b-b804-6e567c160a3a');
+const API_KEY = '6fbb909f-0183-4d0b-b804-6e567c160a3a';
+let paylike = Paylike(API_KEY); // f096aba2-e6bd-4980-850b-c4c6dacac896
 
 // Define possible error codes and their explanations
 const errorCodes = [
@@ -57,7 +58,6 @@ Paylike.assistNumber(plForm.querySelector('input.card-number'));
 Paylike.assistExpiry(plForm.querySelector('input.card-expiry'));
 
 let plFinished = false;
-const plAmount = Number(_('fPrice').innerText) * 100;
 
 const formCont = document.getElementsByClassName('plFormCont')[0];
 const checkoutContent = _('checkout').innerHTML;
@@ -157,19 +157,19 @@ plForm.addEventListener('submit', function (e) {
 
     let paymentData = {
       integration: {
-        key: '6fbb909f-0183-4d0b-b804-6e567c160a3a',
+        key: API_KEY,
       },
       amount: {
         currency: 'HUF',
         exponent: 2,
-        value: plAmount,
+        value: Number(_('fPrice').innerText) * 100
       },
 
       card: {
         number: tokenizedCredentials[0],
         expiry: {
           month: expiryMonth,
-          year: expiryYear,
+          year: expiryYear
         },
         code: tokenizedCredentials[1],
       },

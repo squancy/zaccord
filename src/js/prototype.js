@@ -1,3 +1,9 @@
+function resetBtn() {
+  _('submitBtn').disabled = false;
+  _('submitBtn').style.cursor = 'pointer';
+  _('submitBtn').style.opacity = '1';
+}
+
 _('submitBtn').addEventListener('click', function sendCredentials(e) {
   let name = _('name').value;
   let email = _('email').value;
@@ -16,6 +22,9 @@ _('submitBtn').addEventListener('click', function sendCredentials(e) {
     };
 
     // Send data to server for validation
+    _('submitBtn').disabled = true;
+    _('submitBtn').style.cursor = 'not-allowed';
+    _('submitBtn').style.opacity = '0.7';
     fetch('/validatePrototype', {
       headers: {
         'Content-Type': 'application/json'
@@ -26,18 +35,16 @@ _('submitBtn').addEventListener('click', function sendCredentials(e) {
       return response.json();
     }).then(data => {
       // Check for errors on the server side as well
-      console.log(data)
       if (data.hasOwnProperty('success')) {
         statusFill('succstat', data.success);
       } else {
         statusFill('pstatus', 'Egy nem várt hiba történt, kérlek próbáld újra');
+        resetBtn();
       }
-      _('submitBtn').disabled = false;
     }).catch(err => {
       // Something went wrong
-      console.log(err)
       statusFill('pstatus', 'Egy nem várt hiba történt, kérlek próbáld újra');
-      _('submitBtn').disabled = false;
+      resetBtn();
     });
   }
 });

@@ -1,16 +1,18 @@
+const request = require('request');
+const path = require('path');
+const fs = require('fs');
 const constants = require('./constants.js');
 const addHours = require('./addHours.js');
 const EUDateFormat = require('./EUDateFormat.js');
 const BILLINGO_BLOCK_ID = constants.billingoBlockID;
 const BILLINGO_CARD_NUM = constants.billingoCardNum;
-const BILLINGO_API_KEY = constants.billingoAPIKey;
 const BILLINGO_PRODNUM_1 = constants.billingoProdnum1; 
 const BILLINGO_PRODNUM_2 = constants.billingoProdnum2; 
 const BILLINGO_PRODNUM_3 = constants.billingoProdnum3;
 const BILLINGO_COD_ID = constants.billingoCodID;
 const BILLINGO_DELIVERY_ID = constants.billingoDeliveryID;
+const BILLINGO_API_KEY = constants.billingoAPIKey;
 const MONEY_HANDLE = constants.moneyHandle;
-const SHIPPING_PRICE = constants.shippingPrice;
 
 const createBillingoClient = require('@codingsans/billingo-client').createBillingoClient;
 
@@ -30,7 +32,9 @@ function getData(result) {
 const generateInvoice = (conn, formData) => {
   return new Promise((resolve, reject) => {
     // Get customer credentials from db
-    let uniqueID = formData.uniqueID;
+    const uniqueID = formData.uniqueID;
+    const SHIPPING_PRICE = formData.shippingPrice;
+    const isElectronic = formData.isElectronic;
     let cQuery = 'SELECT * FROM orders WHERE unique_id = ?';
     conn.query(cQuery, [uniqueID], (err, result, field) => {
       if (err) {
@@ -167,7 +171,7 @@ const generateInvoice = (conn, formData) => {
               payment_status: paymentStatus, // paid, none, outstanding
               language: 'hu',
               currency: 'HUF',
-              electronic: false,
+              electronic: isElectronic,
               items: items
             }; 
             
@@ -208,17 +212,43 @@ const generateInvoice = (conn, formData) => {
         });
       }).then(fdata => {
         console.log(fdata);
-        client.documents.create(fdata).then(x => {
-          console.log(x);
+        client.documents.create(fdata).then(resp => {
+          console.log(resp);
+          if (!isElectronic) {
+            resolve('success');
+          } else {
+            const options = {
+              url: `https://api.billingo.hu/v3/documents/${resp.id}/download`,
+              headers: {
+                'Accept': 'application/pdf',
+                'X-API-KEY': BILLINGO_API_KEY,
+              },
+              responseType: 'arraybuffer',
+              responseEncoding: 'binary',
+              encoding: null
+            };
+            
+            setTimeout(function downloadPDF() {
+              request(options, (err, res, body) => {
+                let pathName = path.join(__dirname, '..', '..', '..', 'e-invoices', uniqueID + '.pdf');
+                fs.writeFile(pathName, body, err => {
+                  if (err) {
+                    console.log(err);
+                    reject(err);
+                  }
+                  resolve('success');
+                });
+              });
+            }, 10 * 1000);
+          }
         }).catch(err => {
           console.log(err.response.data);
-          //reject(err);
+          reject(err);
         });
       }).catch(err => {
         console.log(err);
       });
     });
-  resolve('success');
   }).catch(err => {
     reject('failed 2');
   });

@@ -1,60 +1,64 @@
 // Returns true if element is in viewport
 function isElementInViewport(el) {
-    let rect = el.getBoundingClientRect();
-    let elemTop = rect.top;
-    let elemBottom = rect.bottom;
+  let rect = el.getBoundingClientRect();
+  let elemTop = rect.top;
+  let elemBottom = rect.bottom;
 
-    let isVisible = elemTop < window.innerHeight && elemBottom >= 100;
-    return isVisible;
+  let isVisible = elemTop < window.innerHeight && elemBottom >= 100;
+  return isVisible;
+}
+
+class SectionFade {
+  constructor(elName) {
+    this.isFaded = false;
+    this.elName = elName;
+  }
+
+  sectionFadeIn() {
+    if (isElementInViewport(_(this.elName))) {
+      this.isFaded = true;
+      fadeInEl(this.elName);
+    }
+  }
+
+  get isInViewport() {
+    return isElementInViewport(_(this.elName));
+  }
 }
 
 // Add fade in class to element and set animation duration to 1s
 function fadeInEl(id) {
   _(id).style = '--animate-duration: 1s;';
-  _(id).classList = 'animate__animated animate__fadeIn';
-}
+  if (Array.from(_(id).classList).indexOf('animate__animated') < 0) {
+    _(id).classList.add('animate__animated');
+  }
 
-let isFadedFirst = false;
-let isFadedSecond = false;
-let isFadedThird = false;
-let isFadedFourth = false;
+  if (Array.from(_(id).classList).indexOf('animate__fadeIn') < 0) {
+    _(id).classList.add('animate__fadeIn');
+  }
+}
 
 // If the page is reloaded and the elements are in viewport animate them without scrolling
-if (isElementInViewport(_('cpFadeHolder'))) {
-  isFadedFirst = true;
-  fadeInEl('cpFadeHolder');
-}
+let sections = [
+  new SectionFade('cpFadeHolder'),
+  new SectionFade('litFadeHolder'),
+  new SectionFade('fdmFadeHolder'),
+  new SectionFade('slaFadeHolder'),
+  new SectionFade('matFadeHolder'),
+  new SectionFade('infoFadeHolder')
+];
 
-if (isElementInViewport(_('litFadeHolder'))) {
-  isFadedSecond = true;
-  fadeInEl('litFadeHolder');
-}
-
-if (isElementInViewport(_('fdmFadeHolder'))) {
-  isFadedThird = true;
-  fadeInEl('fdmFadeHolder');
-}
-
-if (isElementInViewport(_('matFadeHolder'))) {
-  isFadedFourth = true;
-  fadeInEl('matFadeHolder');
+for (let el of sections) {
+  el.sectionFadeIn();
 }
 
 // During scrolling check if the elements are in viewport
 // If yes, perform a fade in animation
 window.addEventListener('scroll', function fadeInSection(e) {
-  if (isElementInViewport(_('cpFadeHolder')) && !isFadedFirst) {
-    fadeInEl('cpFadeHolder');
-    isFadedFirst = true;
-  } else if (isElementInViewport(_('litFadeHolder')) && !isFadedSecond) {
-    fadeInEl('litFadeHolder');
-    isFadedSecond = true;
-  } else if (isElementInViewport(_('fdmFadeHolder')) && !isFadedThird) {
-    fadeInEl('fdmFadeHolder');
-    isFadedThird = true;
-  } else if (isElementInViewport(_('matFadeHolder')) && !isFadedFourth) {
-    fadeInEl('matFadeHolder');
-    isFadedFourth = true;
+  for (let el of sections) {
+    if (el.isInViewport && !el.isFaded) {
+      el.sectionFadeIn(); 
+    }
   }
 });
 
@@ -66,10 +70,18 @@ const scrollHeight = Math.max(
 
 // Jump to upload area
 let links = document.getElementsByClassName('jumpToPrint');
-for (let link of links) {
-  link.addEventListener('click', function jumpToPrint(e) {
-    $('html, body').animate({
-      scrollTop: 0
-    }, 500);
-  });
+let bottomLink = document.getElementsByClassName('goToQuote');
+let el = _('getQuote');
+let pos = (el.offsetTop - el.scrollTop + el.clientTop);
+addToLinks(links, 0);
+addToLinks(bottomLink, pos);
+
+function addToLinks(links, pos) {
+  for (let link of links) {
+    link.addEventListener('click', function jumpToPrint(e) {
+      $('html, body').animate({
+        scrollTop: pos
+      }, 500);
+    });
+  }
 }

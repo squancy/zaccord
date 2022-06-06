@@ -6,14 +6,13 @@ gtag('config', 'UA-172408841-1');
 gtag('config', 'UA-169198596-1');
 gtag('config', 'AW-577856704');
 
-/*
-if (window.location.href.match(/https:\/\/www\.zaccord\.com\/buy\?product=([0-9]+)/)) {
-  gtag('event', 'conversion', {
-      'send_to': 'AW-577856704/I_w4CK-q6-ABEMDJxZMC',
-      'transaction_id': ''
-  });
+if (window.location.href.match(/https:\/\/www\.zaccord\.com\/buy\?product=(.+)/)) {
+  gtag('event', 'conversion', {'send_to': 'AW-577856704/zAdjCJz39aUDEMDJxZMC'});
 }
-*/
+
+if (window.location.href.match(/https:\/\/www\.zaccord\.com\/uploadPrint\?(.+)/)) {
+  gtag('event', 'conversion', {'send_to': 'AW-577856704/yM1KCIXewaUDEMDJxZMC'});
+}
 
 (function(h,o,t,j,a,r){
     h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
@@ -23,6 +22,31 @@ if (window.location.href.match(/https:\/\/www\.zaccord\.com\/buy\?product=([0-9]
     r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
     a.appendChild(r);
 })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+
+function recordConversion(url, amount, sid) {
+  var callback = function () {
+    if (typeof(url) != 'undefined') {
+      window.location = url;
+    }
+  };
+  
+  gtag('event', 'conversion', {
+      'send_to': 'AW-577856704/' + sid,
+      'value': amount,
+      'currency': 'HUF',
+      'event_callback': callback
+  });
+
+  return false;
+}
+
+window.addEventListener('load', (e) => {
+  // Record uploaded STL & image files as a product in the cart
+  if (_('priceHolder') && typeof(recordConversion) != 'undefined' && recordConversion) {
+    recordConversion(undefined, Number(_('priceHolder').innerHTML), 'g100CPHx9KUDEMDJxZMC');
+    console.log('Conversion');
+  }
+});
 
 /*
 !function(f,b,e,v,n,t,s)

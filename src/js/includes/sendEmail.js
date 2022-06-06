@@ -6,7 +6,7 @@ const EMAIL_PASSWORD = constants.emailPassword;
 
 // Send email from a specific addr with arbitrary content
 // NOTE: you may want to change nodemailer credentials to satisfy your needs
-function sendEmail(from, content, email, subject) {
+function sendEmail(from, content, email, subject, attachmentPath = null) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
       host: EMAIL_HOST_NAME,
@@ -46,12 +46,20 @@ function sendEmail(from, content, email, subject) {
       from: `Zaccord <${from}>`,
       to: email,
       subject: subject,
-      html: emailContent
+      html: emailContent,
     };
+
+    if (attachmentPath) {
+      mailOptions.attachments = [{
+        filename: attachmentPath.filename,
+        path: attachmentPath.path
+      }];
+    }
 
     transporter.sendMail(mailOptions, function(error, info) {
       if (error) {
-        reject('Egy nem várt hiba történt, kérlek próbáld űjra');
+        console.log(error);
+        reject('Egy nem várt hiba történt, kérlek próbáld újra (email)');
         return;
       } else {
         resolve('success');

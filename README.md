@@ -1,6 +1,6 @@
 <img align="right" width="60" src="https://www.zaccord.com/images/logo.png">
 <h1>Zaccord</h1>
-A webshop for selling 3D printed products.
+A service for ordering STL files and lithophanes & a webshop for selling 3D printed products.
 
 Zaccord is a Hungary-based e-commerce website where users can order a variety of 3D-printed
 products or upload their STL files for custom printing & creating lithophanes.<br>
@@ -20,7 +20,7 @@ The price is solely determined by the uploaded STL file and no slicing or g-code
 server side. Despite that it makes the calculation less precise it also eliminates the need to create a
 request to the server side and return it to the client, making the process faster and easier. 
 
-## Price calculation formula
+## Price calculation & STL parsing
 First an estimated price is calculated from the STL file which can change later
 if the user modifies some of the parameters. The base price is determined by an
 algorithm you can find
@@ -28,7 +28,9 @@ algorithm you can find
 
 ## TODOs
 Implementing one or more of the following features would be nice & you may also get a reward:
-  - A product review system with 1-5 stars & comments
+  - Geometrically check if the uploaded STL file determines a closed object in space
+  - Check if the STL file has a minimum wall thickness (necessarry for printing)
+  - Check any other requirements for 3D printing
   - View lithophanes in STL mode (see 3DRocks)
   - A clever algorithm for giving a close enough price estimate for custom printed products &
     lithophanes

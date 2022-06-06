@@ -1,4 +1,6 @@
 let bpSave = [basePrice, basePriceSLA];
+let currentMat = _('printMat').value.toLowerCase();
+let colorMaps = HEX_COLORS[currentMat];
 
 function updateSubPrices(p) {
   if (subPrices.length > 1) {
@@ -8,11 +10,31 @@ function updateSubPrices(p) {
         price = calcP(subPrices[i]);
       } else {
         let params = getSLAParams();
-        price = calcSLAPrice(subPrices[i] * 2.1, ...params);
+        price = calcSLAPrice(subPrices[i] * SLA_MULTIPLIER, ...params);
       }
       _('subprice_' + i).innerText = price;
     }
   }
+}
+
+function chgMat(currentColor) {
+  currentMat = _('printMat').value.toLowerCase();
+  colorMaps = HEX_COLORS[currentMat];
+  let newColors = '';
+  let selectedColor;
+  if (PCOLORS[currentMat].indexOf(currentColor) > -1) {
+    selectedColor = currentColor; 
+  } else {
+    selectedColor = PCOLORS[currentMat][0];
+  }
+
+  for (let color of PCOLORS[currentMat]) {
+    let selected = color == selectedColor ? 'selected' : '';
+    newColors += `<option value="${color}" ${selected}>${color}</option>`;
+  }
+
+  _('color').innerHTML = newColors;
+  updateCookie('color');
 }
 
 function hasBelow800() {
@@ -21,7 +43,7 @@ function hasBelow800() {
       return true; 
     } else {
       let params = getSLAParams();
-      if (calcSLAPrice(subPrices[i] * 2.1, ...params) === 800) {
+      if (calcSLAPrice(subPrices[i] * SLA_MULTIPLIER, ...params) === 800) {
         return true; 
       }
     }
@@ -72,6 +94,16 @@ function toggleTechs(ids1, ids2, box1, box2) {
   updateCookie('techVal', null, 'tech');
 }
 
+function fillTechColor(mat, sel) {
+  let newColors = '';
+  for (let i = 0; i < PCOLORS[mat].length; i++) {
+    let color = PCOLORS[mat][i];
+    let selected = color == sel ? 'selected' : '';
+    newColors += `<option value="${color}" ${selected}>${color}</option>`;
+  }
+  _('color').innerHTML = newColors;
+}
+
 function resetCookieValues(tech) {
   let ids;
   if (tech == 'FDM') {
@@ -93,6 +125,7 @@ function proceedSLA(shouldSkip) {
     toggleTechs(slaIDs, fdmIDs, 'slaChoice', 'fdmChoice');
     basePrice = bpSave[1];
     updateSLAPrice();
+    colorMaps = HEX_COLORS['gyanta (resin)'];
   }
 }
 
@@ -106,19 +139,34 @@ _('toggleDiv').addEventListener('animationend', () => {
   _('toggleDiv').classList.remove('animate__fadeIn');
 });
 
-function fdmChoice() {
+function fdmChoice(isClick = true) {
   _('techVal').value = 'FDM';
   resetCookieValues('FDM');
   toggleTechs(fdmIDs, slaIDs, 'fdmChoice', 'slaChoice');
   basePrice = calcP(bpSave[0]);
   priceChange();
+  if (isClick) {
+    fillTechColor('pla', PCOLORS['pla'][0]);
+    updateCookie('color');
+    colorMaps = HEX_COLORS['pla'];
+    chooseColor('#' + colorMaps[_('color').value]);
+    _('printMat').value = currentMat = 'PLA';
+    updateCookie('printMat');
+  }
 }
 
 _('fdmChoice').addEventListener('click', fdmChoice);
 
 _('slaChoice').addEventListener('click', (e) => {
+  let fromFDM = _('fdmChoice').classList.value.includes('techChosen');
   cookieIDs = localStorage.getItem('refresh').split('|||'); 
   toggleSLAAllowance('scale', cookieIDs, proceedSLA);
+  if (fromFDM) {
+    fillTechColor('gyanta (resin)', PCOLORS['gyanta (resin)'][0]);
+    updateCookie('color');
+    colorMaps = HEX_COLORS['gyanta (resin)'];
+    chooseColor('#' + colorMaps[_('color').value]);
+  }
 });
 
 // Save base price (initial price) and base (initial weight) for further calculations
@@ -144,34 +192,18 @@ function calcP(price) {
     (Math.sin(surusegVal) / 1.3 + 0.73690758206) +
     (Math.sin(fvasVal) * 8 + 0.83246064094) - 2));
 
-  let filamentMaterial = _('printMat').value;
-  let multiplier;
-
-  if (filamentMaterial == PRINT_MATERIALS[0]) {
-    multiplier = 1;
-  } else if (filamentMaterial == PRINT_MATERIALS[1]
-    || filamentMaterial == PRINT_MATERIALS[2]) {
-    multiplier = 1.36;
-  } else {
-    multiplier = 1.814;
-  } 
-  let fp = Math.round(nPrice * multiplier); 
+  let filamentMaterial = _('printMat').value.toLowerCase();
+  let fp = Math.round(nPrice * PRINT_MULTS[filamentMaterial]);
   return fp < MIN_PRICE ? MIN_PRICE : fp;
 }
 
 // Change color of the stl model in the browser
-let colorMaps = {};
-
-for (let i = 0; i < PRINT_COLORS.length; i++) {
-  pcolor = PRINT_COLORS[i];
-  hcolor = HEX_ARR[i];
-  colorMaps[pcolor] = hcolor;
-}
 
 // When clicking on the color selector circles change the color of the model as well
 _('color').addEventListener('change', function changeColor(e) {
   let v = _('color').value;
-  chooseColor(colorMaps[v].toLowerCase());
+  chooseColor('#' + colorMaps[v].toLowerCase());
+  setOpacityAll();
   //if (typeof fbq !== 'undefined') fbq('track', 'CustomizeProduct');
 });
 
@@ -210,12 +242,18 @@ function priceChange() {
   updateSubPrices(p);
 }
 
+function chgMatColor(selectedColor) {
+  chooseColor('#' + colorMaps[selectedColor].toLowerCase());
+  setOpacityAll();
+}
+
 // Add event listeners to parameters & update the UI based on these changes
 _('scale').addEventListener('change', toggleAllowance);
 _('scale').addEventListener('change', (e) => {
   let cookieIDs = localStorage.getItem('refresh').split('|||'); 
   toggleSLAAllowance('scale', cookieIDs, backToFDM);
 });
+
 _('plus').addEventListener('click', priceChange);
 _('minus').addEventListener('click', priceChange);
 _('fvas').addEventListener('change', priceChange);
@@ -226,6 +264,8 @@ _('rvas').addEventListener('change', priceChange);
 if (_('printMat')) {
   _('printMat').addEventListener('change', priceChange);
   _('printMat').addEventListener('change', () => updateCookie('printMat'));
+  _('printMat').addEventListener('change', () => chgMat(_('color').value));
+  _('printMat').addEventListener('change', () => chgMatColor(_('color').value));
 }
 
 // Change the value in the cookies as well
@@ -249,7 +289,7 @@ function updateWeight() {
   model
 */
 if (window.location.href.includes('?file=')) {
-  let fname = window.location.href.split('?file=')[1];
+  let fname = window.location.href.split('?file=')[1].replace(',', '|||');
   localStorage.setItem('refresh', fname);
 }
 
@@ -295,19 +335,22 @@ window.addEventListener('DOMContentLoaded', function() {
         _('rvas').value = rvasVal;
         _('suruseg').value = surusegVal;
         _('fvas').value = fvasVal;
-        _('printMat').value = printMatVal;
-        fdmChoice();
+        _('printMat').value = currentMat = printMatVal;
+        fdmChoice(false);
+        chgMat(colorVal);
+        chgMatColor(colorVal);
       } else {
         _('rvasSLA').value = rvasVal;
         _('infillSLA').value = surusegVal;
         basePrice = basePriceSLA;
         proceedSLA(false);
+        fillTechColor('gyanta (resin)', colorVal);
       }
 
       // Update quantity & weight
       updateQtyUI();
       updateWeight();
-
+    
       // Update & format the size of the model (format: [s1]mm x [s2]mm x [s3]mm)
       let sc = Number(_('scale').value);
       let s1, s2, s3;
@@ -338,7 +381,7 @@ _('buyCP').addEventListener('click', function buyProduct(e) {
     var rvas = _('rvasSLA').value;
     var suruseg = _('infillSLA').value;
     var fvas = null;
-    var printMat = null;
+    var printMat = 'Gyanta (Resin)';
   }
 
   let paths = arr.map(v => v.split('/')[2].replace('.stl', ''));

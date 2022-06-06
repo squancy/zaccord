@@ -1,6 +1,9 @@
-// Maximum printable size is 220mm (width, height, depth)
+const constants = require('./constants.js');
+const PRINT_SIZES_PLA = constants.printSizesPLA;
+
 function checkStlSize(actualSize) {
-  if (actualSize[0] > 220 || actualSize[1] > 220 || actualSize[2] > 220) {
+  let sortedSizes = actualSize.sort((a, b) => a - b);
+  if (sortedSizes[0] > PRINT_SIZES_PLA[0] || sortedSizes[1] > PRINT_SIZES_PLA[1] || sortedSizes[2] > PRINT_SIZES_PLA[2]) {
     return false;
   } 
   return true;

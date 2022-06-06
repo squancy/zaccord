@@ -37,7 +37,6 @@ function resetIds() {
   let inds = document.getElementsByClassName('delFile');
   let cms = document.getElementsByClassName('cms');
   for (let j = 0; j < ddFiles.length; j++) {
-    console.log(ddFiles[j], j)
     ddFiles[j].setAttribute('id', 'fh_' + j);
     inds[j].setAttribute('onclick', `removeFile(${j}, _('fileInput').files)`);
     cms[j].setAttribute('id', 'cm_' + j);

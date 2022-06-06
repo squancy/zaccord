@@ -4,37 +4,47 @@ const fs = require('fs');
 
 // Constant variables used for shopping & delivery, product customization
 // NOTE: change these values if you want to use these features
-const EMAIL_HOST_NAME = '';
+const EMAIL_HOST_NAME = 'zaccord.com';
+const DOWNLOAD_STLS_URL = '';
 const EMAIL_USER_NAME = '';
 const EMAIL_PASSWORD = '';
 const PAYLIKE_ID = '';
 const SESSION_SECRET = '';
-const SHIPPING_PRICE = 1490;
+const SHIPPING_PRICE = 1690;
+const SHIPPING_PRICE_GLS_H = 2390;
+const SHIPPING_PRICE_GLS_P = 2290;
+const SHIPPING_PRICE_PACKETA_H = 1390;
+const SHIPPING_PRICE_PACKETA_P = 890;
+const SHIPPING_PRICE_POSTA_H = 1750;
 const MONEY_HANDLE = 490;
 const LIT_FORMS = ['Domború', 'Homorú', 'Sima'];
 const LIT_PRICES = {'100': 1990, '150': 2990, '200': 3990};
-const PRINT_COLORS = ['Fekete', 'Fehér', 'Kék', 'Zöld', 'Arany', 'Piros', 'Citromsárga'];
-const HEX_ARR = ['#000000', '#ffffff', '#0089ff', '#7aff00', '#FFD700', '#FF0000', '#FFFF66',
-  '#FFFF00'];
 const LAYER_WIDTH_VALUES = [0.12, 0.2, 0.28];
-const INFILL_VALUES = [10];
+const INFILL_VALUES = [];
 const PRINT_MATERIALS = ['PLA', 'ABS', 'PETG', 'TPU'];
 const LAYER_WIDTH_VALUES_SLA = [0.05, 0.07, 0.1];
 const INFILL_VALUES_SLA = ['Üreges', 'Tömör'];
 const PRINT_TECHS = ['FDM', 'SLA'];
-const MIN_PRICE = 990;
+const MIN_PRICE = 1990;
 const BOX_SIZES = [[18, 16, 5], [18, 7, 12], [15, 20, 15], [15, 20, 25], [30, 30, 20]];
 const BILLINGO_API_KEY = '';
-const BILLINGO_PRODNUM_1 = 5221476; // custom print
-const BILLINGO_PRODNUM_2 = 6801120; // lithophane
-const BILLINGO_PRODNUM_3 = 6801096; // fix product
-const BILLINGO_BLOCK_ID = 72687;
-const BILLINGO_CARD_NUM = 88662;
-const BILLINGO_COD_ID = 5339382;
-const BILLINGO_DELIVERY_ID = 4990219;
+const BILLINGO_PRODNUM_1 = 5221476; // 6821423 custom print
+const BILLINGO_PRODNUM_2 = 6801120; // 6821424 lithophane
+const BILLINGO_PRODNUM_3 = 6801096; // 6821436 fix product
+const BILLINGO_BLOCK_ID = 72687; // 103163
+const BILLINGO_CARD_NUM = 88662; // 88880
+const BILLINGO_COD_ID = 5339382; // 6821455
+const BILLINGO_DELIVERY_ID = 4990219; // 6821453
 const PACKAGE_WIDTH = 3; // in cm
+const SLA_MULTIPLIER = 1.6;
+const BA_NUM = "11773449-02809630";
+const BA_NAME = "Turcsán Edit";
+const PRINT_SIZES_PLA = [350, 350, 400];
+const PRINT_SIZES_SLA = [65, 115, 150];
+const DELIVERY_TYPES = ['gls_h', 'gls_p', 'packeta_h', 'packeta_p', 'posta_h'];
+const PACKETA_API_PASSWORD = '';
 
-for (let i = 20; i <= 80; i += 20) {
+for (let i = 10; i <= 90; i += 10) {
   INFILL_VALUES.push(i);
 }
 
@@ -44,7 +54,7 @@ for (let i = 0.5; i <= 1.0; i += 0.1) {
 }
 
 const WALL_WIDTH_VALUES = [];
-for (let i = 0.8; i <= 2.4; i += 0.4) {
+for (let i = 0.8; i <= 4; i += 0.4) {
   WALL_WIDTH_VALUES.push(Number(i.toFixed(2)));
 }
 
@@ -76,7 +86,7 @@ const COUNTRIES = ["Albánia", "Andorra", "Argentína", "Ausztrália", "Ausztria
 
 const FIX_ADD_CPRINT = 500;
 const SUCCESS_RETURN = '{"success": true}';
-const OWNER_EMAILS = ['mark@pearscom.com', 'turcsanmate113@gmail.com'];
+const OWNER_EMAILS = []; //['mark@pearscom.com', 'turcsanmate113@gmail.com'];
 
 // For printing
 const B = 40; // build speed: 40mm/s
@@ -85,8 +95,23 @@ const T = 1; // thermal expansion
 const De = 0.2; // default infill in percentage
 const L = 0.2; // default layer height in mm
 const M = 12; // cost/min in forint
-const DENSITY = 1.27; // PLA density is 1.27 g/cm^3
+const DENSITY = 1.24; // PLA density is 1.27 g/cm^3
 const PRICE_PER_GRAMM = 8.77;
+
+// Return the correct shipping price depending on the choice of service
+function getShippingPrice(type) {
+  if (type == 'gls_h') {
+    return SHIPPING_PRICE_GLS_H;
+  } else if (type == 'gls_p') {
+    return SHIPPING_PRICE_GLS_P;
+  } else if (type == 'packeta_h') {
+    return SHIPPING_PRICE_PACKETA_H;
+  } else if (type == 'packeta_p') {
+    return SHIPPING_PRICE_PACKETA_P;
+  } else {
+    return SHIPPING_PRICE_POSTA_H;
+  }
+}
 
 // Create a piecewise defined function for smoothing out the price when its too big
 function smoothPrice(P) {
@@ -110,11 +135,9 @@ function smoothPrice(P) {
 */
 
 function calcCPPrice(volume, area) {
-  console.log('area: ', area);
   let outerShellVolume = 0.12 * area; // 100% infill
   let innerVolume = volume - outerShellVolume; // 20% infill
-  let finalPrice = smoothPrice(Math.round(outerShellVolume * 1.27 + innerVolume * 1.27 * 0.2) *
-    PRICE_PER_GRAMM * 5);
+  let finalPrice = Math.round(outerShellVolume * DENSITY + innerVolume * DENSITY * 0.2) * PRICE_PER_GRAMM * 9;
   return finalPrice < MIN_PRICE ? MIN_PRICE : finalPrice;
 }
 
@@ -146,6 +169,16 @@ const ADMIN_PAGE_ACCESS = '';
 const ADMIN_UNAME = '';
 const ADMIN_PASSWORD = '';
 
+const LAZY_LOAD = `
+  <script src="/js/includes/lazyLoad.js"></script>
+  <script type="text/javascript">
+    var ll = new LazyLoad({
+      elements_selector: ".lazy",
+      callback_loaded: (el) => el.style.backgroundColor = 'white'
+    });
+  </script>
+`;
+
 module.exports = {
   'shippingPrice': SHIPPING_PRICE,
   'moneyHandle': MONEY_HANDLE,
@@ -161,9 +194,7 @@ module.exports = {
   'numOfImgs': NUM_OF_IMGS,
   'filesToCache': FILES_TO_CACHE,
   'refBg': REF_BG,
-  'printColors': PRINT_COLORS,
   'litForms': LIT_FORMS,
-  'hexArr': HEX_ARR,
   'layerWidthValues': LAYER_WIDTH_VALUES,
   'infillValues': INFILL_VALUES,
   'scaleValues': SCALE_VALUES,
@@ -194,5 +225,20 @@ module.exports = {
   'billingoAPIKey': BILLINGO_API_KEY,
   'billingoCodID': BILLINGO_COD_ID,
   'billingoDeliveryID': BILLINGO_DELIVERY_ID,
-  'packageWidth': PACKAGE_WIDTH
+  'packageWidth': PACKAGE_WIDTH,
+  'slaMultiplier': SLA_MULTIPLIER,
+  'baNum': BA_NUM,
+  'baName': BA_NAME,
+  'printSizesPLA': PRINT_SIZES_PLA,
+  'printSizesSLA': PRINT_SIZES_SLA,
+  'getShippingPrice': getShippingPrice,
+  'shippingPriceGLSH': SHIPPING_PRICE_GLS_H,
+  'shippingPriceGLSP': SHIPPING_PRICE_GLS_P,
+  'shippingPricePacketaH': SHIPPING_PRICE_PACKETA_H,
+  'shippingPricePacketaP': SHIPPING_PRICE_PACKETA_P,
+  'shippingPricePostaH': SHIPPING_PRICE_POSTA_H,
+  'deliveryTypes': DELIVERY_TYPES,
+  'lazyLoad': LAZY_LOAD,
+  'downloadSTLsURL': DOWNLOAD_STLS_URL,
+  'packetaAPIPassword': PACKETA_API_PASSWORD
 };

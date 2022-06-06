@@ -1,0 +1,132 @@
+.indexGreyBox, .indexGreyBoxLeft {
+  box-shadow: 0px 2px 17px 1px rgba(0,0,0,0.29);
+  border-radius: 30px;
+  width: 90%;
+  position: relative;
+}
+
+.indexGreyBoxLeft {
+  float: right;
+}
+
+.greyBoxCont {
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  margin-top: 100px;
+}
+
+.greyBoxImg, .greyBoxImgLeft {
+  position: absolute;
+  right: 0;
+  width: 400px;
+  height: 400px;
+  box-shadow: 0px 2px 17px 1px rgba(0,0,0,0.29);
+  border-radius: 30px;
+  background-color: white;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+.greyBoxImgLeft {
+  left: 0;
+  right: unset;
+}
+
+.greyBoxText, .greyBoxTextLeft {
+  width: calc(100% - 400px);
+  padding: 80px 0 80px 80px;
+}
+
+.greyBoxTextLeft {
+  float: right;
+  padding: 80px 80px 80px 0;
+}
+
+.greyBoxText > p, .greyBoxTextLeft > p, .greyBoxText a, .greyBoxTextLeft a {
+  margin: 0;
+  font-size: 22px;
+}
+
+#gbi_1 {
+  background-image: url('../images/indexImages/print_preview.png');
+  background-color: rgb(53, 54, 58);
+}
+
+#gbi_2 {
+  background-image: url('../images/indexImages/model_preview.png');
+  background-color: rgb(53, 54, 58);
+}
+
+#gbi_3 {
+  background-image: url('../images/indexImages/lit_preview.jpg');
+  background-color: rgb(53, 54, 58);
+}
+
+#gbi_4 {
+  background-image: url('../images/indexImages/product_preview.png');
+  background-color: rgb(53, 54, 58);
+}
+
+#gbi_5 {
+  background-image: url('../images/indexImages/manu_preview.jpg');
+  background-color: rgb(53, 54, 58);
+}
+
+.boxTitle, .boxTitleLeft {
+  position: absolute;
+  top: -25px;
+  left: 80px;
+  font-size: 45px;
+  margin: 0;
+}
+
+.boxTitleLeft {
+  left: unset;
+  right: 80px;
+}
+
+@media only screen and (max-width: 1000px) {
+  .indexGreyBox, .indexGreyBoxLeft {
+    width: 100%;
+  }
+
+  .greyBoxText, .greyBoxTextLeft {
+    width: 100%;
+    padding: 40px 40px 80px 40px;
+  }
+
+  .greyBoxImg, .greyBoxImgLeft {
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    top: unset;
+    right: unset;
+    margin-top: -40px;
+    position: relative;
+  }
+
+  .greyBoxTextLeft, .indexGreyBoxLeft {
+    float: none;
+  }
+
+  .greyBoxText > p, .greyBoxTextLeft > p, .greyBoxText a, .greyBoxTextLeft a {
+    font-size: 18px;
+  }
+
+  .boxTitle, .boxTitleLeft {
+    left: 40px;
+    font-size: 32px;
+    top: -20px;
+  }
+}
+
+@media only screen and (max-width: 500px) {
+  .greyBoxImg, .greyBoxImgLeft {
+    width: calc(100% - 40px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+}

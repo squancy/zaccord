@@ -28,11 +28,18 @@ const buildAdminSection = require('./src/js/adminSectionLogic.js');
 const buildLithophane = require('./src/js/buildLithophane.js');
 const buildCategory = require('./src/js/buildCategory.js');
 const buildSearch = require('./src/js/buildSearch.js');
+const buildBlog = require('./src/js/buildBlog.js');
 const sendOpinion = require('./src/js/sendOpinion.js');
 const delCartFile = require('./src/js/delCartFile.js');
 const buildReferencePage = require('./src/js/referenceLogic.js');
+const buildColorsPage = require('./src/js/buildColors.js');
 const buildRefImage = require('./src/js/buildRefImage.js');
 const generateInvoice = require('./src/js/includes/generateInvoice.js');
+const delFromExcel = require('./src/js/delFromExcel.js');
+const downloadSTLs = require('./src/js/includes/downloadSTLs.js');
+const packetaXML = require('./src/js/includes/packetaXML.js');
+const getXMLPacketa = require('./src/js/includes/getXMLPacketa.js');
+const buildBlogsSection = require('./src/js/buildBlogsSection.js').buildBlogsSection;
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -64,6 +71,7 @@ const validatePcode = appConsts.validatePcode;
 const parseUploadFiles = appConsts.parseUploadFiles;
 const setDynamicMeta = appConsts.setDynamicMeta;
 const isProtectedFile = appConsts.isProtectedFile;
+const buildPage = appConsts.buildPage;
 
 const constants = require('./src/js/includes/constants.js');
 const successReturn = constants.successReturn;
@@ -74,6 +82,23 @@ const STATUS_UPDATE_URL = constants.statusUpdateUrl;
 const ADMIN_PAGE_ACCESS = constants.adminPageAccess;
 const ADMIN_UNAME = constants.adminUname;
 const ADMIN_PASSWORD = constants.adminPassword;
+const DOWNLOAD_STLS_URL = constants.downloadSTLsURL;
+
+const BPAGES = ['/references', '/colors', '/blogs'];
+const PAGE_LOOKUP = {
+  '/references': {
+    'func': buildReferencePage,
+    'path': 'src/reference.html'
+  },
+  '/colors': {
+    'func': buildColorsPage,
+    'path': 'src/color.html'
+  },
+  '/blogs': {
+    'func': buildBlogsSection,
+    'path': 'src/blog.html'
+  }
+}
 
 // Maybe integrate the app with a framework like Express but vanilla Node.js
 // Seems to be more fun
@@ -83,13 +108,27 @@ let d = new Date();
 d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
 let userSession = createSession('user');
 
+function redirectToWWW(req, res) {
+  if (!req.headers.host.startsWith('www') && !req.headers.host.startsWith('localhost')) {
+    res.writeHead(302, {
+      'Location': 'https://www.' + req.headers.host + req.url
+    });
+    res.end();  
+  }
+}
+
 const server = http.createServer((req, res) => {
+  // Redirect to a www version of the URL if needed
+  redirectToWWW(req, res);
+
   userSession(req, res, () => {});
   var userID = req.user.id;
 
-  // Facebook appends its own tracking part to the URL -> remove it
+  // Facebook & Google appends its own tracking part to the URL -> remove it
   if (req.url.includes('?fbclid=')) {
     req.url = req.url.replace(/\?fbclid=.+/, '');
+  } else if (req.url.includes('?gclid=')) {
+    req.url = req.url.replace(/\?gclid=.+/, '');
   }
 
   /*
@@ -132,6 +171,20 @@ const server = http.createServer((req, res) => {
       delCartFile(conn, fname, ext, prefixPath).then(result => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({'status': 'success'}));
+      });
+    });
+  } else if (req.url === '/delFromExcel' && req.method === 'POST') {
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      delFromExcel(conn, formData).then(stat => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({'status': stat}));
       });
     });
   } else if (req.url === '/validatePrototype' && req.method === 'POST') {
@@ -221,6 +274,20 @@ const server = http.createServer((req, res) => {
       let opinion = formData.opinion;
       returnToClient(sendOpinion, [conn, opinion], null, res, successReturn);
     });
+  } else if (req.url === '/createPacket' && req.method === 'POST') {
+    let body = '';
+    req.on('data', data => {
+      body += data;
+      checkData(body, req);
+    });
+
+    req.on('end', () => {
+      let formData = JSON.parse(body);
+      let responseData = {};
+      let xmlBody = getXMLPacketa(formData, 'createPacket');
+
+      returnToClient(packetaXML, [formData, xmlBody], null, res, successReturn);
+    });
   } else if (req.url === '/delValidation' && req.method === 'POST') {
     // Make sure user is logged in
     if (!req.user.id) {
@@ -291,9 +358,15 @@ const server = http.createServer((req, res) => {
       if (!isLit) {
         Promise.all(promises).then(data => {
           buildCustomPrint(conn, userID, filePaths).then(data => {
-            returnPageWithData('src/printUpload.html', data, userID, res);
+            let files = '';
+            for (let i = 0; i < filePaths.length; i++) {
+              let sp = filePaths[i].split('/');
+              let id = sp[sp.length - 1].replace('.stl', '');
+              files += i == filePaths.length - 1 ? id : id + ',';
+            }
+            returnPageWithData('src/printUpload.html', data, userID, res, '/uploadPrint?file=' + files);
           }).catch(err => {
-            // Wrong size (any dimension is bigger than 220mm)
+            // Wrong size
             console.log(err);
             imgError(res, userID, 'sizeError', err);
           });
@@ -301,9 +374,11 @@ const server = http.createServer((req, res) => {
       } else {
         Promise.all(promises).then(data => {
           let [width, height] = litDimensions(newpath);
-
+          
+          let sp = filePaths[0].split('/');
+          let id = sp[sp.length - 1].replace('.png', '').replace('.jpg', '').replace('.jpeg', '');
           buildLithophane(conn, userID, filePaths, width, height).then(data => {
-            returnPageWithData('src/lithophane.html', data, userID, res);
+            returnPageWithData('src/lithophane.html', data, userID, res, '/uploadPrint?image=' + id);
           }).catch(err => {
             console.log(err);
             imgError(res, userID, 'sizeError', err);
@@ -358,6 +433,13 @@ const server = http.createServer((req, res) => {
       
       returnToClient(sendConfEmail, [conn, uid, delType, glsCode], null, res, successReturn);
     });
+  } else if (req.url === DOWNLOAD_STLS_URL && req.method.toLowerCase() === 'post') {
+    req.on('data', data => {
+    });
+
+    req.on('end', () => {
+      returnToClient(downloadSTLs, [conn], null, res, successReturn);
+    });
   } else if (req.url === STATUS_UPDATE_URL && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
     let body = '';
@@ -371,7 +453,8 @@ const server = http.createServer((req, res) => {
       let formData = JSON.parse(body);
       returnToClient(updateStatus, [conn, formData], null, res, successReturn);
     });
-  } else if (req.url === '/validateForgotPass' && req.method.toLowerCase() === 'post') {
+  } else if (req.url === '/validateForgotPass' && req.method.toLowerCase() === 'post' &&
+    !req.user.id) {
     // If user submits a temporary password request validate email addr & send tmp password
     let body = '';
     req.on('data', data => {
@@ -422,6 +505,9 @@ const server = http.createServer((req, res) => {
     let extension = path.extname(filePath);
 
     let contentType = getContentType(extension);
+    if (extension == '.gcode' || extension == '.zip') {
+      filePath = path.join(__dirname, req.url.replace('src', ''));
+    }
 
     if (contentType == 'text/html' && !extension) {
       filePath += '.html';
@@ -432,8 +518,10 @@ const server = http.createServer((req, res) => {
     fileServerResponse(extension, req, res, fileResponse); 
 
     // Make sure user is not logged in when visiting /login and /register pages
+    // Or he/she is not logged in when asking for a temporary password
     if ((['/register', '/login'].indexOf(req.url) > -1 && req.user.id)
-      || req.url.substr(0, 8) === '/?fbclid' || isProtectedFile(req.url)) {
+      || req.url.substr(0, 8) === '/?fbclid' || isProtectedFile(req.url) ||
+      (req.url == '/forgotPassword' && req.user.id)) {
       res.writeHead(302, {
         'Location': '/'
       });
@@ -459,6 +547,15 @@ const server = http.createServer((req, res) => {
             }).catch(error => {
               console.log(error);
               imgError(res, userID, 'parcel');
+            });
+          } else if (req.url.substr(0, 9) === '/blog?id=') {
+            let blogID = Number(req.url.substr(9));
+            let content = '';
+            buildBlog(conn, blogID, req).then(data => {
+              commonData(content, userID, data, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
             });
           } else if (req.url.substr(0, 13) === '/refImage?id=') {
             let content = fs.readFileSync(path.join('src', 'refImage.html'));
@@ -497,8 +594,11 @@ const server = http.createServer((req, res) => {
               pageCouldNotLoad(res, userID);
             });
           } else if (req.url.substr(0, 18) === '/uploadPrint?file=') {
-            let fname = path.join(__dirname, 'printUploads', req.url.substr(18) + '.stl');
-            buildCustomPrint(conn, userID, [fname]).then(data => {
+            let fnames = [];
+            for (let file of req.url.split('uploadPrint?file=')[1].split(',')) {
+              fnames.push(path.join(__dirname, 'printUploads', file + '.stl'));
+            }
+            buildCustomPrint(conn, userID, [...fnames]).then(data => {
               returnPageWithData(path.join('src', 'printUpload.html'), data, userID, res);
             }).catch(err => {
               console.log(err);
@@ -524,13 +624,9 @@ const server = http.createServer((req, res) => {
               console.log(err);
               pageCouldNotLoad(res, userID);
             });
-          } else if (req.url.toLowerCase() === '/references') {
-            buildReferencePage(conn).then(data => {
-              returnPageWithData('src/reference.html', data, userID, res);
-            }).catch(err => {
-              console.log(err);
-              pageCouldNotLoad(res, userID);
-            });
+          } else if (BPAGES.indexOf(req.url.toLowerCase()) > -1) {
+            let url = req.url.toLowerCase();
+            buildPage(req, res, conn, userID, PAGE_LOOKUP[url]['func'], PAGE_LOOKUP[url]['path'])
           } else if (req.url.substr(0, 14) === ADMIN_PAGE_ACCESS) {
             // Admin page login authentication
             let q = url.parse(req.url, true); 
@@ -587,7 +683,7 @@ const server = http.createServer((req, res) => {
           // Build user cart page
           let content = fs.readFileSync(path.join('src', 'cart.html'));
           content += addCookieAccept(req);
-          loadStaticPage(buildCartSection, [conn, req], content, userID, res);
+          loadStaticPage(buildCartSection, [conn, req], content, userID, res, null, true);
         } else if (req.url === '/account') {
           // Make sure user is logged in when visiting account page
           loggedIn(req, res);
@@ -602,7 +698,7 @@ const server = http.createServer((req, res) => {
           */
           let content = fs.readFileSync(path.join('src', 'print.html'));
           content += addCookieAccept(req);
-          loadStaticPage(buildPrintSection, [conn], content, userID, res);
+          loadStaticPage(buildPrintSection, [conn, req], content, userID, res);
         } else {
           // Cache page for faster load
           // Also compress text-based resources
