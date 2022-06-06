@@ -52,6 +52,7 @@ In `src/js/includes/connConstants.js` configure the parameters for connecting to
 If you want to use all features you should configure `src/js/includes/constants.js` according
 to your needs.<br>
 To install the dependencies run `npm install`.<br>
+Download Slic3r as an executable & its libraries and place it under `Slic3r`.<br>
 To start the project run `node app.js` and the site should be up on port 5000.<br>
 
 ## Contact
