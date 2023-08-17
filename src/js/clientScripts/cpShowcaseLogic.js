@@ -90,7 +90,7 @@ cpSegment.attachHandlers(3, 'cpShow', 'cp', 'capTitle', 'scText');
 let titleSourcesLit = ['Kinyomtatott litofán és az eredeti kép', 'Hogyan működik?'];
 let textSourcesLit = [
   `A kész litofán alapesetben egy nehezen kivehető, dombornyomott képed ad. Háttérvilágítással viszont kristálytisztán előtűnik maga a kép. A feltöltött digitális képből a 3D nyomtató készít egy valódi, tapintható litofánt, ami a technológiának köszönhetően valósághűen ábrázolja az eredeti képet.`,
-  `A külünböző vastagságú rétegek különböző mértékben engedik át a fényt és ezért tűnnek bizonyos részek sötétnek, mások pedig világosnak. A 3D nyomtató pontosságának köszönhetően a kinyomtatott litofánia élethűen adja vissza az eredeti képet.`,
+  `A különböző vastagságú rétegek különböző mértékben engedik át a fényt és ezért tűnnek bizonyos részek sötétnek, mások pedig világosnak. A 3D nyomtató pontosságának köszönhetően a kinyomtatott litofánia élethűen adja vissza az eredeti képet.`,
 ];
 
 let litSegment = new ImageSegment(_('litLeftButton'), _('litRightButton'), 0, titleSourcesLit, textSourcesLit);

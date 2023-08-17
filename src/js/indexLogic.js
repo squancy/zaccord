@@ -126,6 +126,9 @@ const buildMainSection = (conn, cat) => {
               <div class="textCenter">
                 <h1 class="mainText lh gotham align fontNorm" style="padding: 10px;">
                   Precíz 3D nyomtatás a Zaccordon
+                  <button class="fillBtn instantQuote gotham" onclick="location.href = '/print'">
+                    Azonnali árajánlat
+                  </button>
                 </h1>
               </div>
             </div>

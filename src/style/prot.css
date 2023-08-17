@@ -7,7 +7,7 @@
 }
 
 .protHeader {
-  font-size: 34px;
+  font-size: 2.125em;
   background-color: #4285f4; 
   border-radius: 30px 30px 0px 0px;
   color: white;
@@ -19,13 +19,13 @@
 }
 
 .subText {
-  font-size: 14px;
+  font-size: 0.875em;
   color: #656565;
   padding-top: 5px;
 }
 
 .subHighlight {
-  font-size: 16px;
+  font-size: 1em;
 }
 
 .protContent {
@@ -33,7 +33,7 @@
 }
 
 .price {
-  font-size: 28px;
+  font-size: 1.75em;
 }
 
 .flexProtCont {
@@ -83,11 +83,11 @@
   }
 
   .price {
-    font-size: 24px;
+    font-size: 1.5em;
   }
 
   .protHeader {
-    font-size: 26px;
+    font-size: 1.625em;
   }
 }
 

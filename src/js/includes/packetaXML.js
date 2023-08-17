@@ -25,6 +25,7 @@ const packetaXML = (data, xmlBody) => {
         if (obj.response.status == 'ok') {
           resolve('Success');
         } else {
+          console.log(obj.response.detail.attributes);
           reject('Packeta rejected the request');
         }
       }

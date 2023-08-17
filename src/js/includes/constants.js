@@ -5,18 +5,11 @@ const fs = require('fs');
 // Constant variables used for shopping & delivery, product customization
 // NOTE: change these values if you want to use these features
 const EMAIL_HOST_NAME = 'zaccord.com';
-const DOWNLOAD_STLS_URL = '';
-const EMAIL_USER_NAME = '';
+const DOWNLOAD_STLS_URL = '/downloadSTLs';
+const EMAIL_USER_NAME = 'info@zaccord.com';
 const EMAIL_PASSWORD = '';
 const PAYLIKE_ID = '';
 const SESSION_SECRET = '';
-const SHIPPING_PRICE = 1690;
-const SHIPPING_PRICE_GLS_H = 2390;
-const SHIPPING_PRICE_GLS_P = 2290;
-const SHIPPING_PRICE_PACKETA_H = 1390;
-const SHIPPING_PRICE_PACKETA_P = 890;
-const SHIPPING_PRICE_POSTA_H = 1750;
-const MONEY_HANDLE = 490;
 const LIT_FORMS = ['Domború', 'Homorú', 'Sima'];
 const LIT_PRICES = {'100': 1990, '150': 2990, '200': 3990};
 const LAYER_WIDTH_VALUES = [0.12, 0.2, 0.28];
@@ -27,36 +20,42 @@ const INFILL_VALUES_SLA = ['Üreges', 'Tömör'];
 const PRINT_TECHS = ['FDM', 'SLA'];
 const MIN_PRICE = 1990;
 const BOX_SIZES = [[18, 16, 5], [18, 7, 12], [15, 20, 15], [15, 20, 25], [30, 30, 20]];
-const BILLINGO_API_KEY = '';
-const BILLINGO_PRODNUM_1 = 5221476; // 6821423 custom print
-const BILLINGO_PRODNUM_2 = 6801120; // 6821424 lithophane
-const BILLINGO_PRODNUM_3 = 6801096; // 6821436 fix product
-const BILLINGO_BLOCK_ID = 72687; // 103163
-const BILLINGO_CARD_NUM = 88662; // 88880
+const BILLINGO_API_KEY = ''; // 
+const BILLINGO_PRODNUM_1 = 13026788; // 6821423 custom print
+const BILLINGO_PRODNUM_2 = 13026804; // 6821424 lithophane
+const BILLINGO_PRODNUM_3 = 13026935; // 6821436 fix product
+const BILLINGO_BLOCK_ID = 183650; // 103163
+const BILLINGO_CARD_NUM = 150869; // 88880
 const BILLINGO_COD_ID = 5339382; // 6821455
-const BILLINGO_DELIVERY_ID = 4990219; // 6821453
+const BILLINGO_DELIVERY_ID = 13027010; // 6821453
+const DISCOUNT = 0.97;
+
+function basePath(p) {
+  return p.replace(path.join('src', 'js', 'includes'), '');
+}
+
+const DEFAULT_CP_IMG = path.join(basePath(__dirname), 'src', 'images', 'defaultStl.png');
+
+/*
+const BILLINGO_API_KEY = ''; // 
+const BILLINGO_PRODNUM_1 = 6821423; // 6821423 custom print
+const BILLINGO_PRODNUM_2 = 6821424; // 6821424 lithophane
+const BILLINGO_PRODNUM_3 = 6821436; // 6821436 fix product
+const BILLINGO_BLOCK_ID = 103163; // 103163
+const BILLINGO_CARD_NUM = 88880; // 88880
+const BILLINGO_COD_ID = 6821455; // 6821455
+const BILLINGO_DELIVERY_ID = 6821453; // 6821453
+*/
+
 const PACKAGE_WIDTH = 3; // in cm
-const SLA_MULTIPLIER = 1.6;
-const BA_NUM = "11773449-02809630";
-const BA_NAME = "Turcsán Edit";
-const PRINT_SIZES_PLA = [350, 350, 400];
-const PRINT_SIZES_SLA = [65, 115, 150];
-const DELIVERY_TYPES = ['gls_h', 'gls_p', 'packeta_h', 'packeta_p', 'posta_h'];
+const SLA_MULTIPLIER = 1.9;
+const BA_NUM = '11773449-02809630';
+const BA_NAME = 'Turcsán Edit';
+const PRINT_SIZES_PLA = [470, 450, 450];
+const PRINT_SIZES_SLA = [250, 220, 120];
 const PACKETA_API_PASSWORD = '';
-
-for (let i = 10; i <= 90; i += 10) {
-  INFILL_VALUES.push(i);
-}
-
-const SCALE_VALUES = [];
-for (let i = 0.5; i <= 1.0; i += 0.1) {
-  SCALE_VALUES.push(Number(i.toFixed(2)));
-}
-
-const WALL_WIDTH_VALUES = [];
-for (let i = 0.8; i <= 4; i += 0.4) {
-  WALL_WIDTH_VALUES.push(Number(i.toFixed(2)));
-}
+const MAX_QUANTITY = 100;
+const MIN_QUANTITY = 1;
 
 const DR = __dirname.replace(path.join('js', 'includes'), '');
 
@@ -89,55 +88,23 @@ const SUCCESS_RETURN = '{"success": true}';
 const OWNER_EMAILS = []; //['mark@pearscom.com', 'turcsanmate113@gmail.com'];
 
 // For printing
-const B = 40; // build speed: 40mm/s
-const N = 0.4; // nozzle size: 0.4mm
-const T = 1; // thermal expansion
-const De = 0.2; // default infill in percentage
-const L = 0.2; // default layer height in mm
 const M = 12; // cost/min in forint
 const DENSITY = 1.24; // PLA density is 1.27 g/cm^3
-const PRICE_PER_GRAMM = 8.77;
+const PRICE_PER_GRAMM = 9.34;
 
-// Return the correct shipping price depending on the choice of service
-function getShippingPrice(type) {
-  if (type == 'gls_h') {
-    return SHIPPING_PRICE_GLS_H;
-  } else if (type == 'gls_p') {
-    return SHIPPING_PRICE_GLS_P;
-  } else if (type == 'packeta_h') {
-    return SHIPPING_PRICE_PACKETA_H;
-  } else if (type == 'packeta_p') {
-    return SHIPPING_PRICE_PACKETA_P;
+function smoothPrice(price) {
+  if (price <= 8000) {
+    return Math.round(price);
   } else {
-    return SHIPPING_PRICE_POSTA_H;
+    return Math.round(price);
+    //return Math.round(Math.sqrt(price) * 110);
   }
 }
-
-// Create a piecewise defined function for smoothing out the price when its too big
-function smoothPrice(P) {
-  if (P <= 4900) {
-    // f(x) = x
-    return Math.round(P);
-  } else {
-    // f(x) = 70 * sqrt(x)
-    return Math.round(Math.sqrt(P) * 70);
-  }
-}
-
-/*
-  ORIGINAL:
-  function calcCPPrice(W, H, D) {
-    // If price is above 5K Ft then free after work, otherwise add +1K Ft
-    let price = Math.round(smoothPrice(((W / B) * (D / ((N / T) / De)) * (H / L)) / 60 * M));
-    if (price < 5000) return (price + 1000);
-    else return price;
-  }
-*/
 
 function calcCPPrice(volume, area) {
   let outerShellVolume = 0.12 * area; // 100% infill
   let innerVolume = volume - outerShellVolume; // 20% infill
-  let finalPrice = Math.round(outerShellVolume * DENSITY + innerVolume * DENSITY * 0.2) * PRICE_PER_GRAMM * 9;
+  let finalPrice = Math.round(outerShellVolume * DENSITY + innerVolume * DENSITY * 0.2) * PRICE_PER_GRAMM * 7;
   return finalPrice < MIN_PRICE ? MIN_PRICE : finalPrice;
 }
 
@@ -149,10 +116,6 @@ function getCoords(path) {
   return [volume, area];
 }
 
-function getPrintTime(W, H, D) {
-  return Math.round((W / B) * (D / ((N / T) / De)) * (H / L));
-}
-
 // Constants for reference page
 const NUM_OF_COLS = 3;
 const NUM_OF_IMGS = 3;
@@ -162,10 +125,10 @@ const REF_BG = `
 
 // NOTE: change ADMIN constants if you want to use that feature
 // Admin URLs (marked with capital letters), password & username
-const ADMIN_LOGIN_URL = '';
-const CONF_EMAIL_URL = '';
-const STATUS_UPDATE_URL = '';
-const ADMIN_PAGE_ACCESS = '';
+const ADMIN_LOGIN_URL = '/adminLogin';
+const CONF_EMAIL_URL = '/sendConfEmail';
+const STATUS_UPDATE_URL = '/updateOrderStatus';
+const ADMIN_PAGE_ACCESS = '/lick_weebshit';
 const ADMIN_UNAME = '';
 const ADMIN_PASSWORD = '';
 
@@ -180,14 +143,11 @@ const LAZY_LOAD = `
 `;
 
 module.exports = {
-  'shippingPrice': SHIPPING_PRICE,
-  'moneyHandle': MONEY_HANDLE,
   'countries': COUNTRIES,
   'minPrice': MIN_PRICE,
   'fixAddCprint': FIX_ADD_CPRINT,
   'successReturn': SUCCESS_RETURN,
   'calcCPPrice': calcCPPrice,
-  'getPrintTime': getPrintTime,
   'getCoords': getCoords,
   'M': M,
   'numOfCols': NUM_OF_COLS,
@@ -195,10 +155,6 @@ module.exports = {
   'filesToCache': FILES_TO_CACHE,
   'refBg': REF_BG,
   'litForms': LIT_FORMS,
-  'layerWidthValues': LAYER_WIDTH_VALUES,
-  'infillValues': INFILL_VALUES,
-  'scaleValues': SCALE_VALUES,
-  'wallWidthValues': WALL_WIDTH_VALUES,
   'litPrices': LIT_PRICES,
   'adminLoginUrl': ADMIN_LOGIN_URL,
   'confEmailUrl': CONF_EMAIL_URL,
@@ -231,14 +187,13 @@ module.exports = {
   'baName': BA_NAME,
   'printSizesPLA': PRINT_SIZES_PLA,
   'printSizesSLA': PRINT_SIZES_SLA,
-  'getShippingPrice': getShippingPrice,
-  'shippingPriceGLSH': SHIPPING_PRICE_GLS_H,
-  'shippingPriceGLSP': SHIPPING_PRICE_GLS_P,
-  'shippingPricePacketaH': SHIPPING_PRICE_PACKETA_H,
-  'shippingPricePacketaP': SHIPPING_PRICE_PACKETA_P,
-  'shippingPricePostaH': SHIPPING_PRICE_POSTA_H,
-  'deliveryTypes': DELIVERY_TYPES,
   'lazyLoad': LAZY_LOAD,
   'downloadSTLsURL': DOWNLOAD_STLS_URL,
-  'packetaAPIPassword': PACKETA_API_PASSWORD
+  'packetaAPIPassword': PACKETA_API_PASSWORD,
+  'minQuantity': MIN_QUANTITY,
+  'maxQuantity': MAX_QUANTITY,
+  'discount': DISCOUNT,
+  'smoothPrice': smoothPrice,
+  'defaultCpImg': DEFAULT_CP_IMG,
+  'basePath': basePath
 };

@@ -4,6 +4,8 @@ const path = require('path');
 const constants = require('./constants.js');
 const getColors = require('./getColors.js');
 const LIT_FORMS = constants.litForms;
+const MAX_QUANTITY = constants.maxQuantity;
+const MIN_QUANTITY = constants.minQuantity;
 
 function validateLitParams(conn, paramObj) {
   return new Promise((resolve, reject) => {
@@ -29,7 +31,7 @@ function validateLitParams(conn, paramObj) {
         resolve(false);
 
       // Validate quantity
-      } else if (paramObj.q < 1 || paramObj.q > 10) {
+      } else if (paramObj.q < MIN_QUANTITY || paramObj.q > MAX_QUANTITY) {
         resolve(false);
 
       // Make sure file exists
@@ -40,6 +42,7 @@ function validateLitParams(conn, paramObj) {
       resolve(true);
     });
   }).catch(err => {
+    console.log(err);
     reject(err);
   });
 }

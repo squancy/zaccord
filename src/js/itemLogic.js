@@ -109,10 +109,10 @@ const buildItemSection = (conn, itemId, req) => {
               </p> 
               <div class="quantity buttons_added">
                 <input type="button" value="-" class="minus" id="minus">
-                <input type="number" step="1" min="1" max="" name="quantity" value="1"
+                <input type="number" step="1" min="1" max="100" name="quantity" value="1"
                   title="Qty"
                   class="input-text qty text" size="4" pattern="" inputmode="" id="quantity"
-                  readonly>
+                  >
                   <input type="button" value="+" class="plus" id="plus">
               </div>
 

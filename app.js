@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 const mv = require('mv');
+const cron = require('node-cron');
 
 const formidable = require('formidable');
 const conn = require('./src/js/connectDb.js');
@@ -40,6 +41,8 @@ const downloadSTLs = require('./src/js/includes/downloadSTLs.js');
 const packetaXML = require('./src/js/includes/packetaXML.js');
 const getXMLPacketa = require('./src/js/includes/getXMLPacketa.js');
 const buildBlogsSection = require('./src/js/buildBlogsSection.js').buildBlogsSection;
+const handleZprod = require('./src/js/handleZprod.js');
+const buildZprod = require('./src/js/buildZprod.js');
 
 const helpers = require('./src/js/includes/helperFunctions.js');
 const addCookieAccept = helpers.addCookieAccept;
@@ -61,6 +64,7 @@ const responseCache = helpers.responseCache;
 const returnPageWithData = helpers.returnPageWithData;
 const litDimensions = helpers.litDimensions;
 const sendCompressedFile = helpers.sendCompressedFile;
+const gatherData = helpers.gatherData;
 
 const appConsts = require('./src/js/includes/appHelpers.js');
 const validateParams = appConsts.validateParams;
@@ -108,6 +112,11 @@ let d = new Date();
 d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
 let userSession = createSession('user');
 
+// Run a cron job to check if there are any expired z-products
+cron.schedule('* * * * *', () => {
+  handleZprod(conn, {type: 'check'});
+});
+
 function redirectToWWW(req, res) {
   if (!req.headers.host.startsWith('www') && !req.headers.host.startsWith('localhost')) {
     res.writeHead(302, {
@@ -136,14 +145,11 @@ const server = http.createServer((req, res) => {
     server and build new output
   */
   if (req.url === '/search' && req.method === 'POST') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let searchData = JSON.parse(body);
+      let searchData = JSON.parse(body.join(''));
       let sValue = searchData.value;
       let content = addTemplate(userID);
       buildSearch(conn, sValue).then(data => {
@@ -156,14 +162,11 @@ const server = http.createServer((req, res) => {
       });
     });
   } else if (req.url === '/delCartFile' && req.method === 'POST') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let data = JSON.parse(body);
+      let data = JSON.parse(body.join(''));
       let ext = data.ext; 
       let fname = data.fname;
      
@@ -174,14 +177,11 @@ const server = http.createServer((req, res) => {
       });
     });
   } else if (req.url === '/delFromExcel' && req.method === 'POST') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       delFromExcel(conn, formData).then(stat => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({'status': stat}));
@@ -189,14 +189,11 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.url === '/validatePrototype' && req.method === 'POST') {
     // Perform server-side validation of user data
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let val = validateParams(formData);
       toClientPrototype(res, val, req, formData);
     });    
@@ -207,18 +204,26 @@ const server = http.createServer((req, res) => {
     }
 
     // Perform server-side validation of user data
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
       let val = validateRegisterParams(formData);
       toClientRegister(res, val, req, formData, userSession);
     });
+  } else if (req.url === '/handleZprod' && req.method === 'POST') {
+    let body = [];
+    gatherData(body, req);
+
+    req.on('end', () => {
+      handleZprod(conn, JSON.parse(body.join(''))).then(resp => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(resp));
+      });
+    });    
+
   } else if (req.url === '/validateLogin' && req.method === 'POST') {
     // Make sure user is not alreday logged in
     if (req.user.id) {
@@ -226,14 +231,11 @@ const server = http.createServer((req, res) => {
     }
 
     // Implement login system; perform server-side checks & respond to client
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    }); 
+    let body = [];
+    gatherData(body, req);
    
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
 
       if (!formData.email || !formData.pass) {
@@ -261,28 +263,22 @@ const server = http.createServer((req, res) => {
     });
     res.end();
   } else if (req.url === '/sendOpinion' && req.method === 'POST') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
 
       let opinion = formData.opinion;
       returnToClient(sendOpinion, [conn, opinion], null, res, successReturn);
     });
   } else if (req.url === '/createPacket' && req.method === 'POST') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
       let xmlBody = getXMLPacketa(formData, 'createPacket');
 
@@ -294,14 +290,11 @@ const server = http.createServer((req, res) => {
       errorFormResponse(res, 'Nem vagy bejelentkezve');
     }
 
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
 
       // Validate postal code; other paramters are too ambiguous
@@ -317,14 +310,11 @@ const server = http.createServer((req, res) => {
       errorFormResponse(res, 'Nem vagy bejelentkezve');
     }
 
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
 
       // User changes their password; validate on server side
@@ -332,14 +322,11 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.url === '/category' && req.method === 'POST') {
     // Sort fixed items on the main page by their category in db
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let responseData = {};
 
       let errorMsg = 'Hoppá... hiba történt a rendezés során';
@@ -390,28 +377,22 @@ const server = http.createServer((req, res) => {
       console.log(err);
     });
   } else if (req.url === '/validateOrder' && req.method.toLowerCase() === 'post') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let paramArr = [conn, formData, req, res, userSession];
       returnToClient(buyItem, paramArr, null, res, successReturn);
     });
   } else if (req.url === ADMIN_LOGIN_URL && req.method.toLowerCase() === 'post') {
     // Admin page
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       returnToClient(buildAdminPage, [conn, formData], null, res, successReturn);
     });
 
@@ -419,14 +400,11 @@ const server = http.createServer((req, res) => {
   // It should match with the URL seen in admin.js
   } else if (req.url === CONF_EMAIL_URL && req.method.toLowerCase() === 'post') {
     // Send an confirmation email to the customer if the package is ready
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       let uid = formData.uid;
       let delType = formData.delType;
       let glsCode = formData.glsCode;
@@ -442,40 +420,31 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.url === STATUS_UPDATE_URL && req.method.toLowerCase() === 'post') {
     // On admin page we can update the status of an order: done / in progress
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     // User buys a product -> validate data on server side & push to db
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       returnToClient(updateStatus, [conn, formData], null, res, successReturn);
     });
   } else if (req.url === '/validateForgotPass' && req.method.toLowerCase() === 'post' &&
     !req.user.id) {
     // If user submits a temporary password request validate email addr & send tmp password
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     // Send JSON response
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       returnToClient(forgotPassword, [conn, formData.email], null, res, successReturn);
     });
   } else if (req.url === '/genInvoice' && req.method.toLowerCase() === 'post') {
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     req.on('end', () => {
-      let formData = JSON.parse(body);
+      let formData = JSON.parse(body.join(''));
       returnToClient(generateInvoice, [conn, formData], null, res, successReturn);
     });
   } else if (req.url === '/moreOrders' && req.method.toLowerCase() === 'post') {
@@ -484,11 +453,8 @@ const server = http.createServer((req, res) => {
       errorFormResponse(res, 'Nem vagy bejelentkezve');
     }
 
-    let body = '';
-    req.on('data', data => {
-      body += data;
-      checkData(body, req);
-    });
+    let body = [];
+    gatherData(body, req);
 
     // Send JSON response with more orders
     req.on('end', () => {
@@ -518,7 +484,6 @@ const server = http.createServer((req, res) => {
     fileServerResponse(extension, req, res, fileResponse); 
 
     // Make sure user is not logged in when visiting /login and /register pages
-    // Or he/she is not logged in when asking for a temporary password
     if ((['/register', '/login'].indexOf(req.url) > -1 && req.user.id)
       || req.url.substr(0, 8) === '/?fbclid' || isProtectedFile(req.url) ||
       (req.url == '/forgotPassword' && req.user.id)) {
@@ -563,6 +528,33 @@ const server = http.createServer((req, res) => {
             content += addCookieAccept(req);
             buildRefImage(conn, id).then(data => {
               commonData(content, userID, data, res);
+            }).catch(err => {
+              console.log(err);
+              pageCouldNotLoad(res, userID);
+            });
+          } else if (req.url.substr(0, 14) === '/z-product?id=') {
+            let content = fs.readFileSync(path.join('src', 'buy.html'));
+            let id = req.url.substr(14);
+            content += addCookieAccept(req);
+            buildZprod(conn, id).then(data => {
+              if (data.status == 'success') {
+                let q = {
+                  product: 'zprod',
+                  price: data.price
+                }
+
+                req.user.id = '';
+                userID = null;
+
+                buildBuySection(conn, q, req).then(data => {
+                  commonData(content, userID, data, res);
+                }).catch(err => {
+                  console.log(err);
+                  imgError(res, userID, 'shop', err);
+                });
+              } else {
+                pageCouldNotLoad(res, userID);
+              }
             }).catch(err => {
               console.log(err);
               pageCouldNotLoad(res, userID);
@@ -648,7 +640,17 @@ const server = http.createServer((req, res) => {
               res.end(content, 'utf8');
             });
           } else {
-            imgError(res, userID, '404error');
+            // File is not found in src/path/to/file so it may be under path/to/file
+            let fname = filePath.replace('src/', '');
+            fs.readFile(fname, (err, content) => {
+              if (err) {
+                imgError(res, userID, '404error');
+              } else {
+                let extension = path.extname(fname);
+                let contentType = getContentType(extension);
+                res.end(content, contentType);
+              }
+            });
             return;
           }
 

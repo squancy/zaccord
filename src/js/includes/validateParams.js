@@ -1,12 +1,15 @@
+const specParams = require('./specParams.js');
 const constants = require('./constants.js');
 const getColors = require('./getColors.js');
 const getMaterials = require('./getMaterials.js');
-const LAYER_WIDTH_VALUES = constants.layerWidthValues;
-const INFILL_VALUES = constants.infillValues;
-const SCALE_VALUES = constants.scaleValues;
-const WALL_WIDTH_VALUES = constants.wallWidthValues;
-const LAYER_WIDTH_VALUES_SLA = constants.layerWidthValuesSLA;
-const INFILL_VALUES_SLA = constants.infillValuesSLA;
+const LAYER_WIDTH_VALUES = specParams.layerHeight;
+const INFILL_VALUES = specParams.infill;
+const SCALE_VALUES = specParams.scale;
+const WALL_WIDTH_VALUES = specParams.wallWidth;
+const LAYER_WIDTH_VALUES_SLA = specParams.layerHeightSLA;
+const INFILL_VALUES_SLA = specParams.infillSLA;
+const MAX_QUANTITY = constants.maxQuantity;
+const MIN_QUANTITY = constants.minQuantity;
 
 // Validate customization parameters
 function validateParams(conn, obj) {
@@ -38,7 +41,7 @@ function validateParams(conn, obj) {
         } else if (tech != 'SLA' && k === 'fvas' && WALL_WIDTH_VALUES.indexOf(Number(obj[k])) < 0) {
           resolve(false);
         } else if ((k === 'q' || k === 'quantity') &&
-          (obj[k] % 1 !== 0 || obj[k] < 1 || obj[k] > 10)) {
+          (obj[k] % 1 !== 0 || obj[k] < MIN_QUANTITY || obj[k] > MAX_QUANTITY)) {
           resolve(false);
         } else if (tech != 'SLA' && k == 'printMat' && PRINT_MATERIALS.indexOf(obj[k].toLowerCase()) < 0) {
           resolve(false);
@@ -47,6 +50,7 @@ function validateParams(conn, obj) {
 
       resolve(true);
     }).catch(err => {
+      console.log(err);
       reject(err);
     });
   });

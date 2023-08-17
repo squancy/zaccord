@@ -38,19 +38,22 @@ function addToCart(id) {
     return;
   } else if (INFILL_VALUES.indexOf(suruseg) < 0) {
     displayErrorMsg('A sűrűség értéke nem megfelelő');
-    return 
+    return; 
   } else if (PCOLORS['pla'].indexOf(color) < 0) {
     displayErrorMsg('A szín értéke nem megfelelő');
-    return 
+    return; 
   } else if (SCALE_VALUES.indexOf(scale) < 0) {
     displayErrorMsg('A méretezés értéke nem megfelelő');
-    return 
+    return; 
   } else if (WALL_WIDTH_VALUES.indexOf(fvas) < 0) {
     displayErrorMsg('A falvastagság értéke nem megfelelő');
-    return 
-  } else if (quantity % 1 !== 0 || quantity < 1 || quantity > 10) {
+    return;
+  } else if (!_('quantity').value || quantity % 1 !== 0) {
     displayErrorMsg('A mennyiség értéke nem megfelelő');
-    return 
+    return; 
+  } else if (quantity < MIN_QUANTITY || quantity > MAX_QUANTITY) {
+    displayErrorMsg(`Egyféle termékből maximum ${MAX_QUANTITY}db rendelhető`);
+    return;
   }
 
   // Add selected item to the cart by adding it to cookies
@@ -78,12 +81,6 @@ function addToCart(id) {
     let props = Object.keys(itemsSoFar).filter(prop => {
       return prop.split('_')[2] == itemId && prop[0] == 'c';
     }).map(prop => prop.replace('content_', ''));
-    
-    // Do not allow more than 15 different items in cart
-    if (props.length >= 15) {
-      displayErrorMsg('Egyszerre maximum 15 különböző termék rendelhető');
-      return;
-    }
 
     for (let i = 0; i < props.length; i++) {
       let y = 0;
@@ -94,10 +91,10 @@ function addToCart(id) {
         let begin = p1.split('_')[0];
         if (value['content_' + id][p1] == itemsSoFar['content_' + cid][begin + '_' + cid]) {
           if (y == 4) {
-            // Maximum quantity for a single item is 10
+            // Maximum quantity for a single item is MAX_QUANTITY
             let tmpQuantity = Number(itemsSoFar['content_' + cid]['quantity_' + cid]);
-            if (tmpQuantity + quantity > 10) {
-              displayErrorMsg('Egyféle termékből maximum 10db rendelhető');
+            if (tmpQuantity + quantity > MAX_QUANTITY) {
+              displayErrorMsg(`Egyféle termékből maximum ${MAX_QUANTITY}db rendelhető`);
               return;
             }
             itemsSoFar['content_' + cid]['quantity_' + cid] = tmpQuantity + quantity;
@@ -155,12 +152,8 @@ function updateTotPrice(cartId, newPrice, oldPrice, isLit = false, isCP = false,
     sumOfSums += Number(_('totpHolder_' + id).innerHTML);
   }
 
-  if (sumOfSums > 15000) {
-    sumOfSums *= 0.97;
-  } else if (sumOfSums < 800) {
-    let extraPrice = 800 - sumOfSums;
-    sumOfSums += extraPrice;
-    _('extraPrice').innerHTML = `(+${extraPrice} Ft felárral együtt)`;
+  if (sumOfSums > FREE_SHIPPING_LIMIT) {
+    sumOfSums *= DISCOUNT;
   } else {
     _('extraPrice').innerHTML = '';
   }
@@ -206,7 +199,7 @@ function calculatePrice(price, id = '', isLit, isCP) {
     // When calculating the price of a custom printed model also consider the filament material
     if (isCP) {
       let filamentMaterial = _('printMat' + id).value.toLowerCase();
-      let fp = Math.round(nPrice * PRINT_MULTS[filamentMaterial]);
+      let fp = smoothPrice(Math.round(nPrice * PRINT_MULTS[filamentMaterial]));
       return fp < MIN_PRICE ? MIN_PRICE : fp;
     }
 
@@ -241,13 +234,13 @@ function updatePrice(isInCart, price, domElement, isLit, isCP = false, isSLA = f
 
 function calcSLAPrice(p, lw, infill, scale) {
   let multiplier = infill == 'Tömör' ? 1 : 0.8;
-  let fp = Math.round(p * (1 / (lw * 70) + 0.7142857142857143) * multiplier * scale);
+  let fp = smoothPrice(Math.round(p * (1 / (lw * 70) + 0.7142857142857143) * multiplier * scale));
   return fp < MIN_PRICE ? MIN_PRICE : fp;
 }
 
 function manageDiscountTxt(newPrice) {
-  if (newPrice > 15000) {
-    _('discount').innerHTML = '(3% kedvezmény)';
+  if (newPrice > FREE_SHIPPING_LIMIT) {
+    _('discount').innerHTML = `(${Math.round((1 - DISCOUNT) * 100)}% kedvezmény)`;
   } else {
     _('discount').innerHTML = '';
   }
@@ -294,6 +287,11 @@ function buyItem(id) {
   let fvas = _('fvas').value;
   let q = _('quantity').value;
   let size = getModelSize();
+
+  if (!_('quantity').value) {
+    displayErrorMsg('A mennyiség értéke nem megfelelő');
+    return; 
+  }
 
   window.location.href =
   `/buy?product=${id}&rvas=${rvas}&suruseg=${suruseg}&color=${encodeURIComponent(color)}&scale=${scale}&fvas=${fvas}&q=${q}&size=${size}&printMat=PLA&tech=FDM`;
@@ -375,11 +373,11 @@ function incDec(qty, name, threshold, mul) {
 
 if (_('plus')) {
   _('plus').addEventListener('click', function increase(){
-    incDec(1, 'plus', 10, 1);
+    incDec(1, 'plus', MAX_QUANTITY, 1);
   });
 
   _('minus').addEventListener('click', function decrease(){
-    incDec(-1, 'minus', 1, -1);
+    incDec(-1, 'minus', MIN_QUANTITY, -1);
   });
 }
 

@@ -16,18 +16,25 @@ const fs = require('fs');
 const path = require('path');
 
 // Shipping and money handle prices constants are used throughout the page
-const SHIPPING_PRICE = constants.shippingPrice;
-const SHIPPING_PRICE_GLS_H = constants.shippingPriceGLSH;
-const SHIPPING_PRICE_GLS_P = constants.shippingPriceGLSP;
-const SHIPPING_PRICE_PACKETA_H = constants.shippingPricePacketaH;
-const SHIPPING_PRICE_PACKETA_P = constants.shippingPricePacketaP;
-const SHIPPING_PRICE_POSTA_H = constants.shippingPricePostaH;
-const getShippingPrice = constants.getShippingPrice;
-const MONEY_HANDLE = constants.moneyHandle;
+const shipping = require('./includes/shippingConstants.js');
+const SHIPPING_OBJ = shipping.shippingObj;
+const FREE_SHIPPING_LIMIT = shipping.freeShippingLimit;
+const MONEY_HANDLE = shipping.moneyHandle;
+const getIDs = shipping.getIDs;
+const DELIVERY_TO_MONEY = shipping.deliveryToMoney;
+const PACKET_POINT_TYPES_R = shipping.packetPointTypesR;
 
 const calcCPPrice = constants.calcCPPrice;
 const getCoords = constants.getCoords;
 const SLA_MULTIPLIER = constants.slaMultiplier;
+const DISCOUNT = constants.discount;
+
+let DEFAULT_SHIPPING_PRICE;
+for (let key of Object.keys(SHIPPING_OBJ)) {
+  if (SHIPPING_OBJ[key]['prior'] == 1) {
+    DEFAULT_SHIPPING_PRICE = SHIPPING_OBJ[key]['actualPrice'];
+  }
+}
 
 // Build page where the customer can buy the products/custom print
 const buildBuySection = (conn, paramObj, req) => {
@@ -47,12 +54,12 @@ const buildBuySection = (conn, paramObj, req) => {
     // Build html output
     let output = `
       <script type="text/javascript">
+        const SHIPPING_DIV_IDS = ${JSON.stringify(getIDs(SHIPPING_OBJ, 'divID'))};
+        const SHIPPING_RADIO_IDS = ${JSON.stringify(getIDs(SHIPPING_OBJ, 'radioID'))};
+        const SHIPPING_OBJ = ${JSON.stringify(SHIPPING_OBJ)};
+        const DELIVERY_TO_MONEY = ${JSON.stringify(DELIVERY_TO_MONEY)};
+        const PACKET_POINT_TYPES_R = ${JSON.stringify(PACKET_POINT_TYPES_R)};
         const MONEY_HANDLE = ${MONEY_HANDLE};
-        const SHIPPING_PRICE_GLS_H = ${SHIPPING_PRICE_GLS_H};
-        const SHIPPING_PRICE_GLS_P = ${SHIPPING_PRICE_GLS_P};
-        const SHIPPING_PRICE_PACKETA_H = ${SHIPPING_PRICE_PACKETA_H};
-        const SHIPPING_PRICE_PACKETA_P = ${SHIPPING_PRICE_PACKETA_P};
-        const SHIPPING_PRICE_POSTA_H = ${SHIPPING_PRICE_POSTA_H};
 
       </script>
       <section class="keepBottom">
@@ -63,29 +70,20 @@ const buildBuySection = (conn, paramObj, req) => {
 
     // Calc parameters in connection with final price, discount, shipping...
     function calcPrices(price) {
-      // Add 3% discount if order value is above 15000 Ft & free shipping
-      // If product price is below 15000 Ft there is an extra 1290 Ft shipping cost
       let discount = 1;
       let discountText = '';
 
-      // Shipping text was used in a previous prototype, currently not in use
-      // May reset it later
-      let shippingText = `
-        A 15000 Ft alatti rendeléseknél ${SHIPPING_PRICE} Ft-os szállítási költséget számolunk
-        fel`;
-      if (price > 15000) {
-        discount = 0.97;
-        shippingText = `A 15000 Ft feletti rendeléseknél ingyenes a szállítás`;
-        discountText = '(3% kedvezmény)';
+      if (price > FREE_SHIPPING_LIMIT) {
+        discount = DISCOUNT;
+        discountText = `(${Math.round((1 - DISCOUNT) * 100)}% kedvezmény)`;
       }
 
-      let actualShippingPrice = (price > 15000) ? 0 : SHIPPING_PRICE_PACKETA_H;
-      return [discount, discountText, actualShippingPrice, shippingText];
+      let actualShippingPrice = (price > FREE_SHIPPING_LIMIT) ? 0 : DEFAULT_SHIPPING_PRICE;
+      return [discount, discountText, actualShippingPrice];
     }
 
     // Reusable promise for generating a single item for output
-    function buildItemOutput(PRINT_MULTS, isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas,
-        quantity) {
+    function buildItemOutput(PRINT_MULTS, isCrt, userID, orderID, product, rvas, suruseg, color, scale, fvas, quantity) {
       return new Promise((resolve, reject) => {
         // Get the product with that id from database & validate parameters
         let cQuery = 'SELECT * FROM fix_products WHERE id = ? LIMIT 1'; 
@@ -136,8 +134,8 @@ const buildBuySection = (conn, paramObj, req) => {
 
             // Calculate shipping price & final price
             let total = data.price * quantity;
-            let discount, discountText, shippingPrice, shippingText;
-            [discount, discountText, shippingPrice, shippingText] = calcPrices(total);
+            let discount, discountText, shippingPrice;
+            [discount, discountText, shippingPrice] = calcPrices(total);
 
             let finalPrice = data.price * quantity * discount;
             if (isCrt) {
@@ -146,9 +144,9 @@ const buildBuySection = (conn, paramObj, req) => {
 
             // Generate html output
             let output = genItem(false, false, false, data);
-
+            
             if (!isCrt) {
-              resolve([output, data, shippingText, finalPrice, discountText, shippingPrice]);
+              resolve([output, data, finalPrice, discountText, shippingPrice]);
             } else {
               resolve([output, data, finalPrice]);
             }
@@ -157,8 +155,7 @@ const buildBuySection = (conn, paramObj, req) => {
       });
     }
 
-    function buildCPOutput(PRINT_MULTS, rvas, suruseg, color, scale, fvas, quantity, printMat, printSize,
-      tech, isFromCrt = false, fname = false) {
+    function buildCPOutput(PRINT_MULTS, rvas, suruseg, color, scale, fvas, quantity, printMat, printSize, tech, isFromCrt = false, fname = false) {
       return new Promise((resolve, reject) => {
         // Validate params
         validateParams(conn, paramObj).then(res => {
@@ -173,21 +170,14 @@ const buildBuySection = (conn, paramObj, req) => {
           } else {
             var files = [fname];
           }
+
           let finalPrice = 0;
           let output = '';
           let dataAll = [];
+
           for (let i = 0; i < files.length; i++) {
             let file = files[i];
             let uid = Number(file.split('_')[0]);
-
-            // Make sure file belongs to user TODO: check id
-            /*
-            if (userID && id != userID && Number.isInteger(uid)) {
-              console.log(userID, id, uid);
-              reject('Hibás felhasználó');
-              return;
-            }
-            */
 
             // Now make sure that file & its thumbnail exist in directory if prefix is uid
             let filePath = path.join(__dirname.replace(path.join('src', 'js'), ''),
@@ -305,91 +295,76 @@ const buildBuySection = (conn, paramObj, req) => {
       });
     }
 
-    // Build the delivery info section
-    // NOTE: temporarily disable packet point shipping until lockdowns are resolved
-    function buildLastSection(userID, shippingText, finalPrice, discountText) {
+    function buildZprodOutput(price, quantity) {
       return new Promise((resolve, reject) => {
-        // Currently we do not ship with GLS
+        let data = {
+          prodURL: '#',
+          imgURL: 'images/defaultStl.png',
+          name: '3D nyomtatott termékek',
+          price,
+          quantity: 1,
+          prodType: 'zprod',
+          orderID,
+          color: '-',
+          quantity: 1,
+          rvas: 0.20,
+          suruseg: 20,
+          scale: 1,
+          color: '-',
+          fvas: 1.2,
+          tech: 'FDM',
+          printMat: 'PLA',
+          fixProduct: false
+        };
+
+        let output = genItem(false, false, false, data, false, false, false, true);
+        resolve([output, price, data]);
+      });
+    }
+
+    // Build the delivery info section
+    function buildLastSection(userID, finalPrice, discountText) {
+      return new Promise((resolve, reject) => {
         let output = `
           </div>
           <p class="blueHead" style="font-size: 24px;">2. Szállítás Módja</p>
-          <label class="container" id="packetaToAddr" style="border-color: #c1c1c1;">
-            <div style="padding-bottom: 0;">Packeta házhozszállítás</div>
-            <div class="lh sel">
-              A Packetával partnerségben lévő futárszolgálat a megadott címre fogja szállítani a rendelt
-              terméket/termékeket.<br>
-              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_PACKETA_H} Ft, felette ingyenes.
-            </div>
-            <input type="radio" name="radio2" id="toAddrPacketa" checked>
-            <span class="checkmark"></span>
-          </label>
+        `;
 
-          <label class="container" id="packetaPacketPoint">
-            <div style="padding-bottom: 0;">Packeta csomagpont átvétel</div>
-            <div class="lh sel">
-              A Packetával partnerségben lévő futárszolgálat a megadott csomagpontra fogja szállítani a rendelt
-              terméket/termékeket.<br>
-              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_PACKETA_P} Ft, felette ingyenes.
-            </div>
-            <div class="lh sel" id="selectedPacketaPoint" style="color: #4285f4; display: none;"></div>
-            <input type="radio" name="radio2" id="packetPointPacketa">
-            <span class="checkmark"></span>
-          </label>
+        let sortedKeys = [];
+        for (let key of Object.keys(SHIPPING_OBJ)) {
+          sortedKeys.push([key, SHIPPING_OBJ[key]['prior']])
+        }
 
-          <label class="container" id="toAddrHolderPosta">
-            <div style="padding-bottom: 0;">MPL házhozszállítás</div>
-            <div class="lh sel">
-              A Magyar Posta a megadott címre fogja szállítani a rendelt
-              terméket/termékeket.<br>
-              Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_POSTA_H} Ft, felette ingyenes.
-            </div>
-            <input type="radio" name="radio2" id="toAddrPosta">
-            <span class="checkmark"></span>
-          </label>
-          
-          <div style="display: none">
-            <label class="container" id="toAddrHolder">
-              <div style="padding-bottom: 0;">GLS házhozszállítás</div>
+        sortedKeys.sort((a, b) => a[1] - b[1]);
+
+        for (let pair of sortedKeys) {
+          let curObj = SHIPPING_OBJ[pair[0]];
+          output += `
+            <label class="container" id="${curObj['divID']}"
+              style="${curObj['prior'] == 1 ? 'border-color: #c1c1c1;' : ''}">
+              <div style="padding-bottom: 0;">${curObj['title']}</div>
               <div class="lh sel">
-                A futárszolgálat a megadott címre fogja szállítani a rendelt
-                terméket/termékeket.<br>
-                Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_GLS_H} Ft, felette ingyenes.
+                ${curObj['desc']}<br>
+                ${curObj['price']}
               </div>
-              <input type="radio" name="radio2" id="toAddr">
+              ${curObj['more']}
+              <input type="radio" name="radio2" id="${curObj['radioID']}"
+                ${curObj['prior'] == 1 ? 'checked' : ''}>
               <span class="checkmark"></span>
             </label>
-
-            <label class="container" id="packetPointHolder">
-              <div style="padding-bottom: 0;">GLS csomagpont átvétel</div>
-              <div class="lh sel">
-                A futárszolgálat a vásárló által megadott csomagpontra fogja kézbesíteni a
-                csomagot ami ezután lesz átvehető.<br>
-                Szállítási költség: 15000 Ft alatt ${SHIPPING_PRICE_GLS_P} Ft, felette ingyenes.
-              </div>
-              <div class="lh sel" id="selectedPP" style="color: #4285f4; display: none;"></div>
-              <input type="radio" name="radio2" id="packetPoint">
-              <span class="checkmark"></span>
-            </label>
-          </div>
-
           <div id="glsBigBox"></div>
           <div class="overlay" id="overlay"></div>
           <img src="/images/icons/closeLight.svg" class="exitBtn trans" id="exitBtn"
             onclick="exitCont('glsBigBox')">
-        `;
+          `;
+        }
 
         output += `
           <p class="blueHead" style="font-size: 24px;">3. Szállítási & Számlázási Adatok</p>
         `;
 
-        let extraCharge = '';
         let charge = 0;
-        if (finalPrice < 800) {
-          charge = 800 - finalPrice;
-          extraCharge = `<span>(+${charge} Ft felár)</span>`;
-        }
-        
-        if (discountText != '(3% kedvezmény)') charge += SHIPPING_PRICE_PACKETA_H;
+        if (discountText != '(3% kedvezmény)') charge += DEFAULT_SHIPPING_PRICE;
 
         genDelivery(conn, userID, !!userID).then(result => {
           output += result;
@@ -490,8 +465,8 @@ const buildBuySection = (conn, paramObj, req) => {
               <div style="padding-bottom: 0;">Banki előre utalás</div>
               <div class="lh sel">
                 Ilyenkor az alábbi számlára való utalással fizethetsz:
-                <span class="blue">11773449-02809630</span><br>
-                Kedvezményezett neve: <span class="blue">Turcsán Edit</span><br>
+                <span class="blue">11709026-20003809</span><br>
+                Kedvezményezett neve: <span class="blue">Frankli Márk</span><br>
                 Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
                 <span class="blue">${orderIDDisplay}</span>
                 <br>
@@ -501,15 +476,6 @@ const buildBuySection = (conn, paramObj, req) => {
               <span class="checkmark"></span>
             </label>
           `;
-
-          // Shipping text is currently not used
-          /*
-            output += `
-              <p class="note align ddgray" id="whoosh">
-                ${shippingText}!
-              </p>
-            `;
-          */
 
           output += `
               <p class="align">
@@ -543,13 +509,15 @@ const buildBuySection = (conn, paramObj, req) => {
                   Végösszeg:
                 </span>
                 <span id="fPrice">${Math.round(finalPrice + charge)}</span>
-                Ft ${discountText} ${extraCharge}
+                Ft ${discountText}
                 (szállítással együtt)
               </p>
-              <button class="fillBtn btnCommon centerBtn" style="margin-top: 20px;"
-                onclick="submitOrder()" id="submitBtn">
-                Megrendelés
-              </button>
+              <div id="submitBtnCont">
+                <button class="fillBtn btnCommon centerBtn" style="margin-top: 20px;"
+                  onclick="submitOrder()" id="submitBtn">
+                  Megrendelés
+                </button>
+              </div>
             </span>
             <div class="errorBox" id="errStatus"></div>
             <div class="successBox" id="succStatus"></div>
@@ -597,19 +565,16 @@ const buildBuySection = (conn, paramObj, req) => {
           buildCPOutput(PRINT_MULTS, ...paramArr).then(data => {
             output += data[0];
             let finalPrice = data[1];
-            let discount, discountText, shippingPrice, shippingText;
-            [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
+            let discount, discountText, shippingPrice;
+            [discount, discountText, shippingPrice] = calcPrices(finalPrice);
 
             // Check if customer gets a discount 
-            if (finalPrice > 15000) {
-              finalPrice *= 0.97;
+            if (finalPrice > FREE_SHIPPING_LIMIT) {
+              finalPrice *= DISCOUNT;
             } 
 
-            buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
+            buildLastSection(userID, finalPrice, discountText).then(lastOutput => {
               output += lastOutput;
-
-              // Extra charge below 800Ft
-              if (finalPrice < 800) finalPrice += 800 - finalPrice;
 
               output += `
                 </section>
@@ -642,17 +607,14 @@ const buildBuySection = (conn, paramObj, req) => {
             output += data[0]; 
             buildLastSection(userID, data[2], data[3], data[4]).then(lastOutput => {
               output += lastOutput;
-              let finalPrice = data[3];
-
-              // Extra charge below 800Ft
-              if (finalPrice < 800) finalPrice += 800 - finalPrice;
+              let finalPrice = data[2];
 
               output += `
                 </section>
                 <script type="text/javascript">
                   let data = [${JSON.stringify(data[1])}];
                   data[0].finalPrice = Math.round(${finalPrice});
-                  data[0].shippingPrice = ${data[5]};
+                  data[0].shippingPrice = ${data[4]};
                   let isFromCart = false;
                   let isFromCP = false;
                   let isLoggedIn = ${userID ? true : false};
@@ -674,15 +636,15 @@ const buildBuySection = (conn, paramObj, req) => {
             output += data[0];
             let finalPrice = data[1];
 
-            let discount, discountText, shippingPrice, shippingText;
-            [discount, discountText, shippingPrice, shippingText] = calcPrices(finalPrice);
+            let discount, discountText, shippingPrice;
+            [discount, discountText, shippingPrice] = calcPrices(finalPrice);
 
             // Check if customer gets a discount 
-            if (finalPrice > 15000) {
-              finalPrice *= 0.97;
+            if (finalPrice > FREE_SHIPPING_LIMIT) {
+              finalPrice *= DISCOUNT;
             } 
 
-            buildLastSection(userID, shippingText, finalPrice, discountText).then(lastOutput => {
+            buildLastSection(userID, finalPrice, discountText).then(lastOutput => {
               output += lastOutput;
               output += `
                 <script type="text/javascript">
@@ -711,17 +673,19 @@ const buildBuySection = (conn, paramObj, req) => {
       } else {
         // Make sure cookie is not empty
         let cItems = parseCookies(req).cartItems;
-        if (!cItems) {
+        let isZprod = paramObj.product == 'zprod';
+
+        if (!cItems || isZprod) {
           cItems = '{}';
         }
 
-        if (!Object.keys(JSON.parse(cItems)).length) {
+        if (!Object.keys(JSON.parse(cItems)).length && !isZprod) {
           reject('Üres a kosarad');
           return;
         }
 
         // Get data from cookies and validate on server side
-        let cartItems = JSON.parse(parseCookies(req).cartItems);
+        let cartItems = JSON.parse(cItems);
 
         // Iterate over all items & build a promise array
         let promises = [];
@@ -767,6 +731,8 @@ const buildBuySection = (conn, paramObj, req) => {
           promises.push(itemQuery);
         }
 
+        if (isZprod) promises = [buildZprodOutput(paramObj.price)];
+
         // Implement a gate and wait for all promises to finish
         Promise.all(promises).then(values => {
           let finalPrice = 0;
@@ -781,27 +747,26 @@ const buildBuySection = (conn, paramObj, req) => {
               pData.push(v[1]);
             }
           }
-       
+
           // Get shipping price & build delivery section
-          let discount, dText, shopPrice, sText;
+          let discount, dText, shipPrice;
           
-          let actualShippingPrice = (finalPrice > 15000) ? 0 : SHIPPING_PRICE_PACKETA_H;
+          let actualShippingPrice = (finalPrice > FREE_SHIPPING_LIMIT) ? 0 : DEFAULT_SHIPPING_PRICE;
 
-          [discount, dText, shopPrice, sText] = calcPrices(finalPrice);
+          [discount, dText, shipPrice] = calcPrices(finalPrice);
 
-          if (finalPrice > 15000) {
-            finalPrice *= 0.97;
+          if (finalPrice > FREE_SHIPPING_LIMIT) {
+            finalPrice *= DISCOUNT;
           }
 
-          buildLastSection(userID, sText, finalPrice, dText).then(lastOutput => {
+          buildLastSection(userID, finalPrice, dText).then(lastOutput => {
             output += lastOutput;
 
-            // Order with a total value of less than 800Ft will get a 800 - price extra charge
-            if (finalPrice < 800) finalPrice += 800 - finalPrice;
             output += `
               </section>
               <script type="text/javascript">
                 let data = ${JSON.stringify(pData)};
+                console.log(data)
                 data[0].finalPrice = Math.round(${finalPrice});
                 data[0].shippingPrice = ${actualShippingPrice};
                 let isFromCart = true;

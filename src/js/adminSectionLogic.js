@@ -2,17 +2,10 @@ const constants = require('./includes/constants.js');
 const addHours = require('./includes/addHours.js');
 const getColors = require('./includes/getColors.js');
 const EUDateFormat = require('./includes/EUDateFormat.js');
-const MONEY_HANDLE = constants.moneyHandle;
-
-function delTypeText(type) {
-  if (type == 'gls_h' || type == 'gls_p') {
-    return 'GLS';
-  } else if (type == 'posta_h' || type == 'posta_p') {
-    return 'MPL';
-  }
-
-  return 'Packeta';
-}
+const shipping = require('./includes/shippingConstants.js');
+const SHIPPING_OBJ = shipping.shippingObj;
+const PACKET_POINT_TYPES_R = shipping.packetPointTypesR;
+const MONEY_HANDLE = shipping.moneyHandle;
 
 // Build admin page where we can see incoming orders & update their status
 const buildAdminSection = (conn) => {
@@ -26,8 +19,6 @@ const buildAdminSection = (conn) => {
           }
         }
       }
-
-      console.log(hexColors)
 
       let aQuery = `
         SELECT o.*, o.price AS aPrice, ud.email AS uemail, o.id AS oid, d.*,
@@ -58,11 +49,14 @@ const buildAdminSection = (conn) => {
               <button id="markAll" class="fillBtn btnCommon" onclick="markAll()">
                 Megbassza az összeset
               </button>
-              <button class="fillBtn btnCommon" onclick="goToQuotes()">
+              <button class="fillBtn btnCommon" onclick="goToID('protQuotes')">
                 Prototípus kérések
               </button>
               <button class="fillBtn btnCommon" onclick="downloadSTLs()">
                 STL letöltés
+              </button>
+              <button class="fillBtn btnCommon" onclick="goToID('zprod')">
+                Z-termék
               </button>
               <span id="downloadStatus">
               </span>
@@ -136,9 +130,13 @@ const buildAdminSection = (conn) => {
             isTransfer = 'bankkártyás fizetés';
             lookup += MONEY_HANDLE;
           } 
-          
-          let delTypeTxt = delTypeText(dt);
 
+          for (let key of Object.keys(SHIPPING_OBJ)) {
+            if (SHIPPING_OBJ[key]['radioID'] == deliveryType) {
+              var delTypeTxt = SHIPPING_OBJ[key]['title'];
+            }
+          }
+          
           let compInfo = '';
           if (normalCompname && normalCompnum) {
             compInfo = `
@@ -150,7 +148,7 @@ const buildAdminSection = (conn) => {
           let cColor = hexColors[color];
 
           let sendCE = 'Csomag szállítás/átvétel alatt';
-          let isPP = deliveryType == 'gls_p' || deliveryType == 'packeta_p';
+          let isPP = PACKET_POINT_TYPES_R.indexOf(deliveryType) > -1;
           
           if (isEInvoice) {
             var invoicePart = `
@@ -253,7 +251,7 @@ const buildAdminSection = (conn) => {
           }
 
           let packetPointData = '';
-          if (deliveryType == 'gls_p' || deliveryType == 'packeta_p') {
+          if (isPP) {
             packetPointData = `
               <div class="inBox"><b>Csomagpont Név:</b> <span id="pname_${uniqueID}">${packetName}</div>
               <div class="inBox"><b>Csomagpont Cím:</b> ${packetZipcode}, ${packetCity}</div>
@@ -345,14 +343,6 @@ const buildAdminSection = (conn) => {
               <div class="inBox"><b>Tranzakciós ID:</b> ${transactionID}</div>
             `; 
           }
-          
-          let delt = {
-            'gls_h': 'Házhozszállítás',
-            'packeta_h': 'Házhozszállítás',
-            'packeta_p': 'Csomagpont',
-            'gls_p': 'Csomagpont',
-            'posta_h': 'Házhozszállítás'
-          };
 
           output += `
                 <div class="inBox"><b>Mennyiség:</b> ${quantity}db</div>
@@ -371,7 +361,7 @@ const buildAdminSection = (conn) => {
                 <div class="inBox"><b>Cím:</b> <span id="address_${uniqueID}">${address}</span></div>
                 <div class="inBox"><b>Tel.:</b> <span id="mobile_${uniqueID}">${mobile}</span></div>
                 <div class="inBox"><b>E-mail:</b> <span id="email_${uniqueID}">${uemail || nlEmail}</span></div>
-                <div class="inBox"><b>Szállítási mód:</b> ${delt[deliveryType]} (${delTypeTxt})</div>
+                <div class="inBox"><b>Szállítási mód:</b> ${delTypeTxt}</div>
                 <div class="inBox"><b>Azonosító:</b> <span id="id_${uniqueID}">${uniqueID}</div>
                 ${compInfo}
                 ${packetPointData}
@@ -408,7 +398,7 @@ const buildAdminSection = (conn) => {
           `;
           sprices[i] = shippingPrice;
         }
-
+        
         conn.query('SELECT * FROM prototype ORDER BY date DESC LIMIT 50', [], (err, res, field) => {
           if (err) {
             reject(err);
@@ -443,15 +433,65 @@ const buildAdminSection = (conn) => {
                 </table>
               </div>
             </section>
-            <script type="text/javascript">
-              let sprices = JSON.parse('${JSON.stringify(sprices)}');
-
-              function goToQuotes() {
-                _('protQuotes').scrollIntoView();
+            <p class="mainTitle" id="zprod">Z-termék</p>
+            <div style="width: 80%; margin: 0 auto;">
+              <p>Új Z-termék generálás</p>
+              <input type="text" placeholder="Ár" id="zprodPrice">
+              <input type="text" placeholder="Érvényesség ideje (nap)" id="zprodExpiry"
+               value="3">
+              <button id="genZprod">Generálás</button>
+              <span id="genStatus"></span>
+            </div>
+            <div style="width: 80%; margin: 0 auto;">
+              <p>Generált Z-termékek</p>
+              <div style="overflow-x: auto;">
+                <table class="protTbl">
+                  <tr id="zprodTbl">
+                    <th>URL</th>
+                    <th>Ár</th>
+                    <th>Aktív</th>
+                    <th>Generálás ideje</th>
+                    <th>Érvényesség (nap)</th>
+                    <th>Törlés</th>
+                  </tr>
+            `;
+            
+            conn.query('SELECT * FROM z_prod ORDER BY creation_date DESC', [], (err, res, field) => {
+              if (err) {
+                reject(err);
+                return;
               }
-            </script>
-          `;
-          resolve(output);
+
+              for (let el of res) {
+                output += `
+                  <tr id="zprod_${el.url}">
+                    <td>
+                      <a href="/z-product?id=${el.url}">${el.url}</a>
+                      <button onclick="copyURL('${el.url}')">copy</button>
+                    </td>
+                    <td>${el.price}</td>
+                    <td>${el.is_live}</td>
+                    <td>${el.creation_date}</td>
+                    <td>${el.expiry}</td>
+                    <td><button onclick="deleteZprod('${el.url}')">X</button></td>
+                  </tr>
+                `; 
+              }
+
+              output += `
+                  </table>
+                </div>
+              </div>
+              <script type="text/javascript">
+                let sprices = JSON.parse('${JSON.stringify(sprices)}');
+
+                function goToID(id) {
+                  _(id).scrollIntoView();
+                }
+              </script>
+            `;
+            resolve(output);
+          });
         });
       }); 
     });

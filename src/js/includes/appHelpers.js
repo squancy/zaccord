@@ -19,6 +19,9 @@ const userRegister = require('../registerLogic.js');
 const path = require('path');
 const mv = require('mv');
 const fs = require('fs');
+const constants = require('./constants.js');
+const DEFAULT_CP_IMG = constants.defaultCpImg;
+const basePath = constants.basePath;
 
 function buildPage(req, res, conn, userID, buildFunc, htmlPath) {
   buildFunc(conn).then(data => {
@@ -128,19 +131,16 @@ function isMoreImages(cFile, allImgs) {
   return false;
 }
 
-function basePath(p) {
-  return p.replace(path.join('src', 'js', 'includes'), '');
-}
-
 function getFilePaths(extension, prefix, i) {
   // Return the path on the server where the file will be moved and the filename itself
+  let timestamp = Number((Date.now() / 1000).toFixed(0)) % 1000;
   if (extension === 'stl') {
     var isLit = false;
-    var uploadFileName = prefix + '_' + Date.now() + '_' + i; 
+    var uploadFileName = prefix + '_' + timestamp + '_' + i; 
     var newpath = path.join(basePath(__dirname), 'printUploads', uploadFileName + '.stl');
   } else {
     var isLit = true;
-    var uploadFileName = prefix + '_' + Date.now() + '_lit_' + i; 
+    var uploadFileName = prefix + '_' + timestamp + '_lit_' + i; 
     var newpath = path.join(basePath(__dirname), 'printUploads', 'lithophanes',
       uploadFileName + '.' + extension);
   }
@@ -150,7 +150,7 @@ function getFilePaths(extension, prefix, i) {
 function createDefaultThumbnail(fname) {
   // Moves a default stock photo as the STL thumbnail to a permanent location
   return new Promise((resolve, reject) => {
-    let source = path.join(basePath(__dirname), 'src', 'images', 'defaultStl.png');
+    let source = DEFAULT_CP_IMG;
     let destination = path.join(basePath(__dirname), 'printUploads', 'thumbnails', 
       fname + '.png');
     fs.copyFile(source, destination, (err) => {
@@ -238,6 +238,7 @@ function parseUploadFiles(form, req, res, userID) {
       let filePaths = [];
       let promises = [];
       let allImgs = isAllImages(cFile);
+      let origFnames = {};
 
       // Make sure that only 1 image is uploaded
       if (isMoreImages(cFile, allImgs)) {
@@ -259,14 +260,15 @@ function parseUploadFiles(form, req, res, userID) {
           return;
         } 
 
-        // If user is not logged in file prefix is 12 char random string, otherwise it's the uid
-        let prefix = randomstring.generate(12);
+        // If user is not logged in file prefix is 1 char random string, otherwise it's the uid
+        let prefix = randomstring.generate(1);
         if (userID) prefix = userID;
 
         // Upload files to server
         var [uploadFileName, newpath, isLit] = getFilePaths(extension, prefix, i);
 
         uploadFnames.push(uploadFileName);
+        origFnames[uploadFileName] = cFile[i].name;
         
         let send = newpath.substr(1);
         let move = new Promise((resolve, reject) => {
@@ -311,7 +313,7 @@ function parseUploadFiles(form, req, res, userID) {
 
         filePaths.push(newpath);
         promises.push(move);
-        resolve([promises, isLit, filePaths, newpath]);
+        resolve([promises, isLit, filePaths, newpath, origFnames]);
       }
     }); 
   });

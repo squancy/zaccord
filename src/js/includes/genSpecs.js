@@ -1,10 +1,10 @@
-const constants = require('./constants.js');
-const LAYER_WIDTH_VALUES = constants.layerWidthValues;
-const INFILL_VALUES = constants.infillValues;
-const SCALE_VALUES = constants.scaleValues;
-const WALL_WIDTH_VALUES = constants.wallWidthValues;
-const LAYER_WIDTH_VALUES_SLA = constants.layerWidthValuesSLA;
-const INFILL_VALUES_SLA = constants.infillValuesSLA;
+const constants = require('./specParams.js');
+const LAYER_WIDTH_VALUES = constants.layerHeight;
+const INFILL_VALUES = constants.infill;
+const SCALE_VALUES = constants.scale;
+const WALL_WIDTH_VALUES = constants.wallWidth;
+const LAYER_WIDTH_VALUES_SLA = constants.layerHeightSLA;
+const INFILL_VALUES_SLA = constants.infillSLA;
 const getColors = require('./getColors.js');
 
 // Generate a form where the user can change the item's parameters

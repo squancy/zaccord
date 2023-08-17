@@ -37,7 +37,7 @@
 
 .plBlueBottom {
   border-radius: 0 0 30px 30px;
-  font-size: 18px;
+  font-size: 1.125em;
   cursor: pointer;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .font28 {
-  font-size: 28px;
+  font-size: 1.75em;
 }
 
 .plField {

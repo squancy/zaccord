@@ -4,6 +4,7 @@ const fs = require('fs');
 const constants = require('./constants.js');
 const addHours = require('./addHours.js');
 const EUDateFormat = require('./EUDateFormat.js');
+const shipping = require('./shippingConstants.js');
 const BILLINGO_BLOCK_ID = constants.billingoBlockID;
 const BILLINGO_CARD_NUM = constants.billingoCardNum;
 const BILLINGO_PRODNUM_1 = constants.billingoProdnum1; 
@@ -12,7 +13,7 @@ const BILLINGO_PRODNUM_3 = constants.billingoProdnum3;
 const BILLINGO_COD_ID = constants.billingoCodID;
 const BILLINGO_DELIVERY_ID = constants.billingoDeliveryID;
 const BILLINGO_API_KEY = constants.billingoAPIKey;
-const MONEY_HANDLE = constants.moneyHandle;
+const MONEY_HANDLE = shipping.moneyHandle;
 
 const createBillingoClient = require('@codingsans/billingo-client').createBillingoClient;
 
@@ -59,37 +60,30 @@ const generateInvoice = (conn, formData) => {
       let orderTime = result[0].order_time;
 
       let common = {
-        "unit_price_type": "gross",
-        "unit": "db",
-        "vat": "0%",
-        "entitlement": "AAM"
+        'unit_price_type': 'gross',
+        'unit': 'db',
+        'vat': '0%',
+        'entitlement': 'AAM'
       };
 
       let items = [];
 
       for (let row of result) {
+        let name;
         if (row.lit_fname) {
-          items.push({
-            "name": "Litofánia",
-            "unit_price": row.price,
-            "quantity": row.quantity,
-            ...common
-          });
+          name = 'Litofánia';
         } else if (row.cp_fname) {
-          items.push({
-            "name": "Bérnyomtatott Termék",
-            "unit_price": row.price,
-            "quantity": row.quantity,
-            ...common
-          });
+          name = 'Bérnyomtatott Termék';
         } else {
-          items.push({
-            "name": "3D Nyomtatott Termék",
-            "unit_price": row.price,
-            "quantity": row.quantity,
-            ...common
-          });
+          name = '3D Nyomtatott Termék';
         }
+
+        items.push({
+          'name': '3D Nyomtatott Termék',
+          'unit_price': row.price,
+          'quantity': row.quantity,
+          ...common
+        });
       }
 
       console.log(shippingPrice)
@@ -140,7 +134,7 @@ const generateInvoice = (conn, formData) => {
             },
             phone: mobile,
             emails: [email],
-            taxcode: billingCompTaxNum || compnum
+            taxcode: billingCompTaxNum || compnum || ''
           };
 
           console.log(billingCompname, compname, name);
@@ -203,7 +197,7 @@ const generateInvoice = (conn, formData) => {
             fdata.items = items;
             resolve(fdata);
           }).catch(err => {
-            console.log(err);
+            console.log(err['response']['data']['errors']);
             reject('failed');
           });
         }).catch(err => {
@@ -250,7 +244,8 @@ const generateInvoice = (conn, formData) => {
       });
     });
   }).catch(err => {
-    reject('failed 2');
+    console.log('error:', err);
+    return false;
   });
 }
 

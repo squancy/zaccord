@@ -94,6 +94,78 @@ if (_('box_0')) {
   _('box_0').style.borderTopRightRadius = '30px';
 }
 
+_('genZprod').addEventListener('click', (e) => {
+  const re = new RegExp('^[0-9]+$');
+  let price = Number(_('zprodPrice').value);
+  let expiry = Number(_('zprodExpiry').value);
+
+  if (!re.test(price) || !re.test(expiry)) {
+    _('genStatus').innerText = 'Az ár és az érvényesség csak számok lehetnek'; 
+    return false;
+  }
+
+  let data = {
+    price,
+    expiry,
+    type: 'generate'
+  };
+
+  fetch('/handleZprod', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(data => {
+    if (data.status == 'success') {
+      let newChild = `
+        <tr id="zprod_${data.url}">
+          <td>
+            <a href="/z-product?id=${data.url}">${data.url}</a>
+            <button onclick="copyURL('${data.url}')">copy</button>
+          </td>
+          <td>${price}</td>
+          <td>1</td>
+          <td>${data.date}</td>
+          <td>${expiry}</td>
+          <td><button onclick="deleteZprod('${data.url}')">X</button></td>
+        </tr>
+      `;
+      let template = document.createElement('template');
+      newChild = newChild.trim(); 
+      template.innerHTML = newChild;
+      _('zprodTbl').parentNode.insertBefore(template.content.firstChild, _('zprodTbl').nextSibling);  
+    } else {
+      _('genStatus').innerText = data.message;
+    }
+  });
+});
+
+async function copyURL(id) {
+  await navigator.clipboard.writeText(window.location.hostname + '/z-product?id=' + id);
+}
+
+function deleteZprod(url) {
+  let data = {
+    url,
+    type: 'delete'
+  }
+
+  fetch('/handleZprod', {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(data => {
+    if (data.status == 'success') {
+      _('zprod_' + url).outerHTML = ''; 
+    } else {
+      _('genStatus').innerText = data.message;
+    }
+  });
+}
+
 function updateStatus(i, boxID) {
   let val = _('ch_' + boxID).value;
   let data = {
@@ -322,7 +394,7 @@ function createPacket(id, n, ppID, isPP, dt) {
     data['city'] = String(_('city_' + id).innerText);
     data['zip'] = String(_('postalCode_' + id).innerText);
     data['houseNumber'] = houseNumber;
-    data['addressId'] = dt == 'MPL' ? 763 : 4159;
+    data['addressId'] = dt == 'DPD' ? 805 : 4159;
   }
 
   _('plink_' + id).innerHTML = 'Feldolgozás';

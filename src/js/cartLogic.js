@@ -9,15 +9,21 @@ const getMaterials = require('./includes/getMaterials.js');
 const fs = require('fs');
 const path = require('path');
 const constants = require('./includes/constants.js');
-const LAYER_WIDTH_VALUES = constants.layerWidthValues;
-const INFILL_VALUES = constants.infillValues;
-const LAYER_WIDTH_VALUES_SLA = constants.layerWidthValuesSLA;
-const INFILL_VALUES_SLA = constants.infillValuesSLA;
+const specParams = require('./includes/specParams.js');
+const shipping = require('./includes/shippingConstants.js');
+const LAYER_WIDTH_VALUES = specParams.layerHeight;
+const INFILL_VALUES = specParams.infill;
+const LAYER_WIDTH_VALUES_SLA = specParams.layerHeightSLA;
+const INFILL_VALUES_SLA = specParams.infillSLA;
 const PRINT_TECHS = constants.printTechs;
 const LIT_FORMS = constants.litForms;
-const SCALE_VALUES = constants.scaleValues;
-const WALL_WIDTH_VALUES = constants.wallWidthValues;
+const SCALE_VALUES = specParams.scale;
+const WALL_WIDTH_VALUES = specParams.wallWidth;
 const SLA_MULTIPLIER = constants.slaMultiplier;
+const MAX_QUANTITY = constants.maxQuantity;
+const MIN_QUANTITY = constants.minQuantity;
+const DISCOUNT = constants.discount;
+const FREE_SHIPPING_LIMIT = shipping.freeShippingLimit;
 
 // Build cart page from cookies & validate them on server side
 const buildCartSection = (conn, req) => {
@@ -77,7 +83,7 @@ const buildCartSection = (conn, req) => {
             }
 
             // Check if cookie item is a saved custom print
-            if (result.length === 0 && tid.split('_').length > 2
+            if (isCP && tid.split('_').length > 2
               && !content.hasOwnProperty('file_' + tid)) {
               // Make sure there is such a file  
               let fPath = path.join(__dirname.replace(path.join('src', 'js'), ''),
@@ -307,7 +313,7 @@ const buildCartSection = (conn, req) => {
                   output += `
                     <div>
                       <p>
-                        Nyomtatási Anyag:
+                        Anyag:
                         <select class="specSelect chItem" id="printMat${tid}"
                           onchange="updateSpecs(this, ${price}, '${tid}', false, ${isCP})">
 
@@ -407,7 +413,7 @@ const buildCartSection = (conn, req) => {
                         onchange="${selQuan}">
             `;
 
-            for (let i = 1; i <= 10; i++) {
+            for (let i = MIN_QUANTITY; i <= MAX_QUANTITY; i++) {
               let selected = quantity == i ? 'selected' : '';
               output += `
                 <option value="${i}" ${selected}>${i}db</option>
@@ -468,10 +474,9 @@ const buildCartSection = (conn, req) => {
           finalPrice += v[1];
         }
 
-        // If total price is above 15.000Ft give a 3% discount
         let discount = 1;
-        if (finalPrice > 15000) {
-          discount = 0.97;
+        if (finalPrice > FREE_SHIPPING_LIMIT) {
+          discount = DISCOUNT;
         }
 
         let ePriceText = '<span id="extraPrice"></span>';
@@ -489,8 +494,10 @@ const buildCartSection = (conn, req) => {
           Ft
         `;
 
-        if (discount == 0.97) {
-          finalPrice += '<span id="discount">(3% kedvezmény)</span>';
+        if (discount == DISCOUNT) {
+          finalPrice += `
+            <span id="discount">(${Math.round((1 - DISCOUNT) * 100)}% kedvezmény)</span>
+          `;
         } else {
           finalPrice += '<span id="discount"></span>';
         }

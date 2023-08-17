@@ -135,7 +135,8 @@ function smoothPrice(P) {
 function calcCPPrice(volume, area) {
   let outerShellVolume = 0.12 * area; // 100% infill
   let innerVolume = volume - outerShellVolume; // 20% infill
-  let finalPrice = Math.round(outerShellVolume * DENSITY + innerVolume * DENSITY * 0.2) * PRICE_PER_GRAMM * 9;
+  let finalPrice = Math.round(outerShellVolume * DENSITY + innerVolume * DENSITY * 0.2) * PRICE_PER_GRAMM * 8;
+  console.log('a', finalPrice < MIN_PRICE ? MIN_PRICE : finalPrice)
   return finalPrice < MIN_PRICE ? MIN_PRICE : finalPrice;
 }
 

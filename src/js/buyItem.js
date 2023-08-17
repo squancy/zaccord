@@ -23,21 +23,21 @@ const validatePrices = require('./includes/validatePrices.js');
 const getFPVolume = require('./includes/getFPVolume.js');
 const getPackageDimensions = require('./includes/getPackageDimensions.js');
 const getMaterials = require('./includes/getMaterials.js');
+const shipping = require('./includes/shippingConstants.js');
 const path = require('path');
 const ExcelJS = require('exceljs');
 const sliceModel = require('./includes/slice.js');
 const generateInvoice = require('./includes/generateInvoice.js');
 
-// Shipping and money handle prices constants are used throughout the page
-const SHIPPING_PRICE_GLS_H = constants.shippingPriceGLSH;
-const SHIPPING_PRICE_GLS_P = constants.shippingPriceGLSP;
-const SHIPPING_PRICE_PACKETA_H = constants.shippingPricePacketaH;
-const SHIPPING_PRICE_PACKETA_P = constants.shippingPricePacketaP;
-const SHIPPING_PRICE_POSTA_H = constants.shippingPricePostaH;
-const getShippingPrice = constants.getShippingPrice;
-const MONEY_HANDLE = constants.moneyHandle;
-const DELIVERY_TYPES = constants.deliveryTypes;
 const COUNTRIES = constants.countries;
+const FREE_SHIPPING_LIMIT = shipping.freeShippingLimit;
+const MONEY_HANDLE = shipping.moneyHandle;
+const getIDs = shipping.getIDs;
+const SHIPPING_OBJ = shipping.shippingObj;
+const DELIVERY_TO_MONEY_R = shipping.deliveryToMoneyR;
+const DELIVERY_TYPES = getIDs(SHIPPING_OBJ, 'radioID');
+const PACKET_POINT_TYPES_R = shipping.packetPointTypesR;
+const DISCOUNT = constants.discount;
 
 const BA_NUM = constants.baNum;
 const BA_NAME = constants.baName;
@@ -45,6 +45,7 @@ const BA_NAME = constants.baName;
 // Validate order on server side & push to db
 const buyItem = (conn, dDataArr, req, res, userSession) => {
   return new Promise((resolve, reject) => {
+    console.log(dDataArr);
     // Extract data from form data obj
     let UID = req.user.id ? req.user.id : null;
     let name = dDataArr[0].name;
@@ -69,8 +70,6 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let fixProdPromises = [];
     let stlToSlice = [];
 
-    console.log(dDataArr);
-
     // Replace classes & ids with inline CSS for emails
     emailOutput = makeInline(emailOutput);
 
@@ -88,11 +87,12 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
     let packetEmail = dDataArr[0].ppEmail;
     let packetLat = dDataArr[0].ppLat;
     let packetLon = dDataArr[0].ppLon;
+    let isPP = PACKET_POINT_TYPES_R.indexOf(deliveryType) > -1;
 
     // Because of async queries a track variable is needed for packet point checking in db
     let ppUpdated = false;
 
-    const SHIPPING_PRICE = getShippingPrice(deliveryType);
+    const SHIPPING_PRICE = DELIVERY_TO_MONEY_R[deliveryType];
 
     // Validate billing info & credentials
     let billingType = dDataArr[0].billingType;
@@ -194,10 +194,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           localFinalPrice += p * d.quantity;
         }
 
-        // Give discount for 15000 Ft < purchases and also an extra price for 800 Ft > purchases
-        let discount = 0.97;
-        if (localFinalPrice < 15000) discount = 1;
-        if (localFinalPrice < 800) localFinalPrice += 800 - localFinalPrice;
+        let discount = DISCOUNT;
+        if (localFinalPrice < FREE_SHIPPING_LIMIT) discount = 1;
 
         // Make sure the final price is valid
         if (Math.round(finalPrice) != Math.round(localFinalPrice * discount)) {
@@ -217,8 +215,9 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Hibás irányítószám'); 
           return;
         // Make sure there is a valid shipping price
-        } else if ((priceWithoutDiscount <= 15000 && shippingPrice != SHIPPING_PRICE)
-          || (priceWithoutDiscount > 15000 && shippingPrice != 0)) {
+        } else if ((priceWithoutDiscount <= FREE_SHIPPING_LIMIT && shippingPrice != SHIPPING_PRICE)
+          || (priceWithoutDiscount > FREE_SHIPPING_LIMIT && shippingPrice != 0)) {
+          console.log(shippingPrice, SHIPPING_PRICE);
           reject('Hibás szállítási ár');
           return;
         // Make sure delivery type is valid
@@ -226,7 +225,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           reject('Válassz szállítási módot');
           return;
         // Make sure that the necessary packet point fields are set
-        } else if ((deliveryType == 'gls_p' || deliveryType == 'packeta_p')
+        } else if (isPP
           && (!packetID || !packetName || !packetZipcode || !packetCity || !packetAddress)) {
           reject('Hiányzó csomagpont adatok');
           return; 
@@ -283,7 +282,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
             let stl = new NodeStl(pathCP, {density: 1.27}); // PLA has 1.27 g/mm^3 density
             itemVolumes.push(stl.boundingBox.reduce((x, y) => x * y) * scale * quantity);
             itemSizes.push(stl.boundingBox); 
-          } else {
+          } else if (prodType == 'fp') {
             fixProdPromises.push(new Promise((resolve, reject) => {
               getFPVolume(conn, itemID).then(v => {
                 resolve([v[0] * scale * quantity, v[1]]);
@@ -296,11 +295,12 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
           }
 
           // Check the validity of parameters
+          console.log(formData)
           let normalValidate = !isProdLit ? validateParams(conn, formData) : null;
           let litValidate = isProdLit ? validateLitParams(conn, formData) : null;
           Promise.all([normalValidate, litValidate]).then(vals => {
             let [validNormal, validLit] = vals;
-            if (!isProdLit && !validNormal) {
+            if (!isProdLit && !validNormal && prodType != 'zprod') {
               reject('Hibás paraméterek');
               return;
             }
@@ -385,8 +385,8 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
               
                 price *= discount;
                 let sameBillingAddr = billingType == 'same' ? 1 : 0;
-                let isCashOnDel = (deliveryType == 'gls_h' || deliveryType == 'packeta_h') ? 1: 0;
-                let packetDbID = (deliveryType == 'gls_p' || deliveryType == 'packeta_p') ? packetID : '';
+                let isCashOnDel = payment == 'uvet';
+                let packetDbID = isPP ? packetID : '';
 
                 let valueArr = [
                   UID, itemID, price, String(rvas), String(suruseg),
@@ -410,7 +410,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                   }
 
                   // If delivery type if packet point insert contact info to db
-                  if (deliveryType == 'gls_p' || deliveryType == 'packeta_p') {
+                  if (isPP) {
                     // First check if the packet point is already in the db
                     // If it is, just update the existing row
                     // Otherwise insert the packet point as a new row
@@ -488,6 +488,9 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
             });
 
             promises.push(process);
+          }).catch(err => {
+            console.log(err);
+            reject('Nincs ilyen termék'); 
           });
         }
 
@@ -569,8 +572,7 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                         }
                       </div>
                       <div>
-                        <b>Átvétel: </b> ${(deliveryType == 'gls_h' || deliveryType == 'packeta_h')
-                          ? 'házhozszállítás' : 'csomagpont átvétel'}
+                        <b>Átvétel: </b> ${!isPP ? 'házhozszállítás' : 'csomagpont átvétel'}
                       </div>
                       ${compInfo}
                     </div>
@@ -635,39 +637,41 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 sendOwnerEmails(sj, cnt);
 
                 // Also record user & order credentials in an excel spreadsheet
-                Promise.all(fixProdPromises).then(v => {
-                  for (let el of v) {
-                    itemVolumes.push(el[0]);
-                    itemSizes.push(el[1]);
-                  }
-
-                  const workbook = new ExcelJS.Workbook();
-                  workbook.creator = 'Zaccord';
-                  workbook.lastModifiedBy = 'Zaccord';
-                  workbook.modified = new Date();
-                  workbook.xlsx.readFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx')).then(w => {
-                    let packageDimensions = getPackageDimensions(itemVolumes, itemSizes);
-                    let amount;
-                    if (payment == 'uvet' && priceWithoutDiscount > 15000) {
-                      amount = finalPrice + MONEY_HANDLE;
-                    } else if (payment == 'uvet') {
-                      amount = finalPrice + SHIPPING_PRICE + MONEY_HANDLE;
-                    } else {
-                      amount = 0;
+                if (dDataArr[0].prodType != 'zprod') {
+                  Promise.all(fixProdPromises).then(v => {
+                    for (let el of v) {
+                      itemVolumes.push(el[0]);
+                      itemSizes.push(el[1]);
                     }
-                    let rowContent = [
-                      name, normalCompname, pcode, city, address, mobile, email, 'Alkatrészek',
-                      ...packageDimensions, 0.5, '', amount
-                    ];
-                    let worksheet = workbook.getWorksheet('Shipping');
-                    worksheet.addRow(rowContent, 'i');
-                    return workbook.xlsx.writeFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx'));
+
+                    const workbook = new ExcelJS.Workbook();
+                    workbook.creator = 'Zaccord';
+                    workbook.lastModifiedBy = 'Zaccord';
+                    workbook.modified = new Date();
+                    workbook.xlsx.readFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx')).then(w => {
+                      let packageDimensions = getPackageDimensions(itemVolumes, itemSizes);
+                      let amount;
+                      if (payment == 'uvet' && priceWithoutDiscount > FREE_SHIPPING_LIMIT) {
+                        amount = finalPrice + MONEY_HANDLE;
+                      } else if (payment == 'uvet') {
+                        amount = finalPrice + SHIPPING_PRICE + MONEY_HANDLE;
+                      } else {
+                        amount = 0;
+                      }
+                      let rowContent = [
+                        name, normalCompname, pcode, city, address, mobile, email, 'Alkatrészek',
+                        ...packageDimensions, 0.5, '', amount
+                      ];
+                      let worksheet = workbook.getWorksheet('Shipping');
+                      worksheet.addRow(rowContent, 'i');
+                      return workbook.xlsx.writeFile(path.resolve('./src/spreadsheets/shippingCredentials.xlsx'));
+                    });
+                  }).catch(err => {
+                    console.log(err);
+                    reject('Hiba történt, kérlek próbáld újra');
+                    return;
                   });
-                }).catch(err => {
-                  console.log(err);
-                  reject('Hiba történt, kérlek próbáld újra');
-                  return;
-                });
+                }
 
                 // Lastly, try to generate the gcode of the ordered STL files
                 // It's irrelevant whether the gcode generation succeeds or not
@@ -689,12 +693,19 @@ const buyItem = (conn, dDataArr, req, res, userSession) => {
                 resolve('success');
               }); 
             }).catch(err => {
+              console.log(err);
               reject(err);
             });
           });
         });
+      }).catch(err => {
+        console.log(err);
+        reject(err);
       });
     }
+  }).catch(err => {
+    console.log(err);
+    return false;
   });
 }
 

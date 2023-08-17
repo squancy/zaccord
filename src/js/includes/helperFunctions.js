@@ -259,6 +259,13 @@ function sendCompressedFile(fname, response, request, contentType, append, userI
   }
 }
 
+function gatherData(body, req) {
+  req.on('data', data => {
+    body.push(data);
+    checkData(body, req);
+  });
+}
+
 module.exports = {
   'addCookieAccept': addCookieAccept,
   'loggedIn': loggedIn,
@@ -278,5 +285,6 @@ module.exports = {
   'responseCache': responseCache,
   'returnPageWithData': returnPageWithData,
   'litDimensions': litDimensions,
-  'sendCompressedFile': sendCompressedFile
+  'sendCompressedFile': sendCompressedFile,
+  'gatherData': gatherData
 };

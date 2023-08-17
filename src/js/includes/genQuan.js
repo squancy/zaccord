@@ -1,3 +1,7 @@
+const constants = require('./constants.js');
+const MAX_QUANTITY = constants.maxQuantity;
+const MIN_QUANTITY = constants.minQuantity;
+
 function genQuan(chargeNote = '') {
   return `
     <div style="text-align: center;">
@@ -6,9 +10,9 @@ function genQuan(chargeNote = '') {
       </p> 
       <div class="quantity buttons_added">
         <input type="button" value="-" class="minus" id="minus" style="padding-left: 11px;">
-        <input type="number" step="1" min="1" max="" name="quantity" value="1" title="Qty"
-          class="input-text qty text" size="4" pattern="" inputmode="" id="quantity"
-          readonly>
+        <input type="number" step="1" min="${MIN_QUANTITY}" max="${MAX_QUANTITY}" name="quantity"
+          value="1" title="Qty"
+          class="input-text qty text" size="4" pattern="" inputmode="" id="quantity">
           <input type="button" value="+" class="plus" id="plus">
       </div>
     </div>

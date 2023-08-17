@@ -1,11 +1,12 @@
 // Check if model can be printed with SLA
-// It means that the bounding box must not be greater than 115 x 65 x 150 mm
 const NodeStl = require('node-stl');
+const constants = require('./constants.js');
+const PRINT_SIZES_SLA = constants.printSizesSLA;
 
 function shouldAllowSLA(path, scale) {
   let stl = new NodeStl(path, {density: 1.27}); // PLA has 1.27 g/mm^3 density
-  let boundingBox = stl.boundingBox.sort((a, b) => a - b);  
-  return (boundingBox[0] * scale > 65 || boundingBox[1] * scale > 115 || boundingBox[2] * scale > 150) ? 0 : 1;
+  let boundingBox = stl.boundingBox.sort((a, b) => b - a);  
+  return (boundingBox[0] * scale > PRINT_SIZES_SLA[0] || boundingBox[1] * scale > PRINT_SIZES_SLA[1] || boundingBox[2] * scale > PRINT_SIZES_SLA[2]) ? 0 : 1;
 }
 
 module.exports = shouldAllowSLA;

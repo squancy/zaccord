@@ -75,19 +75,13 @@ function removeItem(tid) {
   // Subtract item price from total price
   let cPrice = Number(_('totpHolder_' + tid).innerHTML); 
   let fPrice = Number(_('fPrice').innerHTML);
-  if (fPrice - cPrice * 0.97 > 15000) {
+  if (fPrice - cPrice * 0.97 > FREE_SHIPPING_LIMIT) {
     _('fPrice').innerHTML = Math.round(fPrice - cPrice * 0.97);
-  } else if (fPrice > 15000 && fPrice - cPrice * 0.97 <= 15000) {
+  } else if (fPrice > FREE_SHIPPING_LIMIT && fPrice - cPrice * 0.97 <= FREE_SHIPPING_LIMIT) {
     _('fPrice').innerHTML = Math.round(fPrice * (1 / 0.97)) - cPrice;
     _('discount').innerHTML = '';
   } else {
     _('fPrice').innerHTML = fPrice - cPrice;
-  }
-
-  // Check if item needs an extra price (below 800 Ft)
-  if (fPrice - cPrice < 800) {
-    _('fPrice').innerHTML = 800;
-    _('extraPrice').innerHTML = '(+' + (800 - (fPrice - cPrice)) + ' Ft felár)'; 
   }
 }
 

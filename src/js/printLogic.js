@@ -3,6 +3,9 @@ const util = require('util');
 const buildBlogItem = require('./buildBlogsSection.js').buildBlogItem;
 const constants = require('./includes/constants.js');
 const LAZY_LOAD = constants.lazyLoad;
+const PRINT_SIZES_PLA = constants.printSizesPLA;
+const PRINT_SIZES_SLA = constants.printSizesSLA;
+console.log(PRINT_SIZES_PLA, PRINT_SIZES_SLA)
 
 // Custom printing for users if they have an .stl file
 async function buildPrintSection(conn, req) {
@@ -46,6 +49,12 @@ async function buildPrintSection(conn, req) {
             <input type="file" name="file[]" style="display: none;" id="fileInput" multiple
               >
             <input type="submit" id="submitForm" style="display: none;">
+            <br>
+            <p class="gotham lh">
+              Kérhetsz
+              <a href="/print#getQuote" class="blueLink font16">egyedi árajánlatot</a>
+              is, ha nincsen megfelelő fájlod nyomtatáshoz
+            </p>
           </form>
         </div>
         <div class="cPrintDivs rightDiv flexDiv previews gotham" id="bigPrew">
@@ -65,7 +74,7 @@ async function buildPrintSection(conn, req) {
             </p> 
 
             <p class="gotham font16 hideOnMobile" style="color: #2d2d2d;">
-              Max. modell méret: 350mm x 350mm x 400mm
+              <span class="gothamBold">Max. méret:</span> ${PRINT_SIZES_PLA[0]}mm x ${PRINT_SIZES_PLA[1]}mm x ${PRINT_SIZES_PLA[2]}mm (FDM)<br> ${PRINT_SIZES_SLA[0]}mm x ${PRINT_SIZES_SLA[1]}mm x ${PRINT_SIZES_SLA[2]}mm (SLA) 
             </p> 
           </div>
         </div>

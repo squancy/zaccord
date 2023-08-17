@@ -52,6 +52,11 @@ function toggleLit(url, can, img) {
   }
 }
 
+if (window.location.href.includes('?image=')) {
+  let fname = window.location.href.split('?image=')[1];
+  localStorage.setItem('refresh', fname);
+}
+
 // If user is on mobile hovering changes to tapping & also display a notification msg about that
 if (window.mobileCheck()) {
   let state = true;
@@ -83,7 +88,7 @@ img.onload = function() {
     `;
   }
 
-  // If the page is viewed fro the 1st time save ID to the localStorage
+  // If the page is viewed for the 1st time save ID to the localStorage
   if (!localStorage.getItem('refresh')) {
     let tmp = arr[0].split('/');
     tmp = tmp[tmp.length - 1].replace('.png', '').replace('.jpeg', '').replace('.jpg', '');
@@ -135,6 +140,7 @@ _('size').addEventListener('change', () => updateCookie('size'));
 _('color').addEventListener('change', () => updateCookie('color'));
 _('plus').addEventListener('mouseup', () => updateCookie('quantity', 1));
 _('minus').addEventListener('mouseup', () => updateCookie('quantity', -1));
+_('quantity').addEventListener('change', () => updateCookie('quantity'));
 
 function goToURL(url) {
   window.location.href = url;

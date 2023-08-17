@@ -14,7 +14,11 @@ const buildColors = (conn) => {
     'Fémforgács és PLA keveréke, ami nyomtatás után élethű fém hatást eredményez.',
     'Kőzet részecskék és PLA keveréke, ami nyomtatás után élethű kőzetes hatást eredményez.',
     'Színátmenetes PLA anyagok, így egy modellen belül több szín is alkalmazható.',
-    'Az SLA technológiájú nyomtatók standard alapanyaga.'
+    'Az SLA technológiájú nyomtatók standard alapanyaga.',
+    'Rugalmas és erős nyomtatási anyag, amely megtartja az eredeti formát és alakot.',
+    'Rugalmas és erős nyomtatási anyag, amely megtartja az eredeti formát és alakot.',
+    'Magas olvadáspontú, nagy szakítószilárdságú és erős anyag ipari alkalmazásra, funkcionális alkatrészekhez.',
+    'Szénszálas, erős és tartós anyag ipari alkalmazásra.'
   ];
 
   return new Promise((resolve, reject) => {

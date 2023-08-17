@@ -79,13 +79,23 @@
   position: absolute;
   top: -25px;
   left: 80px;
-  font-size: 45px;
+  font-size: 2.8125em;
   margin: 0;
 }
 
 .boxTitleLeft {
   left: unset;
   right: 80px;
+}
+
+.instantQuote {
+  display: block;
+  margin: 0 auto;
+  padding: 10px; 
+  border-radius: 10px;
+  font-size: 0.5em;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
 @media only screen and (max-width: 1000px) {
@@ -118,7 +128,7 @@
 
   .boxTitle, .boxTitleLeft {
     left: 40px;
-    font-size: 32px;
+    font-size: 2em;
     top: -20px;
   }
 }

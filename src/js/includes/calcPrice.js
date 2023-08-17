@@ -1,5 +1,6 @@
 const constants = require('./constants.js');
 const MIN_PRICE = constants.minPrice;
+const smoothPrice = constants.smoothPrice;
 
 // Calculate the final price of a product, given its initial price + parameters
 function calcPrice(PRINT_MULTS, price, rvasVal, surusegVal, scaleVal, fvasVal, filamentMaterial = false) {
@@ -20,7 +21,7 @@ function calcPrice(PRINT_MULTS, price, rvasVal, surusegVal, scaleVal, fvasVal, f
     multiplier = PRINT_MULTS[filamentMaterial.toLowerCase()];
   }
 
-  let fp = Math.round(nPrice * multiplier); 
+  let fp = smoothPrice(Math.round(nPrice * multiplier)); 
   return fp < MIN_PRICE ? MIN_PRICE : fp;
 }
 

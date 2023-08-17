@@ -1,4 +1,4 @@
-const API_KEY = '6fbb909f-0183-4d0b-b804-6e567c160a3a';
+const API_KEY = 'a1f2ad0d-d79c-47b7-84c0-ac8d7c7a6a3a';
 let paylike = Paylike(API_KEY); // f096aba2-e6bd-4980-850b-c4c6dacac896
 
 // Define possible error codes and their explanations

@@ -2,6 +2,7 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const zip = new require('node-zip')();
+const randomstring = require('randomstring');
 
 function deleteZip() {
   fs.unlink(path.join(__dirname, '../', '../', '../', 'tmpZips', 'tmp.zip'), (err) => {
@@ -21,6 +22,7 @@ async function downloadSTLs(conn) {
     `);
 
     for (let i = 0; i < res.length; i++) {
+      let id = randomstring.generate({length: 8});
       let stlFname = res[i].cp_fname;
       let lastName = res[i].name.split(' ')[0];
       let color = res[i].color;
@@ -31,7 +33,7 @@ async function downloadSTLs(conn) {
       let printTech = res[i].printTech;
       let ww = res[i].fvas;
       let scale = res[i].scale;
-      let fname = `${lastName}_${color}_${quantity}_${printMat}_${infill}_${lh}_${printTech}_${ww}_${scale}`;
+      let fname = `${lastName}_${color}_${quantity}_${printMat}_${infill}_${lh}_${printTech}_${ww}_${scale}_${id}`;
       let p = path.join(__dirname, '../', '../', '../', 'printUploads', stlFname + '.stl');
       if (fs.existsSync(p)) {
         zip.file(fname + '.stl', fs.readFileSync(p));

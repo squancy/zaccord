@@ -1,7 +1,15 @@
 @import url(https://fonts.googleapis.com/css2?family=Catamaran:wght@100;200;300;400;500;600;700;800;900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap);
 @font-face {
   font-family: Gotham;
+  src: url(../fonts/gothamNormal.woff2) format('woff2'), url(../fonts/gothamNormal.woff) format('woff'), url(../fonts/gothamNormal.ttf) format('truetype');
+  /* src: url(../fonts/gotham.woff2) format('woff2'), url(../fonts/gotham.woff) format('woff'), url(../fonts/gotham.ttf) format('truetype'); */
+  font-display: swap
+}
+
+@font-face {
+  font-family: GothamBold;
   src: url(../fonts/gotham.woff2) format('woff2'), url(../fonts/gotham.woff) format('woff'), url(../fonts/gotham.ttf) format('truetype');
+  /* src: url(../fonts/gotham.woff2) format('woff2'), url(../fonts/gotham.woff) format('woff'), url(../fonts/gotham.ttf) format('truetype'); */
   font-display: swap
 }
 
@@ -40,8 +48,142 @@
   color: #999;
 }
 
+#colorPicker {
+  margin: 20px 0 20px 0;
+}
+
+.printTechTitle {
+  margin-bottom: 10px;
+}
+
 .flowBox > div:nth-child(1) {
   width: 75%;
+}
+
+.specChHl {
+  background-color: #4285f4;
+}
+
+.specChDD {
+  width: 80%;
+  margin: 0 auto;
+  box-shadow: 0px 10px 9px 0px rgb(0 0 0 / 15%); 
+  margin-top: -40px;
+  border-radius: 0 0 30px 30px;
+  display: none;
+  cursor: pointer;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.specChDDItem {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+}
+
+.specChDDItem > div:nth-child(3) {
+  padding: 20px;
+}
+
+.specChDDItem img {
+  width: 60px;
+  border-radius: 15px;
+}
+
+.p10 {
+  padding-left: 20px;
+}
+
+.specChDDItem div:nth-child(2) {
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nop {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.specChBox {
+  position: relative;
+  width: 100%;
+  box-shadow: 0px 2px 17px 1px rgb(0 0 0 / 15%);
+  border-radius: 30px;
+  padding: 20px;
+  display: flex;
+  margin: 40px 0 40px 0;
+  cursor: pointer;
+}
+
+.specChBox:hover, .specChDDItem:hover {
+  background-color: #f8f8f8;
+}
+
+.specChHl:hover {
+  background-color: #0f6aff;
+}
+
+.specChLongDesc, .specChProps {
+  padding: 0 40px 0 40px;
+  line-height: 1.4;
+}
+
+.specChLongDesc, .specChProps, .specChValBox {
+  display: flex;
+  align-items: center;
+}
+
+.specChValBox {
+  padding-left: 40px;
+  padding-right: 20px;
+  flex-wrap: wrap;
+}
+
+.specChValBox > p:nth-child(1) {
+  margin-bottom: 0;
+  width: 100%;
+  text-align: center;
+  white-space: break-spaces;
+}
+
+.specChValBox > p:nth-child(2) {
+  color: black;
+  font-size: 20px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+
+.specChProps {
+  text-transform: uppercase;  
+  border-left: 1px solid rgb(0 0 0 / 15%);
+  border-right: 1px solid rgb(0 0 0 / 15%);
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.specChProps > div {
+  margin: 0 auto;
+}
+
+.specChBoxTitle {
+  position: absolute;
+  top: -13px;
+  left: 20px;
+}
+
+.font40 {
+  font-size: 40px;
+}
+
+.specChImgBox > img {
+  border-radius: 10px;
+  width: 190px;
+  height: 190px;
 }
 
 .flowBox > div:nth-child(2) {
@@ -170,7 +312,7 @@ body * {
 }
 
 .font34 {
-  font-size: 34px;
+  font-size: 2.125em;
 }
 
 :root {
@@ -297,7 +439,11 @@ textarea:focus {
 }
 
 .font20 {
-  font-size: 20px;
+  font-size: 1.25em;
+}
+
+.font32 {
+  font-size: 32px;
 }
 
 .middleSummary > p, .catLines {
@@ -381,7 +527,7 @@ input[type=number] {
   border-radius: 50px;
   -webkit-box-shadow: 7px 8px 15px 0 rgb(0 0 0 / 20%);
   box-shadow: 7px 8px 15px 0 rgb(0 0 0 / 20%);
-  margin: 20px
+  margin: 20px 0 20px 0
 }
 
 .SLASpecs {
@@ -520,9 +666,13 @@ input[type=number] {
 }
 
 .orSep {
-  font-size: 18px;
+  font-size: 1.125em;
   font-family: Gotham, Roboto, sans-serif;
   margin: 0 10px 0 10px
+}
+
+.gothamBold {
+  font-family: GothamBold, Roboto, sans-serif
 }
 
 .mMenu {
@@ -609,7 +759,7 @@ input[type=number] {
   height: 100%;
   top: 0;
   left: 0;
-  background-color: rgba(0, 0, 0, .4);
+  background-color: rgba(0, 0, 0, .52);
   border-radius: 30px
 }
 
@@ -619,7 +769,7 @@ input[type=number] {
 
 .mainText {
   color: #fff;
-  font-size: 38px;
+  font-size: 2.375em;
   z-index: 2
 }
 
@@ -1003,6 +1153,10 @@ select:hover {
   max-width: 100%
 }
 
+.colorPick:first-child {
+  border: 2px solid #4285F4; 
+}
+
 .colorPick {
   width: 30px;
   height: 30px;
@@ -1058,27 +1212,27 @@ select:hover {
 }
 
 .font34 {
-  font-size: 34px
+  font-size: 2.125em
 }
 
 .font28 {
-  font-size: 28px
+  font-size: 1.75em
 }
 
 .font26 {
-  font-size: 26px
+  font-size: 1.625em
 }
 
 .font24 {
-  font-size: 24px
+  font-size: 1.5em
 }
 
 .font22 {
-  font-size: 22px
+  font-size: 1.375em
 }
 
 .font18 {
-  font-size: 18px
+  font-size: 1.125em
 }
 
 .dgray {
@@ -1274,7 +1428,7 @@ select:hover {
 
 .priceShow>p {
   text-align: center;
-  font-size: 16px;
+  font-size: 1em;
   margin-top: 7px;
   margin-bottom: 5px
 }
@@ -1321,7 +1475,7 @@ footer>div>div {
 }
 
 footer>div>div>b {
-  font-size: 16px;
+  font-size: 1em;
   font-weight: 500;
   margin-bottom: 5px;
   font-family: Gotham
@@ -1389,7 +1543,7 @@ footer>div>div a:hover {
   padding: 10px;
   color: #fff;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 1em;
   outline: 0;
   font-weight: 600;
   cursor: pointer
@@ -1448,7 +1602,7 @@ footer>div>div a:hover {
 
 .prodName {
   color: #171a20;
-  font-size: 38px;
+  font-size: 2.375em;
   margin-top: 10px;
   line-height: 1;
   font-family: Gotham, sans-serif;
@@ -1460,7 +1614,7 @@ footer>div>div a:hover {
 }
 
 .gotham {
-  font-family: Gotham, Roboto, sans-serif
+  font-family: GothamNormal, Roboto, sans-serif
 }
 
 .qty {
@@ -1469,7 +1623,7 @@ footer>div>div a:hover {
 
 .itemPrice {
   margin-top: 10px;
-  font-size: 20px;
+  font-size: 1.25em;
   font-family: Gotham, sans-serif
 }
 
@@ -1479,7 +1633,7 @@ footer>div>div a:hover {
 }
 
 #spec {
-  font-size: 26px;
+  font-size: 1.625em;
   color: #4285f4
 }
 
@@ -1500,7 +1654,7 @@ select {
   margin-top: 5px;
   outline: 0;
   border-radius: 30px;
-  font-size: 16px;
+  font-size: 1em;
   color: #7b7b7b;
   -webkit-transition: border ease-in-out .4s;
   -o-transition: border ease-in-out .4s;
@@ -1550,7 +1704,7 @@ select {
 }
 
 .btnCommon {
-  font-size: 18px;
+  font-size: 1.125em;
   padding: 10px 20px;
   border-radius: 20px;
   outline: 0;
@@ -1569,7 +1723,7 @@ select {
 }
 
 .contHolder {
-  font-size: 18px;
+  font-size: 1.125em;
   -webkit-box-pack: center;
   -ms-flex-pack: center;
   justify-content: center
@@ -1691,7 +1845,7 @@ ul li::before {
 }
 
 .bld {
-  font-size: 16px
+  font-size: 1em
 }
 
 .galleria-lightbox-image {
@@ -1803,7 +1957,7 @@ ul li::before {
 }
 
 .font16 {
-  font-size: 16px
+  font-size: 1em
 }
 
 .lh {
@@ -1852,7 +2006,7 @@ ul li::before {
 }
 
 .grayHead {
-  font-size: 18px;
+  font-size: 1.125em;
   color: #999
 }
 
@@ -1884,7 +2038,7 @@ select {
   border: 1px solid #dfdfdf;
   border-radius: 30px;
   padding: 15px;
-  font-size: 16px;
+  font-size: 1em;
   outline: 0;
   -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .02), 0 1px 2px rgba(0, 0, 0, .04);
   box-shadow: 0 1px 3px rgba(0, 0, 0, .02), 0 1px 2px rgba(0, 0, 0, .04);
@@ -2005,19 +2159,19 @@ select {
 }
 
 .mainTitle {
-  font-size: 30px;
+  font-size: 1.875em;
   text-align: center;
   margin-top: 0;
   font-family: Gotham, Roboto, sans-serif
 }
 
 .ffprot {
-  font-size: 28px
+  font-size: 1.75em
 }
 
 .blueHead {
   color: #4285f4;
-  font-size: 18px;
+  font-size: 1.125em;
   font-family: Gotham, Roboto, sans-serif;
   margin-bottom: 5px
 }
@@ -2037,7 +2191,7 @@ select {
 .formField {
   width: 100%;
   padding: 15px;
-  font-size: 16px;
+  font-size: 1em;
   border-radius: 20px;
   margin-bottom: 20px;
   outline: 0;
@@ -2128,10 +2282,10 @@ select {
 
 @media only screen and (max-width:1000px) {
   .mainText {
-    font-size: 34px
+    font-size: 2.125em
   }
   .font34 {
-    font-size: 30px
+    font-size: 1.875em
   }
   .w33 {
     width: 49%;
@@ -2206,6 +2360,9 @@ select {
 @media only screen and (max-width:923px) {
   #comment {
     width: 100%
+  }
+  .specChValBox > p:nth-child(2) {
+    margin-top: 20px;
   }
   .flowBox > div:nth-child(1), .flowBox > div:nth-child(2) {
     width: 100%;
@@ -2286,7 +2443,7 @@ select {
     padding-left: 11px
   }
   .prodName {
-    font-size: 30px
+    font-size: 1.875em
   }
   .qty {
     margin-top: 20px
@@ -2414,7 +2571,7 @@ select {
     width: 100%
   }
   .blogSection .font18 {
-    font-size: 16px;
+    font-size: 1em;
   }
   .blogPageTitle {
     text-align: center;
@@ -2474,9 +2631,12 @@ select {
   .arrows {
     display: none
   }
+  .fdmChoice, .slaChoice {
+    padding: 15px;
+  }
   .ffprot,
   .mainTitle {
-    font-size: 24px
+    font-size: 1.5em
   }
   .stlCont {
     width: 100%
@@ -2677,7 +2837,82 @@ select {
   border-color: #4285f4
 }
 
-@media screen and (max-width:800px) {
+@media screen and (max-width: 1350px) {
+  .specChBox {
+    flex-wrap: wrap;
+  }
+
+  .specChLongDesc {
+    width: calc((100% - 190px) * (2 / 3));
+  }
+
+  .specChProps {
+    width: calc((100% - 190px) * (1 / 3));
+    border-right: none;
+  }
+
+  .specChValBox, .specChValBox > p {
+    width: 100%;
+    text-align: center;
+    padding: 0;
+  }
+
+  .specChValBox {
+    margin-top: 20px;
+    border-top: 1px solid rgb(0 0 0 / 15%);
+  }
+
+  .specChValBox > p {
+    margin: 10px;
+  }
+}
+
+@media screen and (max-width: 1075px) {
+  .specChLongDesc {
+    display: none;
+  }
+
+  .specChProps {
+    border: none;
+    width: calc((100% - 150px) / 2);
+  }
+
+  .specChImgBox > img {
+    width: 150px;
+    height: 150px;
+  }
+
+  .specChValBox {
+    border-top: none;
+    width: calc((100% - 150px) / 2);
+    border-left: 1px solid rgb(0 0 0 / 15%);
+    margin: 0;
+  }
+
+  .specChProps > div {
+    padding: 10px;
+  }
+}
+
+@media screen and (max-width: 930px) {
+  .specChProps {
+    width: calc(100% - 150px);
+  }
+
+  .specChValBox {
+    margin-top: 20px;
+    border-top: 1px solid rgb(0 0 0 / 15%);
+    border-left: none;
+    width: 100%;
+  }
+
+  .specChValBox > p {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 800px) {
   .column {
     -ms-flex: 50%;
     -webkit-box-flex: 50%;
@@ -2708,4 +2943,57 @@ select {
 
 .ofv {
   overflow: visible;
+}
+
+@media screen and (max-width: 500px) {
+  .specChProps {
+    width: 50%;
+    font-size: 14px;
+    padding: 0 0 0 10px;
+  }
+  .specChDDItem {
+    padding: 10px;
+  }
+  .specChImgBox > img {
+    width: 100%;
+    height: auto;
+  }
+  .specChImgBox {
+    width: 50%;
+  }
+  .specChValBox > p {
+    font-size: 28px;
+    margin-bottom: 0;
+  }
+  .specChProps > div {
+    margin: 0 auto;
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .specChDD {
+    max-height: 200px;
+  }
+  .specChValBox > p:nth-child(2) {
+    font-size: 16px;
+  }
+  .specChValBox > p:nth-child(1) {
+    font-size: 22px;
+  }
+  .specChDDItem img {
+    width: 50px;
+  }
+  .specChValBox {
+    margin-top: 10px;
+  }
+  .specChDDItem div {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .specChDD {
+    width: 90%;
+  }
+  #specChMatDD > div > div:nth-child(4) {
+    display: none;
+  }
 }

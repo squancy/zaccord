@@ -1,4 +1,6 @@
 const sendEmail = require('./includes/sendEmail.js');
+const shipping = require('./includes/shippingConstants.js');
+const SHIPPING_OBJ = shipping.shippingObj;
 
 const sendConfEmail = (conn, uid, delType, glsCode) => {
   return new Promise((resolve, reject) => {
@@ -47,26 +49,12 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
 
         checkPromise.then(email => {
           let emailAddr = email;
-          
-          let trackURL;
-          if (delType == 'gls_h' || delType == 'gls_p') {
-            trackURL = 'https://gls-group.eu/HU/hu/csomagkovetes';
-          } else if (delType == 'posta_h') {
-            trackURL = 'https://www.posta.hu/nyomkovetes/nyitooldal';
-          } else {
-            trackURL = 'https://tracking.packeta.com/hu/tracking/search';
-          }
 
-          if (delType == 'gls_h') {
-            delType = 'Házhozszállítás GLS futárszolgálattal';
-          } else if (delType == 'gls_p') {
-            delType = 'Átvétel GLS csomagponton';
-          } else if (delType == 'packeta_h') {
-            delType = 'Házhozszállítás Packeta futárszolgálattal';
-          } else if (delType == 'packeta_p') {
-            delType = 'Átvétel Packeta csomagponton';
-          } else {
-            delType = 'Házhozszállítás MPL futárszolgálattal';
+          for (let key of Object.keys(SHIPPING_OBJ)) {
+            if (SHIPPING_OBJ[key]['radioID'] == delType) {
+              var trackURL = SHIPPING_OBJ[key]['trackURL'];
+              var delText = SHIPPING_OBJ[key]['title'];
+            }
           }
 
           // Now send email to the customer
@@ -79,7 +67,7 @@ const sendConfEmail = (conn, uid, delType, glsCode) => {
                 átadásra került a kiszállítást végző szolgáltatónak.
               </p>
               <p style="font-size: 16px;">
-                Választott szállítási mód: <span style="color: #4285f4;">${delType}</span>
+                Választott szállítási mód: <span style="color: #4285f4;">${delText}</span>
                 <br>
                 A megrendelésről bővebb információ weboldalunkon, a
                 <span style="color: #4285f4;">Fiók</span> menüpont alatt található.

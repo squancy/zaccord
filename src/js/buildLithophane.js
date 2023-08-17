@@ -94,8 +94,6 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
         // Initialize vars used globally
         let data = [];
         let arr = [];
-        let recordConversion = false;
-
         function _(el) {
           return document.getElementById(el);
         }
@@ -144,7 +142,6 @@ const buildLithophane = (conn, userID, filePaths, width, height) => {
               itemsSoFar = JSON.parse(itemsSoFar);
               setCookie('cartItems', JSON.stringify(Object.assign(itemsSoFar, value)), 365);
               updateCartNum();
-              recordConversion = true;
             }
           }
         }
