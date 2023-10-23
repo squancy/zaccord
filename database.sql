@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 06, 2022 at 06:50 PM
+-- Generation Time: Oct 24, 2023 at 12:33 AM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.2.26
 
@@ -75,7 +75,21 @@ INSERT INTO `blog` (`id`, `title`, `author`, `categories`, `content_path`, `summ
 (19, 'Legjobb modellező szoftverek kezdőknek', 'Frankli Márk', '3D Nyomtatás,Modellezés, Szoftverek', 'softwerek_kezdoknek', 'A 3D modellezés sok gyakorlást igényel, de idővel bárki megtanulhatja. A 3D modellezés ijesztően meredek tanulási görbével járhat, és a digitális tárgyak létrehozásához általánosan használt fejlett CAD-szoftverek közül soknak a beindítása teljesen összezavarhatja a teljesen kezdőket. A leghíresebb eszközök, mint például a SketchUp vagy a Blender, olyan megfélemlítő eszköztárral és ismeretlen vezérlési sémákkal szembesítenek, amelyek bárki kezét vereségre kényszeríthetik.', 'softborito.jpg', '2022-02-27 19:19:08', '2022-02-24 07:18:17'),
 (20, 'PLA vs ABS vs PETG: Melyik a legjobb?', 'Frankli Márk', '3D Nyomtatás, Filamentek, PLA, PETG, ABS', 'plaabspetg', 'A PLA, az ABS és a PETG a legnépszerűbb és legkönnyebben elérhető filamentek közé tartoznak. De csak azért, mert könnyen elérhetőek, nem jelenti azt, hogy minden nyomtatási feladatra egyformán alkalmasak.\r\n', 'pvpvafila.jpg', '2022-02-28 19:19:08', '2022-02-22 07:18:17'),
 (21, '3D nyomtatott sablonok készítése', 'Frankli Márk', '3D Nyomtatás,Technológiák,Sablon, Festés', 'sablonok', 'A sablonok a művészet egyedi formái, amelyeket a figyelmeztető tábláktól kezdve a kedvenc pólódig mindenre használnak. Akár iparilag készítik, akár húzókésekkel és lézervágókkal szabják testre, a sablonkészítésnek új módszere is van: A 3D nyomtatás.', 'stencil2.jpg', '2022-02-28 19:19:08', '2022-02-20 07:18:17'),
-(22, 'A 3D nyomtatott öntőformák létrehozása', 'Frankli Márk', '3D Nyomtatás, Öntőforma, Sorozatgyártás, Mold', 'ontoforma', 'Ezek nagyszerűek a tömeggyártáshoz, a tervek szabványosításához és a repertoár bővítéséhez, hogy mit készíthetsz magadnak az számos dolog lehet. Először is meg kell különböztetnünk a tárgykészítés két típusát, hogy szemléltethessük, hogy a 3D-s öntőformák nyomtatása miben különbözik a szokásos 3D-s nyomtatási projektektől. A fő különbség abban rejlik, hogy hogyan jutunk el a végső tárgyhoz.', 'mold4.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17');
+(22, 'A 3D nyomtatott öntőformák létrehozása', 'Frankli Márk', '3D Nyomtatás, Öntőforma, Sorozatgyártás, Mold', 'ontoforma', 'Ezek nagyszerűek a tömeggyártáshoz, a tervek szabványosításához és a repertoár bővítéséhez, hogy mit készíthetsz magadnak az számos dolog lehet. Először is meg kell különböztetnünk a tárgykészítés két típusát, hogy szemléltethessük, hogy a 3D-s öntőformák nyomtatása miben különbözik a szokásos 3D-s nyomtatási projektektől. A fő különbség abban rejlik, hogy hogyan jutunk el a végső tárgyhoz.', 'mold4.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17'),
+(23, 'A 3D nyomtatás előnyei és kihívásai a prototípusgyártás során', 'Kis Péter', '3D Nyomtatás,Prototípus, Előnyök, Hátrányok', 'A_3D_nyomtatas_elonyei_es_kihivasai', 'A 3D nyomtatás, más néven az additív gyártás az elmúlt években forradalmasította a prototípusgyártást. Lehetővé teszi a fizikai prototípusok gyors és költséghatékony előállítását, lehetővé téve a vállalkozások számára, hogy minden eddiginél gyorsabban teszteljék és továbbfejlesszék terveiket. ', 'proto_bor.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17'),
+(24, '3D nyomtatás az orvostudományban: A sebészeti segédletektől a protézisekig', 'Kis Péter', '3D Nyomtatás,Orvoslás, Ipar', '3D_nyomtatas_az_orvosi_iparban', 'A 3D nyomtatás az elmúlt években jelentős előrelépést tett az orvostechnikai iparban, ahol a sebészeti segédletektől kezdve a protézisekig sokféle alkalmazás létezik. Számos előnyt kínál, többek között a testreszabhatóságot, a költséghatékonyságot és a gyorsaságot, így egyre népszerűbb választássá válik az orvosi alkalmazások széles körében. ', 'orvoslas_bor.jpg', '2022-02-27 19:19:08', '2022-02-24 07:18:17'),
+(25, 'A 3D nyomtatás környezeti hatása ', 'Kis Péter', '3D Nyomtatás, Környezet, Ökológia', 'A_3D_nyomtatas_kornyezeti_hatasa', 'A 3D nyomtatás, más néven az additív gyártás forradalmasíthatja a termékek előállításának módját, mivel olyan előnyöket kínál, mint a testreszabhatóság, a költséghatékonyság és a gyorsaság. ', 'kornyezet_bor.jpg', '2022-02-28 19:19:08', '2022-02-22 07:18:17'),
+(26, 'A 3D nyomtatás jövője: Előrejelzések és lehetőségek', 'Kis Péter', '3D Nyomtatás,Technológiák,Jövő, Fejlődés', 'A_3D_nyomtatas_jovoje', 'A 3D nyomtatás, más néven additív gyártás, hosszú utat tett meg az 1980-as évekbeli kezdete óta. Lehetősége van arra, hogy forradalmasítsa a termékek előállításának módját, mivel olyan előnyöket kínál, mint a testreszabhatóság, a költséghatékonyság és a gyorsaság. ', 'jovo_bor.jpg', '2022-02-28 19:19:08', '2022-02-20 07:18:17'),
+(27, 'A 3D nyomtatás etikája: A szellemi tulajdon és a hozzáférhetőség', 'Kis Péter', '3D Nyomtatás, Etika, Szellemi tulajdon', 'A_3D_nyomtatas_etikaja', 'A 3D nyomtatási technológia folyamatos fejlődésével párhuzamosan fontos figyelembe venni a technológia etikai vonatkozásait is. Ebben a bejegyzésben a 3D nyomtatással kapcsolatos két kulcsfontosságú etikai megfontolást tekintjük át: a szellemi tulajdonjogokat és a hozzáférhetőséget.', 'etika_bor.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17'),
+(28, '3D nyomtatás a divatiparban: A prototípusoktól a végtermékekig', 'Kis Péter', '3D Nyomtatás,Prototípus, Divat', '3D_nyomtatas_a_divatiparban', 'A 3D nyomtatás, más néven additív gyártás, forradalmasíthatja a divatipart. Számos előnyt kínál, többek között a személyre szabott és összetett minták előállításának lehetőségét, a hulladék és a kibocsátások csökkentésének lehetőségét, valamint a gyártási folyamat felgyorsításának lehetőségét. ', 'divat_bor.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17'),
+(29, '3D nyomtatás az építőiparban: A prototípusgyártástól a 3D nyomtatott házakig', 'Kis Péter', '3D Nyomtatás,Építőipar, Házak', '3D_nyomtatas_az_epitoiparban', 'A 3D nyomtatás, más néven additív gyártás, forradalmasíthatja az építőipart. Számos előnnyel jár, többek között a személyre szabott és összetett tervek előállításának lehetőségével, a hulladék és a kibocsátások csökkentésének lehetőségével, valamint az építési folyamat felgyorsításának képességével. ', 'epites_bor.jpg', '2022-02-27 19:19:08', '2022-02-24 07:18:17'),
+(30, 'A 3D nyomtatás gazdaságtana: A költség-haszon elemzés', 'Kis Péter', '3D Nyomtatás, Gazdaságtan, Költség, Haszon', 'A_3D_nyomtatas_gazdasagtana', 'A 3D nyomtatás, más néven additív gyártás, forradalmasíthatja a termékek tervezésének és gyártásának módját. Számos előnnyel jár, többek között a testreszabott és összetett formatervek előállításával, a hulladék és a kibocsátások csökkentésének lehetőségével, valamint a gyártási folyamat felgyorsításának lehetőségével is egyaránt. ', 'gazdasag_bor.jpg', '2022-02-28 19:19:08', '2022-02-22 07:18:17'),
+(31, '3D nyomtatás a művészet világában: A szobroktól a funkcionális művészetig', 'Kis Péter', '3D Nyomtatás,Művészet,Szobor, Festés', '3D_nyomtatas_a_muveszet_vilagaban', 'A 3D nyomtatás az elmúlt években forradalmasította a művészeti világot, lehetővé téve a művészek számára, hogy bonyolult szobrokat és funkcionális tárgyakat hozzanak létre soha nem látott pontossággal és részletességgel. ', 'muveszet_bor.jpg', '2022-02-28 19:19:08', '2022-02-20 07:18:17'),
+(32, '3D nyomtatás a szórakoztató elektronikai iparban: A prototípustól a végleges alkatrészekig', 'Kis Péter', '3D Nyomtatás, Elektronika, Sorozatgyártás, Ipar', '3D_nyomtatas_a_szorakoztato_elektronikai_iparban', 'A szórakoztatóelektronikai ipar mindig is az új technológiák bevezetésének és fejlesztésének motorja volt, és ez alól a 3D nyomtatás sem kivétel. Az elmúlt években a 3D nyomtatás egyre értékesebb eszközzé vált a fogyasztói elektronikai ipar vállalatai számára, a prototípusok készítésétől és az új termékek tesztelésétől kezdve a végleges alkatrészek, sőt teljes készülékek gyártásáig.', 'elektronika_bor.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17'),
+(33, '3D nyomtatás a bútoriparban: A prototípusoktól a végtermékekig', 'Kis Péter', '3D Nyomtatás,Bútoripar, Prototípus', '3D_nyomtatas_a_butoriparban', 'A 3D nyomtatási technológia használata a bútoriparban az elmúlt években nagy utat tett meg. A kezdetben elsősorban prototípusok és koncepciók fejlesztésére használt 3D nyomtatást ma már a bútorpiacra szánt végtermékek gyártására is alkalmazzák. Ez a technológia számos előnyt kínál a bútortervezők és -gyártók számára, többek között az összetett formák gyors és egyszerű létrehozásának lehetőségét, a termékek egyedi vásárlókra szabhatóságát, valamint a termékek igény szerinti gyártásának lehetőségét. ', 'butor_bor.jpg', '2022-02-27 19:19:08', '2022-02-24 07:18:17'),
+(34, '3D nyomtatás a sportiparban: A testreszabott felszereléstől a teljesítményre szabott ruházatig', 'Kis Péter', '3D Nyomtatás, Sportipar, Testreszabás, Egyéni', '3D_nyomtatas_a_sportiparban', 'A sportipar mindig is élen járt az új technológiák és technikák alkalmazásában a teljesítmény javítása és a sportélmény fokozása érdekében. Az elmúlt években a 3D nyomtatás olyan ígéretes technológiaként jelent meg, amely forradalmasíthatja a sportipart.', 'sport_bor.jpg', '2022-02-28 19:19:08', '2022-02-22 07:18:17'),
+(35, 'A 3D nyomtatás előnyei a kisvállalkozások és a startupok számára', 'Kis Péter', '3D Nyomtatás,Vállalkozás,Startup, Előnyök', 'A_3D_nyomtatas_elonyei_a_kisvallalkozasok_es_a_startupok_szamara', 'Az elmúlt években a 3D nyomtatás olyan ígéretes technológiaként jelent meg, amely számos iparág forradalmasítására képes. A kisvállalkozások és az induló vállalkozások számára a 3D nyomtatás számos olyan előnnyel járhat, amely segítheti őket a sikerben és a növekedésben.', 'startup_bor.jpg', '2022-02-28 19:19:08', '2022-02-20 07:18:17'),
+(36, '3D nyomtatás a csomagolóiparban: A prototípusoktól a végtermékekig', 'Kis Péter', '3D Nyomtatás, Csomagolóipar, Fenntarthatóság', '3D_nyomtatas_a_csomagoloiparban', 'A 3D nyomtatás számos iparágban forradalmasítja a termékek tervezésének és gyártásának módját, és ez alól a csomagolóipar sem kivétel. A 3D nyomtatás az új csomagolási tervek prototípusgyártásától a végtermékek előállításáig egyre fontosabb szerepet játszik a csomagolóiparban.', 'csomag_bor.jpg', '2022-02-27 03:06:05', '2022-02-26 07:18:17');
 
 -- --------------------------------------------------------
 
@@ -147,17 +161,17 @@ INSERT INTO `colors` (`id`, `color`, `material`, `images`, `info`, `hex_color`, 
 (49, 'Narancssárga', 'abs', '3djake-niceabs-narancssarga-241167-hu.jpg', 'Jól nyomtatható', 'FFA500', 0),
 (50, 'Piros', 'abs', '3djake-niceabs-piros-241197-hu.jpg', 'Jól nyomtatható', 'FF0000', 1),
 (51, 'Világosszürke', 'abs', '3djake-niceabs-vilagosszuerke-241117-hu.jpg', 'Jól nyomtatható', 'D3D3D3', 1),
-(52, 'Fehér', 'tpu', '3djake-tpu-a95-feher-284855-hu.jpg', 'Standard szín', 'ffffff', 1),
-(53, 'Fekete', 'tpu', '3djake-tpu-a95-fekete-284865-hu.jpg', 'Standard szín', '000000', 1),
-(54, 'Átlátszó', 'tpu', '3djake-tpu-a95-atlatszo-284845-hu.jpg', 'Üvegszerű hatás', 'ffffff', 1),
-(55, 'Ezüst', 'tpu', '3djake-tpu-a95-ezuest-284875-hu.jpg', 'Standard szín', 'C0C0C0', 0),
-(56, 'Sötétszürke', 'tpu', '3djake-tpu-a95-soetetszuerke-284905-hu.jpg', 'Standard szín', 'A9A9A9', 1),
-(57, 'Sötétkék', 'tpu', '3djake-tpu-a95-soetetkek-284895-hu.jpg', 'Jól nyomtatható', '00008B', 1),
-(58, 'Világoskék', 'tpu', '3djake-tpu-a95-vilagoskek-284915-hu.jpg', 'Jól nyomtatható', 'add8e6', 1),
-(59, 'Világoszöld', 'tpu', '3djake-tpu-a95-vilagoszoeld-284925-hu.jpg', 'Jól nyomtatható', '90EE90', 1),
-(60, 'Narancssárga', 'tpu', '3djake-tpu-a95-narancssarga-299677-hu.jpg', 'Jól nyomtatható', 'FFA500', 0),
-(61, 'Piros', 'tpu', '3djake-tpu-a95-piros-284885-hu.jpg', 'Jól nyomtatható', 'FF0000', 1),
-(62, 'Világosszürke', 'tpu', '3djake-tpu-a95-vilagosszuerke-284935-hu.jpg', 'Jól nyomtatható', 'D3D3D3', 1),
+(52, 'Fehér', 'tpu (hard - a95)', '3djake-tpu-a95-feher-284855-hu.jpg', 'Standard szín', 'ffffff', 1),
+(53, 'Fekete', 'tpu (hard - a95)', '3djake-tpu-a95-fekete-284865-hu.jpg', 'Standard szín', '000000', 1),
+(54, 'Átlátszó', 'tpu (hard - a95)', '3djake-tpu-a95-atlatszo-284845-hu.jpg', 'Üvegszerű hatás', 'ffffff', 1),
+(55, 'Ezüst', 'tpu (hard - a95)', '3djake-tpu-a95-ezuest-284875-hu.jpg', 'Standard szín', 'C0C0C0', 0),
+(56, 'Sötétszürke', 'tpu (hard - a95)', '3djake-tpu-a95-soetetszuerke-284905-hu.jpg', 'Standard szín', 'A9A9A9', 1),
+(57, 'Sötétkék', 'tpu (hard - a95)', '3djake-tpu-a95-soetetkek-284895-hu.jpg', 'Jól nyomtatható', '00008B', 1),
+(58, 'Világoskék', 'tpu (hard - a95)', '3djake-tpu-a95-vilagoskek-284915-hu.jpg', 'Jól nyomtatható', 'add8e6', 1),
+(59, 'Világoszöld', 'tpu (hard - a95)', '3djake-tpu-a95-vilagoszoeld-284925-hu.jpg', 'Jól nyomtatható', '90EE90', 1),
+(60, 'Narancssárga', 'tpu (hard - a95)', '3djake-tpu-a95-narancssarga-299677-hu.jpg', 'Jól nyomtatható', 'FFA500', 0),
+(61, 'Piros', 'tpu (hard - a95)', '3djake-tpu-a95-piros-284885-hu.jpg', 'Jól nyomtatható', 'FF0000', 1),
+(62, 'Világosszürke', 'tpu (hard - a95)', '3djake-tpu-a95-vilagosszuerke-284935-hu.jpg', 'Jól nyomtatható', 'D3D3D3', 1),
 (63, 'Fehér', 'asa', '3djake-asa-feher-284775-hu.jpg', 'Standard szín', 'ffffff', 1),
 (64, 'Fekete', 'asa', '3djake-asa-fekete-280991-hu.jpg', 'Standard szín', '000000', 1),
 (65, 'Ezüst', 'asa', '3djake-asa-ezuest-284785-hu.jpg', 'Jól nyomtatható', 'C0C0C0', 0),
@@ -193,7 +207,13 @@ INSERT INTO `colors` (`id`, `color`, `material`, `images`, `info`, `hex_color`, 
 (95, 'Kék', 'gyanta (resin)', 'phrozen-abs-like-resin-feher-1000-g-377040-hu.jpg', 'Átlátszó és fedő színek', '0089ff', 0),
 (96, 'Tisztazöld', 'gyanta (resin)', 'phrozen-abs-like-resin-feher-1000-g-377040-hu.jpg', 'Átlátszó és fedő színek', '696012', 1),
 (97, 'Betonszürke', 'gyanta (resin)', 'phrozen-abs-like-resin-feher-1000-g-377040-hu.jpg', 'Átlátszó és fedő színek', '808076', 1),
-(98, 'Fehér', 'gyanta (resin)', 'phrozen-abs-like-resin-feher-1000-g-377040-hu.jpg', 'Átlátszó és fedő színek', 'ffffff', 1);
+(98, 'Fehér', 'gyanta (resin)', 'phrozen-abs-like-resin-feher-1000-g-377040-hu.jpg', 'Átlátszó és fedő színek', 'ffffff', 1),
+(99, 'Fehér', 'tpu (medium - a85)', '3djake-tpu-a95-feher-284855-hu.jpg', 'Rugalmas', 'ffffff', 1),
+(100, 'Fekete', 'tpu (medium - a85)', '3djake-tpu-a95-fekete-284865-hu.jpg', 'Rugalmas', '000000', 1),
+(101, 'Fehér', 'tpu (soft - a70)', '3djake-tpu-a95-feher-284855-hu.jpg', 'Rugalmas', 'ffffff', 1),
+(102, 'Fekete', 'tpu (soft - a70)', '3djake-tpu-a95-fekete-284865-hu.jpg', 'Rugalmas', '000000', 1),
+(103, 'Fekete', 'nylon', 'nylon.jpg', 'Magas olvadáspont, erős', '000000', 1),
+(104, 'Fekete', 'carbon fiber', 'carbon_fiber.jpg', 'Erős, könnyű, tartós', '000000', 1);
 
 -- --------------------------------------------------------
 
@@ -367,12 +387,16 @@ INSERT INTO `materials` (`id`, `name`, `mult`) VALUES
 (1, 'pla', 1),
 (2, 'abs', 1.45),
 (3, 'petg', 1.45),
-(4, 'tpu', 1.814),
+(4, 'tpu (hard - a95)', 1.814),
 (5, 'asa', 1.45),
 (6, 'wood', 2.5),
 (7, 'metal', 3.23375),
 (8, 'stone', 3.2025),
-(9, 'magic pla', 1.36);
+(9, 'magic pla', 1.36),
+(11, 'tpu (medium - a85)', 1.814),
+(12, 'tpu (soft - a70)', 1.814),
+(13, 'carbon fiber', 4.2),
+(14, 'nylon', 4.2);
 
 -- --------------------------------------------------------
 
@@ -387,7 +411,7 @@ CREATE TABLE `orders` (
   `price` float NOT NULL,
   `rvas` enum('0.05','0.07','0.10','0.1','0.12','0.20','0.28','0.2') COLLATE utf8mb4_bin DEFAULT NULL,
   `suruseg` enum('Tömör','Üreges','10','20','30','40','50','60','70','80','90') COLLATE utf8mb4_bin DEFAULT NULL,
-  `scale` enum('0.5','0.6','0.7','0.8','0.9','1.0','1.3','1') COLLATE utf8mb4_bin DEFAULT NULL,
+  `scale` enum('0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0','1.3','1') COLLATE utf8mb4_bin DEFAULT NULL,
   `color` varchar(255) COLLATE utf8mb4_bin NOT NULL,
   `printMat` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   `printTech` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
@@ -422,7 +446,6 @@ CREATE TABLE `orders` (
   `order_time` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
--- --------------------------------------------------------
 
 --
 -- Table structure for table `packet_points`
@@ -453,8 +476,6 @@ CREATE TABLE `prototype` (
   `message` text DEFAULT NULL,
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `reference_images`
@@ -503,7 +524,18 @@ CREATE TABLE `users` (
   `register_time` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
--- --------------------------------------------------------
+--
+-- Table structure for table `z_prod`
+--
+
+CREATE TABLE `z_prod` (
+  `id` int(11) NOT NULL,
+  `price` int(11) NOT NULL,
+  `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `is_live` tinyint(1) NOT NULL,
+  `creation_date` datetime NOT NULL,
+  `expiry` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Structure for view `a`
@@ -583,6 +615,12 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `z_prod`
+--
+ALTER TABLE `z_prod`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -590,19 +628,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `blog`
 --
 ALTER TABLE `blog`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `colors`
 --
 ALTER TABLE `colors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT for table `delivery_data`
 --
 ALTER TABLE `delivery_data`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=268;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -620,25 +658,25 @@ ALTER TABLE `fix_products`
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=574;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=662;
 
 --
 -- AUTO_INCREMENT for table `packet_points`
 --
 ALTER TABLE `packet_points`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `prototype`
 --
 ALTER TABLE `prototype`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `reference_images`
@@ -651,6 +689,12 @@ ALTER TABLE `reference_images`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+
+--
+-- AUTO_INCREMENT for table `z_prod`
+--
+ALTER TABLE `z_prod`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

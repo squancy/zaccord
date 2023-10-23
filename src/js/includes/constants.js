@@ -4,9 +4,9 @@ const fs = require('fs');
 
 // Constant variables used for shopping & delivery, product customization
 // NOTE: change these values if you want to use these features
-const EMAIL_HOST_NAME = 'zaccord.com';
-const DOWNLOAD_STLS_URL = '/downloadSTLs';
-const EMAIL_USER_NAME = 'info@zaccord.com';
+const EMAIL_HOST_NAME = '';
+const DOWNLOAD_STLS_URL = '';
+const EMAIL_USER_NAME = '';
 const EMAIL_PASSWORD = '';
 const PAYLIKE_ID = '';
 const SESSION_SECRET = '';
@@ -20,7 +20,7 @@ const INFILL_VALUES_SLA = ['Üreges', 'Tömör'];
 const PRINT_TECHS = ['FDM', 'SLA'];
 const MIN_PRICE = 1990;
 const BOX_SIZES = [[18, 16, 5], [18, 7, 12], [15, 20, 15], [15, 20, 25], [30, 30, 20]];
-const BILLINGO_API_KEY = ''; // 
+const BILLINGO_API_KEY = '';
 const BILLINGO_PRODNUM_1 = 13026788; // 6821423 custom print
 const BILLINGO_PRODNUM_2 = 13026804; // 6821424 lithophane
 const BILLINGO_PRODNUM_3 = 13026935; // 6821436 fix product
@@ -36,21 +36,10 @@ function basePath(p) {
 
 const DEFAULT_CP_IMG = path.join(basePath(__dirname), 'src', 'images', 'defaultStl.png');
 
-/*
-const BILLINGO_API_KEY = ''; // 
-const BILLINGO_PRODNUM_1 = 6821423; // 6821423 custom print
-const BILLINGO_PRODNUM_2 = 6821424; // 6821424 lithophane
-const BILLINGO_PRODNUM_3 = 6821436; // 6821436 fix product
-const BILLINGO_BLOCK_ID = 103163; // 103163
-const BILLINGO_CARD_NUM = 88880; // 88880
-const BILLINGO_COD_ID = 6821455; // 6821455
-const BILLINGO_DELIVERY_ID = 6821453; // 6821453
-*/
-
 const PACKAGE_WIDTH = 3; // in cm
 const SLA_MULTIPLIER = 1.9;
-const BA_NUM = '11773449-02809630';
-const BA_NAME = 'Turcsán Edit';
+const BA_NUM = '11709026-20003809';
+const BA_NAME = 'Frankli Márk';
 const PRINT_SIZES_PLA = [470, 450, 450];
 const PRINT_SIZES_SLA = [250, 220, 120];
 const PACKETA_API_PASSWORD = '';
@@ -125,10 +114,10 @@ const REF_BG = `
 
 // NOTE: change ADMIN constants if you want to use that feature
 // Admin URLs (marked with capital letters), password & username
-const ADMIN_LOGIN_URL = '/adminLogin';
-const CONF_EMAIL_URL = '/sendConfEmail';
-const STATUS_UPDATE_URL = '/updateOrderStatus';
-const ADMIN_PAGE_ACCESS = '/lick_weebshit';
+const ADMIN_LOGIN_URL = '';
+const CONF_EMAIL_URL = '';
+const STATUS_UPDATE_URL = '';
+const ADMIN_PAGE_ACCESS = '';
 const ADMIN_UNAME = '';
 const ADMIN_PASSWORD = '';
 

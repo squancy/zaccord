@@ -29,6 +29,9 @@ const getCoords = constants.getCoords;
 const SLA_MULTIPLIER = constants.slaMultiplier;
 const DISCOUNT = constants.discount;
 
+const BA_NUM = constants.baNum;
+const BA_NAME = constants.baName;
+
 let DEFAULT_SHIPPING_PRICE;
 for (let key of Object.keys(SHIPPING_OBJ)) {
   if (SHIPPING_OBJ[key]['prior'] == 1) {
@@ -465,8 +468,8 @@ const buildBuySection = (conn, paramObj, req) => {
               <div style="padding-bottom: 0;">Banki előre utalás</div>
               <div class="lh sel">
                 Ilyenkor az alábbi számlára való utalással fizethetsz:
-                <span class="blue">11709026-20003809</span><br>
-                Kedvezményezett neve: <span class="blue">Frankli Márk</span><br>
+                <span class="blue">${BA_NUM}</span><br>
+                Kedvezményezett neve: <span class="blue">${BA_NAME}</span><br>
                 Fontos, hogy a közleményben tüntetsd fel az alábbi azonosítót:
                 <span class="blue">${orderIDDisplay}</span>
                 <br>
