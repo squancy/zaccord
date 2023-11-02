@@ -51,8 +51,10 @@ After cloning the repository & installing Node.js create the database by importi
 In `src/js/includes/connConstants.js` configure the parameters for connecting to the database.<br>
 If you want to use all features you should configure `src/js/includes/constants.js` according
 to your needs.<br>
-To install the dependencies run `npm install`.<br>
-Download Slic3r as an executable & its libraries and place it under `Slic3r`.<br>
+The minimum you need to do to make it work is to change `SESSION_SECRET` in `src/js/includes/constants.js` to some random string.<br>
+Note that Zaccord is only tested in Node v. 16 and it’s advisable to run it with this version. I’m planning to test it on newer versions of Node as well.
+To install the   run `npm ci` to install the dependencies from `package-lock.json`.<br>
+Optionally, you can download Slic3r as an executable & its libraries and place it under `Slic3r`. It’s ignored it the current version.<br>
 To start the project run `node app.js` and the site should be up on port 5000.<br>
 
 ## Contact
